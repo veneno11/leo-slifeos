@@ -1032,7 +1032,13 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
 
     // --- STREAMING_CHUNK:AI YouTube Features... ---
     // --- YOUTUBE LOGIC ---
-    
+    window.removeYtChannel = function(id) {
+  // Filters out the channel with the matching ID
+  window.appState.ytChannels = window.appState.ytChannels.filter(ch => ch.id !== id);
+  
+  window.saveState(); // Saves the removal to Firebase
+  renderYtChannels(); // Redraws the screen
+}
     function extractCategories() {
       const cats = new Set(window.appState.ytChannels.map(c => c.category));
       return Array.from(cats);
@@ -1043,7 +1049,7 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
       renderYtChannels();
     }
 
-    function renderYtChannels() {
+function renderYtChannels() {
       // Re-render filters
       const filterContainer = document.getElementById('yt-filter-container');
       const cats = extractCategories();
@@ -1076,6 +1082,12 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
 
         return `
         <div class="bg-notion-bg border border-notion-border rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center group relative overflow-hidden transition-all hover:border-rose-500/50 hover:bg-rose-950/20">
+          
+          <!-- Delete Button -->
+          <button onclick="window.removeYtChannel('${ch.id}')" class="absolute top-2 right-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all z-10" title="Remove Channel">
+            <i class="fa-solid fa-trash text-[10px]"></i>
+          </button>
+
           <img src="${avatarUrl}" onerror="this.src='${fallbackUrl}'" alt="${ch.handle}" class="w-12 h-12 rounded-full object-cover border-2 border-zinc-800 shadow-lg group-hover:border-rose-500 transition-colors" />
           <div class="w-full">
             <h4 class="text-xs font-bold text-zinc-200 truncate w-full" title="${ch.handle}">${ch.handle}</h4>
