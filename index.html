@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" data-theme="gray">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Leo's LifeOS</title>
   
-  <!-- Atom SVG Favicon -->
+  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>" />
 
   <!-- Tailwind CSS CDN -->
@@ -47,7 +47,63 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- PWA Requirements Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#141414">
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Dynamic Manifest Generation for Chrome Installability
+      const manifest = {
+        name: "Leo's LifeOS",
+        short_name: "LifeOS",
+        start_url: window.location.href,
+        display: "standalone",
+        background_color: "#141414",
+        theme_color: "#141414",
+        icons: [{
+          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>",
+          sizes: "192x192",
+          type: "image/svg+xml",
+          purpose: "any maskable"
+        },
+        {
+          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>",
+          sizes: "512x512",
+          type: "image/svg+xml",
+          purpose: "any maskable"
+        }]
+      };
+      
+      const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+      const manifestUrl = URL.createObjectURL(manifestBlob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestUrl;
+      document.head.appendChild(link);
+
+      // 2. Dummy Service Worker for Chrome "Add to Home Screen" Requirement
+      if ('serviceWorker' in navigator) {
+        const swCode = `
+          self.addEventListener('install', (e) => { self.skipWaiting(); });
+          self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+          self.addEventListener('fetch', (e) => { });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+        
+        navigator.serviceWorker.register(swUrl).then(() => {
+          console.log('PWA Service Worker Registered (Blob)');
+        }).catch(err => {
+          console.log('PWA Service Worker skipped (expected in some iframe environments)', err);
+        });
+      }
+    });
+  </script>
 
   <style>
     :root {
@@ -101,6 +157,30 @@
       animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
+    /* Task completion smooth animation */
+    .task-card {
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .task-title-text {
+      position: relative;
+      transition: color 0.3s ease, opacity 0.3s ease;
+    }
+    .task-card.completed .task-title-text {
+      opacity: 0.45;
+      text-decoration: line-through;
+      text-decoration-color: #10B981;
+      text-decoration-thickness: 2px;
+    }
+
+    @keyframes popCheck {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+    .animate-check {
+      animation: popCheck 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
     .tab-content {
       display: none;
       opacity: 0;
@@ -132,19 +212,6 @@
       backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
-
-    .waterfall-container {
-      column-count: 1;
-      column-gap: 1rem;
-    }
-    @media (min-width: 640px) { .waterfall-container { column-count: 2; } }
-    @media (min-width: 1024px) { .waterfall-container { column-count: 3; } }
-    .waterfall-item {
-      break-inside: avoid;
-      margin-bottom: 1rem;
-      display: inline-block;
-      width: 100%;
-    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-28 md:pb-8">
@@ -152,38 +219,44 @@
   <header class="sticky top-0 z-30 bg-[#141414]/95 backdrop-blur-md border-b border-notion-border px-3 sm:px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
       
-      <!-- Brand Logo -->
+      <!-- Brand Logo with Live Sync Badge -->
       <div class="flex-1 flex items-center justify-start min-w-0">
-        <div class="flex items-center space-x-2.5 cursor-pointer group min-w-0" onclick="switchTab('gym')">
-          <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100 font-bold transition-transform group-hover:scale-105 shrink-0">
-            <i class="fa-solid fa-atom text-sm"></i>
+        <div class="flex items-center space-x-2.5 cursor-pointer group min-w-0" onclick="window.switchTab('gym')">
+          <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100 font-bold transition-transform group-hover:scale-105 shrink-0 relative">
+            <svg class="w-4 h-4 text-zinc-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span id="sync-status-dot" class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-zinc-500 border-2 border-[#141414] rounded-full transition-colors" title="Sync Status"></span>
           </div>
           <div class="min-w-0">
-            <h1 class="font-bold text-sm sm:text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LEO'S LIFEOS</h1>
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-bold text-sm sm:text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LEO'S LIFEOS</h1>
+              <span id="sync-badge-text" class="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 font-mono hidden sm:inline-block">Local</span>
+            </div>
             <p class="text-[9px] sm:text-[10px] text-notion-textMuted tracking-wider uppercase font-medium truncate">Student & Gym Hub</p>
           </div>
         </div>
       </div>
 
-      <!-- Desktop Nav Tabs -->
       <nav class="hidden md:flex items-center space-x-1 bg-notion-sidebar p-1 rounded-xl border border-notion-border shadow-inner">
-        <button onclick="switchTab('gym')" id="nav-btn-gym" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2">
+        <button onclick="window.switchTab('gym')" id="nav-btn-gym" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2">
           <i class="fa-solid fa-dumbbell text-xs"></i> Gym Split
         </button>
-        <button onclick="switchTab('student')" id="nav-btn-student" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
+        <button onclick="window.switchTab('student')" id="nav-btn-student" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
           <i class="fa-solid fa-graduation-cap text-xs"></i> Student Hub
         </button>
-        <button onclick="switchTab('info')" id="nav-btn-info" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
-          <i class="fa-solid fa-compass text-xs"></i> Info & FYP
+        <button onclick="window.switchTab('info')" id="nav-btn-info" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
+          <i class="fa-solid fa-quote-right text-xs"></i> Quotes & Feed
         </button>
       </nav>
 
       <!-- Right Action Controls -->
       <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <button onclick="openModal('settingsModal')" class="p-2 text-notion-textMuted hover:text-white rounded-lg hover:bg-notion-hover transition-all" title="Settings & Gemini Key">
+        <button onclick="window.openModal('settingsModal')" class="p-2 text-notion-textMuted hover:text-white rounded-lg hover:bg-notion-hover transition-all relative" title="Settings & Gemini Key">
           <i class="fa-solid fa-sliders text-sm"></i>
+          <span id="api-indicator" class="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full hidden shadow-[0_0_5px_#8B5CF6]"></span>
         </button>
-        <button onclick="openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-lg transition-all transform hover:scale-105 flex items-center gap-1 shadow-sm">
+        <button onclick="window.openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-lg transition-all transform hover:scale-105 flex items-center gap-1 shadow-sm">
           <i class="fa-solid fa-plus text-xs"></i> <span class="hidden xs:inline">Task</span>
         </button>
       </div>
@@ -197,19 +270,21 @@
           <i class="fa-solid fa-quote-left"></i>
         </div>
         <div class="min-w-0">
-          <p id="banner-quote-text" class="text-xs sm:text-sm font-medium italic text-notion-textPrimary line-clamp-2 leading-relaxed">"The resistance that you physically fight at the gym and the resistance that you fight in life can only build a strong character."</p>
-          <span id="banner-quote-author" class="text-[10px] sm:text-[11px] text-notion-textMuted font-medium block mt-0.5 truncate">— Arnold Schwarzenegger</span>
+          <p id="banner-quote-text" class="text-xs sm:text-sm font-medium italic text-notion-textPrimary line-clamp-2 leading-relaxed">"You have no enemies. No one has any enemies."</p>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span id="banner-quote-author" class="text-[10px] sm:text-[11px] text-notion-textMuted font-medium block truncate">— Thors Snorresson</span>
+          </div>
         </div>
       </div>
-      <button onclick="cycleBannerQuote()" class="p-1.5 text-notion-textMuted hover:text-white hover:bg-notion-hover rounded-lg transition-all shrink-0 ml-1" title="Next Quote">
-        <i class="fa-solid fa-rotate text-xs"></i>
+      <button id="banner-refresh-btn" onclick="window.cycleInfiniteQuote()" class="p-2 text-notion-textMuted hover:text-white hover:bg-notion-hover rounded-lg transition-all shrink-0 ml-1 flex items-center justify-center" title="Next Quote">
+        <i id="banner-refresh-icon" class="fa-solid fa-wand-magic-sparkles text-xs"></i>
       </button>
     </div>
   </section>
 
-  <!-- MAIN TAB WRAPPER -->
   <main class="max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 flex-grow">
 
+    <!-- GYM TAB CONTENT -->
     <div id="tab-gym" class="tab-content active space-y-5">
       
       <!-- Split Selector Bar -->
@@ -222,16 +297,16 @@
         </div>
 
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 pt-1 sm:pt-0 shrink-0 scrollbar-none">
-          <button onclick="setGymSplit('chest')" id="split-btn-chest" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200">
+          <button onclick="window.setGymSplit('chest')" id="split-btn-chest" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200">
             Chest & Shoulders
           </button>
-          <button onclick="setGymSplit('back')" id="split-btn-back" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+          <button onclick="window.setGymSplit('back')" id="split-btn-back" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
             Back & Biceps
           </button>
-          <button onclick="setGymSplit('arms')" id="split-btn-arms" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+          <button onclick="window.setGymSplit('arms')" id="split-btn-arms" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
             Arms Focus
           </button>
-          <button onclick="setGymSplit('legs')" id="split-btn-legs" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+          <button onclick="window.setGymSplit('legs')" id="split-btn-legs" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
             Legs & Core
           </button>
         </div>
@@ -240,10 +315,10 @@
       <!-- Action Control Toolbar -->
       <div class="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5">
         <div class="flex flex-wrap items-center gap-2">
-          <button id="shuffle-btn" onclick="shuffleUnlockedBlocks()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+          <button id="shuffle-btn" onclick="window.shuffleUnlockedBlocks()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
             <i id="shuffle-icon" class="fa-solid fa-shuffle"></i> Shuffle Unlocked Blocks
           </button>
-          <button onclick="openModal('addBlockModal')" class="bg-notion-hover hover:bg-notion-border text-notion-textPrimary px-3 py-2 rounded-lg text-xs font-medium transition-all border border-notion-border flex items-center justify-center gap-1.5">
+          <button onclick="window.openModal('addBlockModal')" class="bg-notion-hover hover:bg-notion-border text-notion-textPrimary px-3 py-2 rounded-lg text-xs font-medium transition-all border border-notion-border flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-plus"></i> Add Movement Block
           </button>
         </div>
@@ -263,19 +338,17 @@
           <h3 class="text-sm sm:text-base font-bold flex items-center gap-2 text-notion-emerald">
             <i class="fa-solid fa-trophy"></i> Personal Best (PB) Log
           </h3>
-          <button onclick="openModal('logSetModal')" class="text-xs bg-notion-emerald/10 border border-notion-emerald/30 text-notion-emerald hover:bg-notion-emerald/20 font-semibold px-2.5 py-1 rounded-lg transition-all">
+          <button onclick="window.openModal('logSetModal')" class="text-xs bg-notion-emerald/10 border border-notion-emerald/30 text-notion-emerald hover:bg-notion-emerald/20 font-semibold px-2.5 py-1 rounded-lg transition-all">
             + Log Set / PR
           </button>
         </div>
-
-        <!-- PB Cards Container -->
         <div id="pb-records-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <!-- Dynamically Rendered via JS -->
         </div>
       </div>
-
     </div>
 
+    <!-- STUDENT TAB CONTENT -->
     <div id="tab-student" class="tab-content space-y-5">
       
       <!-- Student Hub Header & Filter Controls -->
@@ -288,7 +361,7 @@
             <p class="text-xs text-notion-textMuted">Organize tasks, exams, and labs across all your courses.</p>
           </div>
 
-          <button onclick="openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
+          <button onclick="window.openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
             <i class="fa-solid fa-plus text-xs"></i> Add Assignment
           </button>
         </div>
@@ -297,40 +370,39 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pt-3 border-t border-notion-border/60 text-xs">
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="text-notion-textMuted font-medium text-[11px] mr-1">Group By:</span>
-            <button onclick="setAssignmentGrouping('date')" id="group-btn-date" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">By Date</button>
-            <button onclick="setAssignmentGrouping('course')" id="group-btn-course" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Course</button>
-            <button onclick="setAssignmentGrouping('type')" id="group-btn-type" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Type</button>
-            <button onclick="setAssignmentGrouping('none')" id="group-btn-none" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Flat List</button>
+            <button onclick="window.setAssignmentGrouping('date')" id="group-btn-date" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">By Date</button>
+            <button onclick="window.setAssignmentGrouping('course')" id="group-btn-course" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Course</button>
+            <button onclick="window.setAssignmentGrouping('type')" id="group-btn-type" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Type</button>
+            <button onclick="window.setAssignmentGrouping('none')" id="group-btn-none" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Flat List</button>
           </div>
 
           <div class="flex items-center gap-1.5">
             <span class="text-notion-textMuted font-medium text-[11px] mr-1">Sort:</span>
-            <button onclick="setAssignmentSorting('dueAsc')" id="sort-btn-dueAsc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">Earliest</button>
-            <button onclick="setAssignmentSorting('dueDesc')" id="sort-btn-dueDesc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Latest</button>
+            <button onclick="window.setAssignmentSorting('dueAsc')" id="sort-btn-dueAsc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">Earliest</button>
+            <button onclick="window.setAssignmentSorting('dueDesc')" id="sort-btn-dueDesc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Latest</button>
           </div>
         </div>
       </div>
 
-      <!-- Assignments Container -->
       <div id="assignments-container" class="space-y-4">
         <!-- Dynamically Rendered via JS -->
       </div>
-
     </div>
 
+    <!-- INFO / QUOTES TAB CONTENT -->
     <div id="tab-info" class="tab-content space-y-5">
       
-      <!-- Info Hub Intro Header -->
+      <!-- Quotes Hub Intro Header -->
       <div class="bg-notion-sidebar p-3.5 sm:p-4 rounded-xl border border-notion-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div>
           <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-100">
-            <i class="fa-solid fa-sparkles text-zinc-300"></i> Information & "For You" Feed
+            <i class="fa-solid fa-quote-right text-zinc-300"></i> Quotes & Feed
           </h2>
-          <p class="text-xs text-notion-textMuted">Self-curated intentional feed, creator network, and persistent notes.</p>
+          <p class="text-xs text-notion-textMuted">Curated creator network, daily perspective, and personal notes.</p>
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <button onclick="openModal('addYtChannelModal')" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+          <button onclick="window.openModal('addYtChannelModal')" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
             <i class="fa-solid fa-plus"></i> Add Channel
           </button>
         </div>
@@ -347,12 +419,8 @@
           </div>
 
           <!-- YouTube Category Filters -->
-          <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs scrollbar-none">
-            <button onclick="filterYtChannels('all')" id="yt-filter-all" class="yt-filter-btn px-2.5 py-1 rounded-md bg-rose-600 text-white font-semibold whitespace-nowrap">#All</button>
-            <button onclick="filterYtChannels('Fitness')" id="yt-filter-Fitness" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Fitness</button>
-            <button onclick="filterYtChannels('Academics')" id="yt-filter-Academics" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Academics</button>
-            <button onclick="filterYtChannels('Tech')" id="yt-filter-Tech" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Tech</button>
-            <button onclick="filterYtChannels('Mindset')" id="yt-filter-Mindset" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Mindset</button>
+          <div id="yt-filter-container" class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs scrollbar-none">
+            <!-- Rendered by JS based on unique categories -->
           </div>
         </div>
 
@@ -361,33 +429,33 @@
         </div>
       </section>
 
-      <!-- Utility Columns (Quotes & Scratchpad) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        <!-- Quote Display -->
+        <!-- Clean Quotes Container -->
         <div class="space-y-5 h-full">
-          <div class="notion-card rounded-xl p-3.5 sm:p-4 space-y-3 h-full flex flex-col">
-            <div class="flex items-center justify-between border-b border-notion-border pb-2">
+          <div class="notion-card rounded-xl p-3.5 sm:p-4 space-y-3 h-full flex flex-col justify-between relative overflow-hidden group">
+            
+            <div class="flex items-center justify-between border-b border-notion-border pb-2 relative z-10">
               <h3 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-zinc-200">
-                <i class="fa-solid fa-quote-left text-zinc-400"></i> Mindset & Wisdom Vault
+                <i class="fa-solid fa-quote-left text-purple-400"></i> Quotes
               </h3>
+              <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="text-xs bg-purple-900/30 hover:bg-purple-800/40 text-purple-200 border border-purple-800/50 font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
+                <i class="fa-solid fa-rotate text-xs"></i> Next
+              </button>
             </div>
 
-            <div id="quote-card-display" class="bg-notion-bg p-4 rounded-xl border border-notion-border relative flex-grow flex flex-col justify-center">
+            <div id="quote-card-display" class="bg-notion-bg p-4 rounded-xl border border-notion-border relative flex-grow flex flex-col justify-center my-2 z-10">
               <p id="quote-display-text" class="text-sm sm:text-base italic font-medium leading-relaxed text-notion-textPrimary text-center">
-                "We don't rise to the level of our expectations, we fall to the level of our training."
+                "There is no shame in falling down. True shame is in not standing back up."
               </p>
-              <div class="flex items-center justify-between mt-6 pt-3 border-t border-notion-border/50 w-full">
-                <span id="quote-display-author" class="text-xs font-semibold text-zinc-300">— Archilochus</span>
-                <div class="flex items-center gap-2">
-                  <button onclick="prevQuote()" class="p-1.5 hover:bg-notion-hover text-notion-textMuted hover:text-white rounded text-xs">
-                    <i class="fa-solid fa-chevron-left"></i>
-                  </button>
-                  <span id="quote-counter" class="text-[10px] text-notion-textMuted font-mono">1/3</span>
-                  <button onclick="nextQuote()" class="p-1.5 hover:bg-notion-hover text-notion-textMuted hover:text-white rounded text-xs">
-                    <i class="fa-solid fa-chevron-right"></i>
-                  </button>
-                </div>
+              <div class="flex flex-col items-center justify-center mt-6 pt-3 border-t border-notion-border/50 w-full gap-1">
+                <span id="quote-display-author" class="text-xs font-semibold text-zinc-200">— Miyamoto Musashi</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end pt-1 text-[11px] text-notion-textMuted z-10">
+              <div class="flex items-center gap-2">
+                <span id="quote-counter" class="text-[10px] text-notion-textMuted font-mono">Synced</span>
               </div>
             </div>
           </div>
@@ -405,7 +473,7 @@
             
             <p class="text-[11px] text-notion-textMuted">Quick thoughts, formulas, or reminders auto-saved locally.</p>
 
-            <textarea id="scratchpad-textarea" oninput="saveScratchpad()" placeholder="Write thoughts, lecture notes, or quick reminders..." class="w-full flex-grow min-h-[160px] bg-notion-bg border border-notion-border rounded-lg p-3 text-xs text-notion-textPrimary focus:outline-none focus:border-zinc-400 font-mono leading-relaxed resize-none"></textarea>
+            <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Write thoughts, lecture notes, or quick reminders..." class="w-full flex-grow min-h-[160px] bg-notion-bg border border-notion-border rounded-lg p-3 text-xs text-notion-textPrimary focus:outline-none focus:border-zinc-400 font-mono leading-relaxed resize-none"></textarea>
           </div>
         </div>
 
@@ -413,34 +481,34 @@
     </div>
   </main>
 
+  <!-- MOBILE FLOATING NAVIGATION PILL -->
   <div class="md:hidden fixed bottom-4 inset-x-0 z-40 flex justify-center w-full px-4 pointer-events-none">
     <footer class="samsung-floating-pill rounded-full px-6 py-2.5 w-full max-w-xs pointer-events-auto shadow-2xl">
       <div class="flex items-center justify-around">
-        <button onclick="switchTab('gym')" id="mob-btn-gym" class="mob-nav-btn flex flex-col items-center gap-1 text-white transition-all transform active:scale-95">
+        <button onclick="window.switchTab('gym')" id="mob-btn-gym" class="mob-nav-btn flex flex-col items-center gap-1 text-white transition-all transform active:scale-95">
           <i class="fa-solid fa-dumbbell text-base"></i>
           <span class="text-[9px] font-bold tracking-wider uppercase">Gym</span>
         </button>
-        <button onclick="switchTab('student')" id="mob-btn-student" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
+        <button onclick="window.switchTab('student')" id="mob-btn-student" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
           <i class="fa-solid fa-graduation-cap text-base"></i>
           <span class="text-[9px] font-bold tracking-wider uppercase">School</span>
         </button>
-        <button onclick="switchTab('info')" id="mob-btn-info" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
-          <i class="fa-solid fa-compass text-base"></i>
-          <span class="text-[9px] font-bold tracking-wider uppercase">Info</span>
+        <button onclick="window.switchTab('info')" id="mob-btn-info" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
+          <i class="fa-solid fa-quote-right text-base"></i>
+          <span class="text-[9px] font-bold tracking-wider uppercase">Quotes</span>
         </button>
       </div>
     </footer>
   </div>
 
-
-  <!-- MODAL 1: SETTINGS & GEMINI API KEY -->
+  <!-- MODALS SECTION -->
   <div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
     <div class="notion-card rounded-xl max-w-lg w-full p-4 sm:p-5 space-y-4 bg-notion-card max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-notion-border pb-3">
         <h3 class="text-sm font-bold flex items-center gap-2">
-          <i class="fa-solid fa-sliders accent-text"></i> Settings & AI Configuration
+          <i class="fa-solid fa-sliders accent-text"></i> Settings & Configuration
         </h3>
-        <button onclick="closeModal('settingsModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('settingsModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <!-- Gemini API Key Input Card -->
@@ -454,68 +522,30 @@
           </span>
         </div>
         <p class="text-[11px] text-notion-textMuted leading-normal">
-          Add your Google API key to enable instant AI exercise classification. The key is saved strictly in your browser's local storage and is never sent to any server other than Google's API.
+          Add your Google API key to enable instant exercise muscle classification, quote generation, and auto-sorting YouTube channels into topics!
         </p>
         <div class="flex gap-2">
           <input type="password" id="gemini-key-input" placeholder="AIzaSy..." class="w-full bg-notion-sidebar border border-notion-border rounded-lg p-2 text-xs font-mono text-notion-textPrimary focus:outline-none focus:border-purple-500" />
-          <button onclick="saveGeminiApiKey()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0">
+          <button onclick="window.saveGeminiApiKey()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 shadow-sm transition-all">
             Save Key
           </button>
         </div>
       </div>
 
-      <!-- Accent Theme Color Chooser -->
-      <div class="space-y-2 pt-1">
-        <label class="text-xs font-bold text-notion-textPrimary block">Global Accent Theme</label>
-        <div class="grid grid-cols-5 gap-2">
-          <button onclick="setGlobalTheme('gray')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-zinc-400 flex flex-col items-center gap-1 text-[10px] font-semibold">
-            <span class="w-3.5 h-3.5 rounded-full bg-zinc-300"></span> Gray
-          </button>
-          <button onclick="setGlobalTheme('blue')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-blue-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
-            <span class="w-3.5 h-3.5 rounded-full bg-blue-500"></span> Blue
-          </button>
-          <button onclick="setGlobalTheme('emerald')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-emerald-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
-            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span> Emerald
-          </button>
-          <button onclick="setGlobalTheme('purple')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-purple-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
-            <span class="w-3.5 h-3.5 rounded-full bg-purple-500"></span> Purple
-          </button>
-          <button onclick="setGlobalTheme('amber')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-amber-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
-            <span class="w-3.5 h-3.5 rounded-full bg-amber-500"></span> Amber
-          </button>
-        </div>
-      </div>
-
-      <!-- Anti-Cache & Code Sync Utilities -->
-      <div class="pt-3 border-t border-notion-border space-y-2">
-        <label class="text-xs font-bold text-notion-textPrimary block">Cross-Device Code Export & Refresh</label>
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="hardRefreshPage()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 p-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-rotate-right text-notion-amber"></i> Hard Refresh
-          </button>
-          <button onclick="exportUpdatedHTMLCode()" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 p-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-file-code text-emerald-400"></i> Export HTML File
-          </button>
-        </div>
-        <p class="text-[10px] text-notion-textMuted">
-          <strong>Export HTML File</strong> bakes your current API keys, YouTube creators, gym blocks, and notes directly into the source code as new defaults, making it easy to sync cross-device.
-        </p>
-      </div>
-
       <div class="flex justify-end pt-3 border-t border-notion-border">
-        <button onclick="closeModal('settingsModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg">Done</button>
+        <button onclick="window.closeModal('settingsModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg">Done</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL 3: ADD ASSIGNMENT -->
+  <!-- MODAL: ADD ASSIGNMENT -->
   <div id="addAssignmentModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
     <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-zinc-100">+ Add New Assignment</h3>
-        <button onclick="closeModal('addAssignmentModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('addAssignmentModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleAddAssignment(event)" class="space-y-3 text-xs">
+      <form onsubmit="window.handleAddAssignment(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Assignment Title</label>
           <input type="text" id="asgn-title-input" required placeholder="e.g. Problem Set #4 or Lab Report" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400" />
@@ -553,33 +583,33 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="closeModal('addAssignmentModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="button" onclick="window.closeModal('addAssignmentModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
           <button type="submit" class="px-4 py-1.5 rounded-lg bg-zinc-200 text-zinc-950 font-bold hover:bg-white">Save Assignment</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 4: ADD EXERCISE BLOCK -->
+  <!-- MODAL: ADD EXERCISE BLOCK -->
   <div id="addBlockModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
     <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-notion-amber">+ Add Exercise Block</h3>
-        <button onclick="closeModal('addBlockModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('addBlockModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleAddExerciseBlock(event)" class="space-y-3 text-xs">
+      <form onsubmit="window.handleAddExerciseBlock(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Primary Exercise Name</label>
           <input type="text" id="block-primary-input" required placeholder="e.g. Incline Dumbbell Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber mb-2" />
           
-          <button type="button" onclick="aiAutoDetectExercise()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold py-2 rounded-lg border border-zinc-700 transition-colors shadow-sm">
-            Detect Muscle Group
+          <button type="button" onclick="window.aiAutoDetectExercise()" id="btn-detect-muscle" class="w-full bg-zinc-800 hover:bg-zinc-700 text-purple-300 text-xs font-semibold py-2 rounded-lg border border-zinc-700 transition-colors shadow-sm flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Detect Muscle Group
           </button>
         </div>
 
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Target Muscle / Muscle Head</label>
-          <input type="text" id="block-target-input" required placeholder="e.g. Upper Chest (Clavicular Head)" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber" />
+          <input type="text" id="block-target-input" required placeholder="e.g. Upper Chest" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber" />
         </div>
 
         <div>
@@ -598,21 +628,21 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="closeModal('addBlockModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="button" onclick="window.closeModal('addBlockModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
           <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-amber text-black font-bold hover:bg-yellow-500">Save Block</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 5: LOG SET / PB -->
+  <!-- MODAL: LOG SET / PB -->
   <div id="logSetModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
     <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-notion-emerald"><i class="fa-solid fa-trophy"></i> Log Set / Personal Best</h3>
-        <button onclick="closeModal('logSetModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('logSetModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleLogSet(event)" class="space-y-3 text-xs">
+      <form onsubmit="window.handleLogSet(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Exercise Name</label>
           <input type="text" id="log-exercise-name" required placeholder="e.g. Barbell Bench Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
@@ -628,40 +658,43 @@
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="closeModal('logSetModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="button" onclick="window.closeModal('logSetModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
           <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-emerald text-black font-bold hover:bg-emerald-400">Log PR</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 6: ADD YOUTUBE CHANNEL -->
+  <!-- MODAL: ADD YOUTUBE CHANNEL -->
   <div id="addYtChannelModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
     <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
           <i class="fa-brands fa-youtube text-rose-500"></i> Add Creator to Feed
         </h3>
-        <button onclick="closeModal('addYtChannelModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('addYtChannelModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleAddChannel(event)" class="space-y-3 text-xs">
+      <form onsubmit="window.handleAddChannel(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">YouTube Handle</label>
           <input type="text" id="yt-handle-input" required placeholder="e.g. @JeffNippard" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500 font-mono" />
-          <p class="text-[10px] text-notion-textMuted mt-1">Profile picture will be fetched automatically.</p>
         </div>
-        <div>
-          <label class="block text-notion-textMuted mb-1 font-medium">Category</label>
+        <div id="yt-category-container">
+          <label class="block text-notion-textMuted mb-1 font-medium flex justify-between">
+            <span>Category</span>
+            <span class="text-[9px] text-purple-400 hidden" id="yt-ai-note"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Sort enabled</span>
+          </label>
           <select id="yt-category-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500">
             <option value="Fitness">Fitness</option>
             <option value="Academics">Academics</option>
             <option value="Tech">Tech</option>
             <option value="Mindset">Mindset</option>
+            <option value="Misc">Misc</option>
           </select>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="closeModal('addYtChannelModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold">Add Channel</button>
+          <button type="button" onclick="window.closeModal('addYtChannelModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" id="btn-add-yt" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all">Add Channel</button>
         </div>
       </form>
     </div>
@@ -672,25 +705,32 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'lifeos-default';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    // --- State Initialization & Globals ---
+    window.appState = {
+      gymBlocks: [
+        { id: 'b1', split: 'chest', target: 'Upper Chest', current: 'Incline Dumbbell Press', locked: false, alternatives: ['Incline Smith Machine Press', 'Low-to-High Cable Fly'] },
+        { id: 'b2', split: 'chest', target: 'Mid/Lower Pecs', current: 'Flat Barbell Bench Press', locked: true, alternatives: ['Weighted Dips', 'Machine Chest Press'] }
+      ],
+      tasks: [],
+      pbLogs: [],
+      ytChannels: [
+        { id: 'y1', handle: '@JeffNippard', category: 'Fitness' },
+        { id: 'y2', handle: '@Fireship', category: 'Tech' },
+        { id: 'y3', handle: '@AliAbdaal', category: 'Academics' }
+      ],
+      scratchpadText: ""
+    };
     
-    let app, auth, db;
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-    } catch (e) {
-      console.error("Firebase init error (ensure config is provided):", e);
-    }
+    window.currentTab = 'gym';
+    window.currentGymSplit = 'chest';
+    window.currentYtFilter = 'all';
+    window.taskGroupBy = 'date';
+    window.taskSortBy = 'dueAsc';
 
-    let currentUserId = null;
-
-    /* Default Initial Data */
-    const DEFAULT_CLASS_COLORS = {
+    const CLASS_COLORS = {
       "AP Chemistry": "#10B981",          
       "AP Precalculus": "#6366F1",        
       "AP Economics": "#F59E0B",          
@@ -700,649 +740,630 @@
       "Elaboración de Proyectos": "#F97316" 
     };
 
-    const DEFAULT_GYM_BLOCKS = [
-      { id: 'b1', split: 'chest', target: 'Upper Chest (Clavicular)', current: 'Incline Dumbbell Press', locked: false, alternatives: ['Incline Smith Machine Press', 'Low-to-High Cable Fly', 'Incline Barbell Bench'] },
-      { id: 'b2', split: 'chest', target: 'Mid/Lower Pecs', current: 'Flat Barbell Bench Press', locked: true, alternatives: ['Weighted Dips', 'Machine Chest Press', 'Flat Dumbbell Press'] },
-      { id: 'b3', split: 'chest', target: 'Lateral Deltoids', current: 'Cable Lateral Raises', locked: false, alternatives: ['Dumbbell Lateral Raise', 'Egyptian Lateral Raise', 'Machine Lateral Raise'] },
-      { id: 'b4', split: 'back', target: 'Lats (Width)', current: 'Lat Pulldown (Neutral Grip)', locked: false, alternatives: ['Single-Arm Cable Lat Pulldown', 'Meadows Row', 'Weighted Chin-Ups'] },
-      { id: 'b5', split: 'back', target: 'Upper Back / Rhomboids', current: 'Chest-Supported T-Bar Row', locked: true, alternatives: ['Seated Cable Row (Wide)', 'Barbell Bent Over Row', 'Face Pulls'] },
-      { id: 'b6', split: 'arms', target: 'Biceps Long Head', current: 'Incline Dumbbell Curls', locked: false, alternatives: ['Bayesian Cable Curl', 'Behind-the-Back Cable Curl', 'Drag Curl'] },
-      { id: 'b7', split: 'arms', target: 'Triceps Lateral Head', current: 'Tricep Rope Pushdowns', locked: false, alternatives: ['Single-Arm Overhead Extension', 'Skullcrushers', 'EZ Bar Overhead Ext'] },
-      { id: 'b8', split: 'legs', target: 'Quads (Quadriceps)', current: 'Barbell Back Squat', locked: true, alternatives: ['Bulgarian Split Squat', 'Leg Press', 'Hack Squat'] }
-    ];
+    // --- Firebase & Sync Setup ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'leo-lifeos-local';
+    let db, auth, userId, unsubscribeState;
+    let usingCloudSync = false;
 
-    const DEFAULT_ASSIGNMENTS = [
-      { id: 'a1', title: 'Thermochemistry Problem Set #4', course: 'AP Chemistry', type: 'Homework', date: '2026-10-06', completed: false },
-      { id: 'a2', title: 'Trigonometric Identities Quiz', course: 'AP Precalculus', type: 'Quiz', date: '2026-10-07', completed: false },
-      { id: 'a3', title: 'Fiscal Policy Analysis Essay', course: 'AP Economics', type: 'Project', date: '2026-10-09', completed: false },
-      { id: 'a4', title: 'Poema 20 Explicación de Texto', course: 'Spanish Lit', type: 'Homework', date: '2026-10-08', completed: true }
-    ];
-
-    const DEFAULT_PBS = [
-      { id: 'p1', name: 'Barbell Bench Press', weight: '225', reps: '5', date: '2026-09-28' },
-      { id: 'p2', name: 'Barbell Back Squat', weight: '315', reps: '3', date: '2026-09-25' },
-      { id: 'p3', name: 'Incline Dumbbell Press', weight: '85', reps: '8', date: '2026-09-30' }
-    ];
-
-    const DEFAULT_QUOTES = [
-      { text: "The resistance that you physically fight at the gym and the resistance that you fight in life can only build a strong character.", author: "Arnold Schwarzenegger" },
-      { text: "We don't rise to the level of our expectations, we fall to the level of our training.", author: "Archilochus" },
-      { text: "Quality is not an act, it is a habit.", author: "Aristotle" }
-    ];
-
-    const DEFAULT_CHANNELS = [
-      { id: "ch-1", handle: "@JeffNippard", category: "Fitness" },
-      { id: "ch-2", handle: "@HubermanLab", category: "Mindset" },
-      { id: "ch-3", handle: "@mkbhd", category: "Tech" },
-      { id: "ch-4", handle: "@CrashCourse", category: "Academics" }
-    ];
-
-    let currentTheme = 'gray';
-    let geminiApiKey = '';
-    let classColors = DEFAULT_CLASS_COLORS;
-    let gymBlocks = DEFAULT_GYM_BLOCKS;
-    let assignments = DEFAULT_ASSIGNMENTS;
-    let pbRecords = DEFAULT_PBS;
-    let quotesList = DEFAULT_QUOTES;
-    let ytChannels = DEFAULT_CHANNELS;
-    let scratchpadData = "";
-
-    let currentSplit = 'chest';
-    let assignmentGrouping = 'date';
-    let assignmentSorting = 'dueAsc';
-    let currentQuoteIdx = 0;
-    let activeYtFilter = 'all';
-
-    /* Cloud Sync Engine */
-    async function initAuthAndData() {
-      if (!auth) return;
+    async function initStorage() {
       try {
-        if (typeof __initial_auth_token !== 'undefined') {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+        if (typeof __firebase_config !== 'undefined') {
+          const fbConfig = JSON.parse(__firebase_config);
+          const app = initializeApp(fbConfig);
+          auth = getAuth(app);
+          db = getFirestore(app);
+          
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+              await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+              await signInAnonymously(auth);
+          }
+
+          userId = auth.currentUser?.uid;
+          if (userId) {
+            usingCloudSync = true;
+            document.getElementById('sync-status-dot').className = "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#141414] rounded-full animate-pulse";
+            document.getElementById('sync-badge-text').innerText = "Synced";
+            document.getElementById('sync-badge-text').className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono hidden sm:inline-block";
+            
+            // Listen to unified state
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'appData', 'state');
+            unsubscribeState = onSnapshot(docRef, (docSnap) => {
+              if (docSnap.exists()) {
+                window.appState = { ...window.appState, ...docSnap.data() };
+                renderAll();
+              } else {
+                saveToCloud(); // Save defaults if empty
+              }
+            }, (error) => console.error("Sync error:", error));
+            return;
+          }
         }
-        currentUserId = auth.currentUser?.uid;
-        
-        if (currentUserId) {
-          showToast("Connected to Cloud Storage");
-          setupFirestore();
-        }
+      } catch (err) {
+        console.warn("Cloud sync disabled. Using local storage.", err);
+      }
+      
+      // Local Storage Fallback
+      const localState = localStorage.getItem('lifeOsState');
+      if (localState) {
+        window.appState = { ...window.appState, ...JSON.parse(localState) };
+      }
+      renderAll();
+    }
+
+    window.saveState = function() {
+      if (usingCloudSync && userId) {
+        saveToCloud();
+      } else {
+        localStorage.setItem('lifeOsState', JSON.stringify(window.appState));
+      }
+    }
+
+    async function saveToCloud() {
+      if (!userId || !db) return;
+      try {
+        await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'appData', 'state'), window.appState);
       } catch (e) {
-        console.error("Auth error", e);
-        showToast("Offline Mode (Auth Failed)");
-        renderAll();
+        console.error("Cloud save failed", e);
       }
     }
 
-    function setupFirestore() {
-      if (!currentUserId) return;
-      const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'appData', 'state');
-      
-      onSnapshot(docRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          if (data.gymBlocks) gymBlocks = data.gymBlocks;
-          if (data.assignments) assignments = data.assignments;
-          if (data.pbRecords) pbRecords = data.pbRecords;
-          if (data.ytChannels) ytChannels = data.ytChannels;
-          
-          if (data.theme) {
-            currentTheme = data.theme;
-          }
-          if (data.geminiApiKey !== undefined) geminiApiKey = data.geminiApiKey;
-          
-          if (data.scratchpad !== undefined) {
-             scratchpadData = data.scratchpad;
-             const textarea = document.getElementById('scratchpad-textarea');
-             // Only update if not actively typing to avoid cursor jumps
-             if (textarea && document.activeElement !== textarea) {
-               textarea.value = scratchpadData;
-             } else if (textarea && textarea.value === "") {
-               textarea.value = scratchpadData;
-             }
-          }
-          renderAll();
-        } else {
-          // No document yet, save defaults to cloud
-          syncToCloud();
-          renderAll();
-        }
-      }, (error) => {
-        console.error("Sync error:", error);
-        showToast("Error syncing with cloud.");
-      });
-    }
-
-    function syncToCloud() {
-      if (!currentUserId || !db) return;
-      const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'appData', 'state');
-      const scratch = document.getElementById('scratchpad-textarea')?.value || '';
-      
-      setDoc(docRef, {
-        gymBlocks,
-        assignments,
-        pbRecords,
-        ytChannels,
-        theme: currentTheme,
-        geminiApiKey,
-        scratchpad: scratch
-      }).catch(e => console.error("Cloud save error", e));
-    }
-
-    function renderAll() {
-      applyTheme(currentTheme);
-      updateApiKeyBadge();
-      renderGymBlocks();
-      renderPbRecords();
-      renderAssignments();
-      renderChannels();
-      renderQuoteDisplay();
-    }
-
-    window.switchTab = function(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      const targetTab = document.getElementById(`tab-${tabId}`);
-      if (targetTab) targetTab.classList.add('active');
-
-      document.querySelectorAll('.tab-nav-btn').forEach(btn => {
-        btn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50";
-      });
-      const activeDeskBtn = document.getElementById(`nav-btn-${tabId}`);
-      if (activeDeskBtn) activeDeskBtn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2";
-
-      document.querySelectorAll('.mob-nav-btn').forEach(btn => {
-        btn.classList.remove('text-white');
-        btn.classList.add('text-notion-textMuted');
-      });
-      const activeMobBtn = document.getElementById(`mob-btn-${tabId}`);
-      if (activeMobBtn) {
-        activeMobBtn.classList.remove('text-notion-textMuted');
-        activeMobBtn.classList.add('text-white');
+    // --- STREAMING_CHUNK:Setting up Gemini API Helpers... ---
+    
+    // Check key on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem('geminiApiKey');
+      if (savedKey) {
+        document.getElementById('gemini-key-input').value = savedKey;
+        updateApiUIStatus(true);
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.openModal = function(id) {
-      const modal = document.getElementById(id);
-      if (modal) modal.classList.remove('hidden');
-    };
-
-    window.closeModal = function(id) {
-      const modal = document.getElementById(id);
-      if (modal) modal.classList.add('hidden');
-    };
-
-    window.setGlobalTheme = function(theme) {
-      currentTheme = theme;
-      applyTheme(theme);
-      syncToCloud();
-      showToast(`Accent theme updated to ${theme.toUpperCase()}`);
-    };
-
-    function applyTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
+    });
 
     window.saveGeminiApiKey = function() {
-      const val = document.getElementById('gemini-key-input').value.trim();
-      geminiApiKey = val;
-      syncToCloud();
-      updateApiKeyBadge();
-      showToast("Google Gemini API Key Saved to Cloud");
-    };
+      const key = document.getElementById('gemini-key-input').value.trim();
+      if (key) {
+        localStorage.setItem('geminiApiKey', key);
+        updateApiUIStatus(true);
+        window.showToast("Gemini API Key Saved!", "success");
+        window.closeModal('settingsModal');
+      } else {
+        localStorage.removeItem('geminiApiKey');
+        updateApiUIStatus(false);
+        window.showToast("API Key Removed", "info");
+      }
+    }
 
-    function updateApiKeyBadge() {
+    function updateApiUIStatus(hasKey) {
       const badge = document.getElementById('api-key-status-badge');
-      const input = document.getElementById('gemini-key-input');
-      if (input) input.value = geminiApiKey;
-
-      if (geminiApiKey) {
-        badge.innerText = "Key Active";
-        badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-950 text-emerald-400 border border-emerald-800";
+      const indicator = document.getElementById('api-indicator');
+      const ytAiNote = document.getElementById('yt-ai-note');
+      
+      if (hasKey) {
+        badge.innerText = "Active";
+        badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-900 text-purple-200";
+        indicator.classList.remove('hidden');
+        if (ytAiNote) ytAiNote.classList.remove('hidden');
       } else {
         badge.innerText = "Not Set";
         badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-zinc-800 text-zinc-400";
+        indicator.classList.add('hidden');
+        if (ytAiNote) ytAiNote.classList.add('hidden');
       }
     }
 
-    window.aiAutoDetectExercise = async function() {
-      const exName = document.getElementById('block-primary-input').value.trim();
-      if (!exName) {
-        showToast("Enter an exercise name first");
-        return;
-      }
-      showToast("Analyzing movement pattern...");
+    async function askGemini(prompt, systemInstruction = null) {
+      const apiKey = localStorage.getItem('geminiApiKey');
+      if (!apiKey) throw new Error("API_KEY_MISSING");
       
-      const apiKeyToUse = geminiApiKey || "";
-      const prompt = `Analyze the gym workout exercise: "${exName}". Return JSON ONLY with:
-      {
-        "target": "<Short primary muscle target and head, e.g. Upper Chest>",
-        "split": "<Must be exactly one of: chest, back, arms, legs>",
-        "alternatives": "<2 comma separated alternative exercises>"
-      }`;
-
-      try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKeyToUse}`;
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-          })
-        });
-
-        const data = await res.json();
-        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        
-        if (jsonText) {
-          const parsed = JSON.parse(jsonText);
-          if (parsed.target) document.getElementById('block-target-input').value = parsed.target;
-          if (parsed.split) document.getElementById('block-split-input').value = parsed.split;
-          if (parsed.alternatives) document.getElementById('block-alternatives-input').value = parsed.alternatives;
-          showToast("Detection complete");
-        } else {
-          fallbackDetect(exName);
-        }
-      } catch (e) {
-        console.warn("AI Auto-detect fallback", e);
-        fallbackDetect(exName);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const payload = {
+          contents: [{ parts: [{ text: prompt }] }]
+      };
+      if (systemInstruction) {
+          payload.systemInstruction = { parts: [{ text: systemInstruction }] };
       }
-    };
-
-    function fallbackDetect(exName) {
-      const lower = exName.toLowerCase();
-      if (lower.includes("chest") || lower.includes("bench") || lower.includes("fly") || lower.includes("press")) {
-        document.getElementById('block-target-input').value = "Chest / Pecs";
-        document.getElementById('block-split-input').value = "chest";
-      } else if (lower.includes("squat") || lower.includes("leg") || lower.includes("calf") || lower.includes("deadlift")) {
-        document.getElementById('block-target-input').value = "Quads / Leg Compound";
-        document.getElementById('block-split-input').value = "legs";
-      } else {
-        document.getElementById('block-target-input').value = "Target Muscle Head";
-      }
-      showToast("Auto-filled estimated details");
-    }
-
-    window.setGymSplit = function(split) {
-      currentSplit = split;
-      document.querySelectorAll('.split-btn').forEach(btn => {
-        btn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap";
-      });
-      const activeBtn = document.getElementById(`split-btn-${split}`);
-      if (activeBtn) activeBtn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200";
-      renderGymBlocks();
-    };
-
-    window.toggleBlockLock = function(blockId) {
-      const b = gymBlocks.find(x => x.id === blockId);
-      if (b) {
-        b.locked = !b.locked;
-        syncToCloud();
-        renderGymBlocks();
-        showToast(b.locked ? "Block Locked in Position" : "Block Unlocked for Shuffling");
-      }
-    };
-
-    window.shuffleUnlockedBlocks = function() {
-      let shuffled = 0;
-      gymBlocks.forEach(b => {
-        if (b.split === currentSplit && !b.locked && b.alternatives && b.alternatives.length > 0) {
-          const options = [b.current, ...b.alternatives];
-          const next = options[Math.floor(Math.random() * options.length)];
-          if (next !== b.current) {
-            b.current = next;
-            shuffled++;
-          }
-        }
-      });
-      syncToCloud();
-      renderGymBlocks();
-      showToast(shuffled > 0 ? `Shuffled ${shuffled} exercise movements` : "No unlocked blocks to shuffle");
-    };
-
-    window.handleAddExerciseBlock = function(e) {
-      e.preventDefault();
-      const target = document.getElementById('block-target-input').value.trim();
-      const split = document.getElementById('block-split-input').value;
-      const primary = document.getElementById('block-primary-input').value.trim();
-      const altsRaw = document.getElementById('block-alternatives-input').value.trim();
-      const alts = altsRaw ? altsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-      gymBlocks.push({ id: 'b_' + Date.now(), split, target, current: primary, locked: false, alternatives: alts });
-      syncToCloud();
-      window.closeModal('addBlockModal');
-      e.target.reset();
-      renderGymBlocks();
-      showToast("New Movement Block Added");
-    };
-
-    window.handleLogSet = function(e) {
-      e.preventDefault();
-      const name = document.getElementById('log-exercise-name').value.trim();
-      const weight = document.getElementById('log-weight-input').value;
-      const reps = document.getElementById('log-reps-input').value;
-
-      pbRecords.unshift({ id: 'p_' + Date.now(), name, weight, reps, date: new Date().toISOString().split('T')[0] });
-      syncToCloud();
-      window.closeModal('logSetModal');
-      e.target.reset();
-      renderPbRecords();
-      showToast("Personal Best Logged!");
-    };
-
-    function renderGymBlocks() {
-      const container = document.getElementById('exercise-blocks-container');
-      if (!container) return;
-      const filtered = gymBlocks.filter(b => b.split === currentSplit);
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 text-notion-textMuted text-xs">No exercise blocks configured for this split. Click "+ Add Movement Block" to create one.</div>`;
-        return;
-      }
-      container.innerHTML = filtered.map(b => `
-        <div class="notion-card rounded-xl p-3.5 space-y-3 flex flex-col justify-between relative group">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-1.5">
-              <span class="text-[10px] font-bold uppercase font-mono px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 truncate">
-                ${escapeHtml(b.target)}
-              </span>
-              <button onclick="toggleBlockLock('${b.id}')" class="lock-btn p-1.5 rounded-md border border-zinc-700/60 ${b.locked ? 'locked' : 'text-notion-textMuted hover:text-white'}" title="${b.locked ? 'Locked' : 'Unlocked'}">
-                <i class="fa-solid ${b.locked ? 'fa-lock text-notion-amber' : 'fa-lock-open'} text-xs"></i>
-              </button>
-            </div>
-            <h4 class="text-xs sm:text-sm font-bold text-zinc-100 leading-snug line-clamp-2">${escapeHtml(b.current)}</h4>
-          </div>
-          <div class="pt-2 border-t border-notion-border/60">
-            <span class="text-[10px] text-notion-textMuted font-medium block mb-1">Rotation Pool:</span>
-            <div class="flex flex-wrap gap-1">
-              ${b.alternatives ? b.alternatives.map(alt => `
-                <span class="text-[9px] px-1.5 py-0.5 rounded bg-notion-bg border border-notion-border text-notion-textMuted truncate max-w-[120px]">${escapeHtml(alt)}</span>
-              `).join('') : ''}
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderPbRecords() {
-      const container = document.getElementById('pb-records-container');
-      if (!container) return;
-      if (pbRecords.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-xs text-notion-textMuted">No benchmark PRs logged yet.</div>`;
-        return;
-      }
-      container.innerHTML = pbRecords.map(r => `
-        <div class="notion-card rounded-xl p-3 flex items-center justify-between">
-          <div class="min-w-0 pr-2">
-            <h5 class="text-xs font-bold text-zinc-200 truncate">${escapeHtml(r.name)}</h5>
-            <span class="text-[10px] text-notion-textMuted font-mono block">${r.date}</span>
-          </div>
-          <div class="text-right shrink-0">
-            <span class="text-xs font-extrabold text-notion-emerald block">${r.weight} lbs</span>
-            <span class="text-[10px] text-notion-textMuted font-semibold">${r.reps} reps</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    window.setAssignmentGrouping = function(group) {
-      assignmentGrouping = group;
-      document.querySelectorAll('.group-btn').forEach(btn => {
-        btn.className = "group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white";
-      });
-      const active = document.getElementById(`group-btn-${group}`);
-      if (active) active.className = "group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700";
-      renderAssignments();
-    };
-
-    window.setAssignmentSorting = function(sort) {
-      assignmentSorting = sort;
-      document.querySelectorAll('.sort-btn').forEach(btn => {
-        btn.className = "sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white";
-      });
-      const active = document.getElementById(`sort-btn-${sort}`);
-      if (active) active.className = "sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700";
-      renderAssignments();
-    };
-
-    window.toggleAssignmentComplete = function(id) {
-      const a = assignments.find(x => x.id === id);
-      if (a) {
-        a.completed = !a.completed;
-        syncToCloud();
-        renderAssignments();
-        showToast(a.completed ? "Task Completed" : "Task Reopened");
-      }
-    };
-
-    window.handleAddAssignment = function(e) {
-      e.preventDefault();
-      const title = document.getElementById('asgn-title-input').value.trim();
-      const course = document.getElementById('asgn-course-input').value;
-      const type = document.getElementById('asgn-type-input').value;
-      const date = document.getElementById('asgn-date-input').value;
-
-      assignments.push({ id: 'a_' + Date.now(), title, course, type, date, completed: false });
-      syncToCloud();
-      window.closeModal('addAssignmentModal');
-      e.target.reset();
-      renderAssignments();
-      showToast("Assignment Created");
-    };
-
-    function renderAssignments() {
-      const container = document.getElementById('assignments-container');
-      if (!container) return;
-      let list = [...assignments];
-      list.sort((a, b) => {
-        if (assignmentSorting === 'dueAsc') return new Date(a.date) - new Date(b.date);
-        return new Date(b.date) - new Date(a.date);
-      });
-
-      if (list.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-notion-textMuted text-xs">No assignments found. Add one above!</div>`;
-        return;
-      }
-
-      if (assignmentGrouping === 'none') {
-        container.innerHTML = `<div class="space-y-2">${list.map(renderAssignmentItem).join('')}</div>`;
-        return;
-      }
-
-      const groups = {};
-      list.forEach(item => {
-        let key = item.date;
-        if (assignmentGrouping === 'course') key = item.course;
-        if (assignmentGrouping === 'type') key = item.type;
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(item);
-      });
-
-      container.innerHTML = Object.keys(groups).map(groupKey => `
-        <div class="space-y-2">
-          <div class="flex items-center gap-2 border-b border-notion-border pb-1">
-            <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">${escapeHtml(groupKey)}</span>
-            <span class="text-[10px] text-notion-textMuted bg-zinc-800 px-1.5 py-0.5 rounded-full font-bold">${groups[groupKey].length}</span>
-          </div>
-          <div class="space-y-2">
-            ${groups[groupKey].map(renderAssignmentItem).join('')}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderAssignmentItem(item) {
-      const color = classColors[item.course] || '#8B5CF6';
-      return `
-        <div class="notion-card rounded-xl p-3 flex items-center justify-between gap-3 ${item.completed ? 'opacity-50' : ''}">
-          <div class="flex items-center gap-3 min-w-0">
-            <button onclick="toggleAssignmentComplete('${item.id}')" class="w-5 h-5 rounded border border-zinc-600 flex items-center justify-center shrink-0 ${item.completed ? 'bg-emerald-500 border-emerald-500 text-black' : 'hover:border-zinc-400'}">
-              ${item.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
-            </button>
-            <div class="min-w-0">
-              <h4 class="text-xs sm:text-sm font-semibold text-zinc-100 ${item.completed ? 'line-through text-notion-textMuted' : ''} truncate">${escapeHtml(item.title)}</h4>
-              <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded text-white truncate" style="background-color: ${color}">${escapeHtml(item.course)}</span>
-                <span class="text-[10px] text-notion-textMuted font-mono">Due: ${item.date}</span>
-              </div>
-            </div>
-          </div>
-          <span class="text-[10px] px-2 py-0.5 rounded border border-notion-border text-notion-textMuted shrink-0 font-medium hidden xs:inline-block">${escapeHtml(item.type)}</span>
-        </div>
-      `;
-    }
-
-    window.filterYtChannels = function(cat) {
-      activeYtFilter = cat;
-      document.querySelectorAll('.yt-filter-btn').forEach(b => {
-        b.className = "yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap";
-      });
-      const active = document.getElementById(`yt-filter-${cat}`);
-      if (active) active.className = "yt-filter-btn px-2.5 py-1 rounded-md bg-rose-600 text-white font-semibold whitespace-nowrap";
-      renderChannels();
-    };
-
-    window.handleAddChannel = function(e) {
-      e.preventDefault();
-      const handle = document.getElementById('yt-handle-input').value.trim();
-      const category = document.getElementById('yt-category-input').value;
-
-      ytChannels.push({ id: 'ch_' + Date.now(), handle, category });
-      syncToCloud();
-      window.closeModal('addYtChannelModal');
-      e.target.reset();
-      renderChannels();
-      showToast("Creator Added to Feed!");
-    };
-
-    function renderChannels() {
-      const container = document.getElementById('yt-channels-container');
-      if (!container) return;
-      const filtered = activeYtFilter === 'all' ? ytChannels : ytChannels.filter(c => c.category === activeYtFilter);
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-6 text-notion-textMuted text-xs">No channels found for this tag.</div>`;
-        return;
-      }
-      container.innerHTML = filtered.map(c => {
-        const cleanHandle = c.handle.startsWith('@') ? c.handle.substring(1) : c.handle;
-        const displayHandle = c.handle.startsWith('@') ? c.handle : `@${c.handle}`;
-        const avatarUrl = `https://unavatar.io/youtube/${cleanHandle}`;
-        const fallbackUrl = `https://ui-avatars.com/api/?name=${cleanHandle}&background=random&color=fff`;
-
-        return `
-          <a href="https://youtube.com/${displayHandle}" target="_blank" class="notion-card rounded-xl p-4 flex flex-col items-center gap-2.5 hover:bg-zinc-800 transition-colors group">
-            <div class="relative">
-              <img src="${avatarUrl}" alt="${displayHandle}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-notion-border object-cover group-hover:border-rose-500 transition-colors shadow-lg" onerror="this.src='${fallbackUrl}'" />
-              <div class="absolute bottom-0 right-0 bg-rose-600 text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center border border-zinc-900">
-                <i class="fa-brands fa-youtube"></i>
-              </div>
-            </div>
-            <div class="text-center w-full min-w-0">
-              <h5 class="text-xs font-bold text-zinc-100 truncate">${displayHandle}</h5>
-              <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 border border-zinc-700 text-notion-textMuted">${escapeHtml(c.category)}</span>
-            </div>
-          </a>
-        `;
-      }).join('');
-    }
-
-    function renderQuoteDisplay() {
-      const q = quotesList[currentQuoteIdx] || quotesList[0];
-      if (q) {
-        const qt = document.getElementById('quote-display-text');
-        const qa = document.getElementById('quote-display-author');
-        const qc = document.getElementById('quote-counter');
-        if(qt) qt.innerText = `"${q.text}"`;
-        if(qa) qa.innerText = `— ${q.author}`;
-        if(qc) qc.innerText = `${currentQuoteIdx + 1}/${quotesList.length}`;
-      }
-    }
-
-    window.cycleBannerQuote = function() {
-      currentQuoteIdx = (currentQuoteIdx + 1) % quotesList.length;
-      const q = quotesList[currentQuoteIdx];
-      const bt = document.getElementById('banner-quote-text');
-      const ba = document.getElementById('banner-quote-author');
-      if(bt) bt.innerText = `"${q.text}"`;
-      if(ba) ba.innerText = `— ${q.author}`;
-    };
-
-    window.prevQuote = function() {
-      currentQuoteIdx = (currentQuoteIdx - 1 + quotesList.length) % quotesList.length;
-      renderQuoteDisplay();
-    };
-
-    window.nextQuote = function() {
-      currentQuoteIdx = (currentQuoteIdx + 1) % quotesList.length;
-      renderQuoteDisplay();
-    };
-
-    // Debounced Scratchpad Cloud Save
-    let scratchpadTimeout;
-    window.saveScratchpad = function() {
-      const status = document.getElementById('scratch-save-status');
-      if (status) status.innerText = "Syncing...";
       
-      clearTimeout(scratchpadTimeout);
-      scratchpadTimeout = setTimeout(() => {
-        syncToCloud();
-        if (status) status.innerText = "Cloud saved";
-      }, 1200); // Wait 1.2s after typing stops before hitting database
-    };
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error("API_REQUEST_FAILED");
+      
+      const data = await res.json();
+      if (data.candidates && data.candidates[0].content) {
+         return data.candidates[0].content.parts[0].text.trim();
+      }
+      throw new Error("UNEXPECTED_RESPONSE");
+    }
 
-    window.hardRefreshPage = function() {
-      showToast("Forcing hard refresh...");
-      setTimeout(() => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('v', Date.now().toString());
-        window.location.href = url.toString();
-      }, 400);
-    };
 
-    window.exportUpdatedHTMLCode = function() {
-      showToast("NOTE: Data is now auto-synced to Cloud Storage!");
-      setTimeout(() => {
-        showToast("Generating local backup HTML file...");
-        let htmlContent = document.documentElement.outerHTML;
-        
-        // Remove standard inject tags in backup for clean export
-        const blob = new Blob(["<!DOCTYPE html>\n<html lang=\"en\" class=\"dark\">\n" + htmlContent + "\n</html>"], { type: 'text/html' });
-        const downloadUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = 'Leo_LifeOS_Backup.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(downloadUrl);
-      }, 1500);
-    };
+    // --- STREAMING_CHUNK:Implementing UI & Core Logic... ---
 
-    window.showToast = function(msg) {
+    window.switchTab = function(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      
+      // Update desktop nav
+      document.querySelectorAll('.tab-nav-btn').forEach(el => {
+        el.classList.remove('text-white', 'bg-zinc-800', 'border-zinc-700');
+        el.classList.add('text-notion-textMuted');
+      });
+      const activeDesktop = document.getElementById('nav-btn-' + tabId);
+      if (activeDesktop) {
+        activeDesktop.classList.add('text-white', 'bg-zinc-800', 'border-zinc-700');
+        activeDesktop.classList.remove('text-notion-textMuted');
+      }
+
+      // Update mobile nav
+      document.querySelectorAll('.mob-nav-btn').forEach(el => {
+        el.classList.remove('text-white');
+        el.classList.add('text-notion-textMuted');
+      });
+      const activeMob = document.getElementById('mob-btn-' + tabId);
+      if (activeMob) activeMob.classList.add('text-white');
+      
+      window.currentTab = tabId;
+    }
+
+    window.openModal = function(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    window.closeModal = function(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    window.showToast = function(msg, type="info") {
       const container = document.getElementById('toast-container');
-      if (!container) return;
       const toast = document.createElement('div');
-      toast.className = "bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 animate-enter pointer-events-auto";
-      toast.innerHTML = `<i class="fa-solid fa-circle-check text-notion-emerald"></i> ${msg}`;
+      
+      let icon = '<i class="fa-solid fa-circle-info"></i>';
+      let colorClass = 'bg-zinc-800 border-zinc-700 text-zinc-100';
+      if (type === 'success') { icon = '<i class="fa-solid fa-check-circle"></i>'; colorClass = 'bg-emerald-950 border-emerald-800 text-emerald-300'; }
+      if (type === 'error') { icon = '<i class="fa-solid fa-circle-exclamation"></i>'; colorClass = 'bg-rose-950 border-rose-800 text-rose-300'; }
+
+      toast.className = `flex items-center gap-2 px-4 py-2.5 rounded-lg border shadow-lg text-xs font-semibold animate-enter ${colorClass}`;
+      toast.innerHTML = `${icon} <span>${msg}</span>`;
+      
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s ease';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
-      }, 2500);
-    };
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>"']/g, function(m) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-      });
+      }, 3000);
     }
 
-    // Launch App
-    initAuthAndData();
+    function renderAll() {
+      renderGymBlocks();
+      renderPbLogs();
+      renderTasks();
+      renderYtChannels();
+      document.getElementById('scratchpad-textarea').value = window.appState.scratchpadText || "";
+    }
+
+    // --- GYM LOGIC ---
+    window.setGymSplit = function(split) {
+      window.currentGymSplit = split;
+      document.querySelectorAll('.split-btn').forEach(btn => {
+        btn.classList.replace('bg-zinc-200', 'bg-transparent');
+        btn.classList.replace('text-zinc-950', 'text-notion-textMuted');
+        btn.classList.replace('border-zinc-200', 'border-notion-border');
+      });
+      const activeBtn = document.getElementById('split-btn-' + split);
+      activeBtn.classList.add('bg-zinc-200', 'text-zinc-950', 'border-zinc-200');
+      activeBtn.classList.remove('bg-transparent', 'text-notion-textMuted', 'border-notion-border');
+      renderGymBlocks();
+    }
+
+    window.toggleBlockLock = function(id) {
+      const block = window.appState.gymBlocks.find(b => b.id === id);
+      if (block) {
+        block.locked = !block.locked;
+        window.saveState();
+        renderGymBlocks();
+      }
+    }
+
+    window.shuffleUnlockedBlocks = function() {
+      const icon = document.getElementById('shuffle-icon');
+      icon.classList.add('fa-spin');
+      setTimeout(() => icon.classList.remove('fa-spin'), 500);
+
+      let shuffled = false;
+      window.appState.gymBlocks.filter(b => b.split === window.currentGymSplit && !b.locked).forEach(block => {
+        if (block.alternatives && block.alternatives.length > 0) {
+          const options = [block.current, ...block.alternatives];
+          const randomChoice = options[Math.floor(Math.random() * options.length)];
+          
+          // Re-adjust alternatives array
+          const newAlts = options.filter(opt => opt !== randomChoice);
+          block.current = randomChoice;
+          block.alternatives = newAlts;
+          shuffled = true;
+        }
+      });
+      
+      if (shuffled) {
+        window.saveState();
+        renderGymBlocks();
+        window.showToast("Split variations shuffled!");
+      } else {
+        window.showToast("No alternatives found or all locked.", "error");
+      }
+    }
+
+    function renderGymBlocks() {
+      const container = document.getElementById('exercise-blocks-container');
+      const blocks = window.appState.gymBlocks.filter(b => b.split === window.currentGymSplit);
+      
+      if (blocks.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl">No exercise blocks added for this split.</div>`;
+        return;
+      }
+
+      container.innerHTML = blocks.map(block => `
+        <div class="notion-card rounded-xl p-4 flex flex-col justify-between h-full group ${block.locked ? 'border-notion-amber/30 bg-notion-amber/5' : ''}">
+          <div>
+            <div class="flex items-start justify-between mb-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-notion-textMuted">${block.target}</span>
+              <button onclick="window.toggleBlockLock('${block.id}')" class="lock-btn ${block.locked ? 'locked' : 'text-notion-textMuted hover:text-white'} p-1.5 rounded" title="${block.locked ? 'Unlock' : 'Lock Exercise'}">
+                <i class="fa-solid fa-${block.locked ? 'lock' : 'lock-open'}"></i>
+              </button>
+            </div>
+            <h4 class="text-sm font-bold text-zinc-100 mb-2 leading-tight">${block.current}</h4>
+          </div>
+          <div class="mt-3 pt-3 border-t border-notion-border/50">
+             <div class="text-[10px] text-notion-textMuted mb-1 font-medium">Alternative Options:</div>
+             <div class="flex flex-wrap gap-1">
+               ${block.alternatives.length > 0 ? 
+                 block.alternatives.map(alt => `<span class="px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] text-zinc-300 border border-zinc-700 truncate max-w-full">${alt}</span>`).join('') 
+                 : `<span class="text-[9px] italic opacity-50">None set</span>`
+               }
+             </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- STREAMING_CHUNK:AI YouTube Features... ---
+    // --- YOUTUBE LOGIC ---
+    
+    function extractCategories() {
+      const cats = new Set(window.appState.ytChannels.map(c => c.category));
+      return Array.from(cats);
+    }
+
+    window.filterYtChannels = function(cat) {
+      window.currentYtFilter = cat;
+      renderYtChannels();
+    }
+
+    function renderYtChannels() {
+      // Re-render filters
+      const filterContainer = document.getElementById('yt-filter-container');
+      const cats = extractCategories();
+      let filterHTML = `<button onclick="window.filterYtChannels('all')" class="yt-filter-btn px-2.5 py-1 rounded-md ${window.currentYtFilter === 'all' ? 'bg-rose-600 text-white border-transparent' : 'bg-notion-bg text-notion-textMuted border border-notion-border'} font-semibold whitespace-nowrap transition-all">#All</button>`;
+      
+      cats.forEach(c => {
+        const isActive = window.currentYtFilter === c;
+        filterHTML += `<button onclick="window.filterYtChannels('${c}')" class="yt-filter-btn px-2.5 py-1 rounded-md ${isActive ? 'bg-rose-600 text-white border-transparent' : 'bg-notion-bg text-notion-textMuted border border-notion-border'} font-semibold whitespace-nowrap transition-all">#${c}</button>`;
+      });
+      filterContainer.innerHTML = filterHTML;
+
+      // Render channels
+      const container = document.getElementById('yt-channels-container');
+      let filtered = window.appState.ytChannels;
+      if (window.currentYtFilter !== 'all') {
+        filtered = filtered.filter(c => c.category === window.currentYtFilter);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-4 text-center text-notion-textMuted text-xs">No channels found. Add some!</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(ch => {
+        // Unavatar.io is an open service for social avatars. 
+        // We strip the '@' to ensure the handle formats correctly for YouTube.
+        const cleanHandle = ch.handle.replace('@', '');
+        const avatarUrl = `https://unavatar.io/youtube/${cleanHandle}`;
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${cleanHandle}&background=222&color=fff`;
+
+        return `
+        <div class="bg-notion-bg border border-notion-border rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center group relative overflow-hidden transition-all hover:border-rose-500/50 hover:bg-rose-950/20">
+          <img src="${avatarUrl}" onerror="this.src='${fallbackUrl}'" alt="${ch.handle}" class="w-12 h-12 rounded-full object-cover border-2 border-zinc-800 shadow-lg group-hover:border-rose-500 transition-colors" />
+          <div class="w-full">
+            <h4 class="text-xs font-bold text-zinc-200 truncate w-full" title="${ch.handle}">${ch.handle}</h4>
+            <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 text-notion-textMuted tracking-wide uppercase">${ch.category}</span>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    window.handleAddChannel = async function(e) {
+      e.preventDefault();
+      let handle = document.getElementById('yt-handle-input').value.trim();
+      let category = document.getElementById('yt-category-input').value;
+      
+      if (!handle.startsWith('@')) handle = '@' + handle; // enforce @
+
+      const btn = document.getElementById('btn-add-yt');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+      btn.disabled = true;
+
+      try {
+        const apiKey = localStorage.getItem('geminiApiKey');
+        if (apiKey) {
+           // AI Sorting Active
+           const aiCat = await askGemini(`Analyze the YouTube channel "${handle}". What is its primary topic? Pick ONE category from this list: Fitness, Academics, Tech, Mindset, Finance. If none of those fit well, invent ONE single-word category that fits best. Respond ONLY with the single word category name, nothing else.`);
+           if (aiCat) {
+             category = aiCat.replace(/[^a-zA-Z]/g, ''); // Clean punctuation
+             window.showToast(`AI sorted ${handle} into ${category}`, "success");
+           }
+        } else {
+           window.showToast(`Added manually as ${category}`);
+        }
+
+        const newCh = { id: Date.now().toString(), handle, category };
+        window.appState.ytChannels.push(newCh);
+        window.saveState();
+        renderYtChannels();
+        window.closeModal('addYtChannelModal');
+        e.target.reset();
+
+      } catch (err) {
+        console.error(err);
+        window.showToast("Failed to add channel or AI error.", "error");
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+
+    // --- STREAMING_CHUNK:AI Generated Quotes & Minor Tasks... ---
+    // --- QUOTES LOGIC ---
+    window.cycleInfiniteQuote = async function() {
+      const btn = document.getElementById('main-quote-btn') || document.getElementById('banner-refresh-btn');
+      const icon = btn.querySelector('i');
+      if (icon) icon.classList.add('fa-spin');
+      
+      try {
+        // Try Gemini API first
+        const apiKey = localStorage.getItem('geminiApiKey');
+        if (!apiKey) throw new Error("No API Key");
+
+        const prompt = "Generate a short, profound, and highly unique motivational quote about discipline, focus, or strength. Respond EXACTLY in this format: \"The quote text here\" — Author Name";
+        const result = await askGemini(prompt);
+        
+        // Parse result (e.g. "quote" - author)
+        const parts = result.split('—');
+        if (parts.length >= 2) {
+           const quote = parts[0].trim();
+           const author = "— " + parts[1].trim();
+           document.getElementById('quote-display-text').innerText = quote;
+           document.getElementById('quote-display-author').innerText = author;
+           document.getElementById('banner-quote-text').innerText = quote;
+           document.getElementById('banner-quote-author').innerText = author;
+           window.showToast("Generated new AI Quote!", "success");
+        } else {
+           throw new Error("Parsing failed");
+        }
+
+      } catch (err) {
+        // Fallback to local arrays if API fails or no key
+        const fallbacks = [
+          { q: "We suffer more often in imagination than in reality.", a: "— Seneca" },
+          { q: "He who has a why to live for can bear almost any how.", a: "— Friedrich Nietzsche" },
+          { q: "No man has the right to be an amateur in the matter of physical training.", a: "— Socrates" }
+        ];
+        const random = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        document.getElementById('quote-display-text').innerText = random.q;
+        document.getElementById('quote-display-author').innerText = random.a;
+        document.getElementById('banner-quote-text').innerText = random.q;
+        document.getElementById('banner-quote-author').innerText = random.a;
+        
+        if (err.message === "No API Key") {
+           window.showToast("Using local quotes. Add API Key in Settings for AI quotes.", "info");
+        } else {
+           window.showToast("AI generation failed, using local quote.", "error");
+        }
+      } finally {
+        if (icon) icon.classList.remove('fa-spin');
+      }
+    }
+
+
+    // --- SCRATCHPAD LOGIC ---
+    let scratchpadTimeout;
+    window.saveScratchpad = function() {
+      const status = document.getElementById('scratch-save-status');
+      status.innerText = "Saving...";
+      status.classList.add('text-notion-amber');
+      
+      clearTimeout(scratchpadTimeout);
+      scratchpadTimeout = setTimeout(() => {
+        window.appState.scratchpadText = document.getElementById('scratchpad-textarea').value;
+        window.saveState();
+        status.innerText = "Auto-saved";
+        status.classList.remove('text-notion-amber');
+      }, 1000);
+    }
+
+
+    // --- STUDENT HUB TASKS LOGIC (abbreviated for completeness) ---
+    window.setAssignmentGrouping = function(by) { window.taskGroupBy = by; renderTasks(); }
+    window.setAssignmentSorting = function(sort) { window.taskSortBy = sort; renderTasks(); }
+    
+    window.handleAddAssignment = function(e) {
+      e.preventDefault();
+      const newTask = {
+        id: Date.now().toString(),
+        title: document.getElementById('asgn-title-input').value,
+        course: document.getElementById('asgn-course-input').value,
+        type: document.getElementById('asgn-type-input').value,
+        dueDate: document.getElementById('asgn-date-input').value,
+        completed: false
+      };
+      window.appState.tasks.push(newTask);
+      window.saveState();
+      renderTasks();
+      window.closeModal('addAssignmentModal');
+      e.target.reset();
+      window.showToast("Assignment added");
+    }
+
+    window.toggleTask = function(id) {
+      const t = window.appState.tasks.find(x => x.id === id);
+      if(t) {
+        t.completed = !t.completed;
+        window.saveState();
+        renderTasks();
+      }
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('assignments-container');
+      if (window.appState.tasks.length === 0) {
+         container.innerHTML = `<div class="p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl">No pending assignments. You're caught up!</div>`;
+         return;
+      }
+
+      // Sort
+      let sorted = [...window.appState.tasks].sort((a,b) => {
+        const da = new Date(a.dueDate).getTime();
+        const db = new Date(b.dueDate).getTime();
+        return window.taskSortBy === 'dueAsc' ? da - db : db - da;
+      });
+
+      container.innerHTML = sorted.map(t => {
+        const color = CLASS_COLORS[t.course] || '#9B9B9B';
+        const dateObj = new Date(t.dueDate + 'T00:00:00');
+        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        return `
+        <div class="task-card notion-card rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3 ${t.completed ? 'completed' : ''}">
+          <div class="flex items-center gap-3.5 flex-1 min-w-0">
+            <button onclick="window.toggleTask('${t.id}')" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-zinc-600 flex items-center justify-center shrink-0 hover:border-notion-emerald transition-colors ${t.completed ? 'bg-notion-emerald border-notion-emerald animate-check' : 'bg-transparent'}">
+              <i class="fa-solid fa-check text-[10px] sm:text-xs text-[#141414] ${t.completed ? 'opacity-100' : 'opacity-0'}"></i>
+            </button>
+            <div class="min-w-0 flex-1">
+              <h4 class="task-title-text text-sm sm:text-base font-bold text-zinc-100 truncate">${t.title}</h4>
+              <div class="flex flex-wrap items-center gap-2 mt-1">
+                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${color};"></span> ${t.course}
+                </span>
+                <span class="text-[10px] text-notion-textMuted flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
+                <span class="text-[9px] uppercase tracking-wider text-zinc-500 font-bold border border-zinc-700 px-1 rounded">${t.type}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    // --- STREAMING_CHUNK:AI Gym Helper and Logs... ---
+    // --- GYM ADD & AI DETECT ---
+    window.aiAutoDetectExercise = async function() {
+       const primary = document.getElementById('block-primary-input').value.trim();
+       if(!primary) return window.showToast("Enter a primary exercise name first.", "error");
+
+       const btn = document.getElementById('btn-detect-muscle');
+       const originalText = btn.innerHTML;
+       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
+       
+       try {
+         const apiKey = localStorage.getItem('geminiApiKey');
+         if (!apiKey) throw new Error("No API Key");
+
+         const res = await askGemini(`Analyze the exercise "${primary}". Return exactly two things separated by a pipe (|). 1) The main target muscle head using common names instead of formal scientific names (e.g. use "Tricep (Long Head)", "Tricep (Short Head)", "Upper Chest", "Front Delt"). Always specify the specific head of the muscle if applicable. 2) The best workout split category for it from this exact list: [chest, back, arms, legs]. Example output: Tricep (Long Head) | arms`);
+         
+         const parts = res.split('|');
+         if(parts.length === 2) {
+            document.getElementById('block-target-input').value = parts[0].trim();
+            document.getElementById('block-split-input').value = parts[1].trim().toLowerCase();
+            window.showToast("Detected muscle and split!", "success");
+         } else {
+           throw new Error("Bad parse");
+         }
+       } catch (err) {
+         window.showToast("Detection failed. Do you have your API key set?", "error");
+       } finally {
+         btn.innerHTML = originalText;
+       }
+    }
+
+    window.handleAddExerciseBlock = function(e) {
+      e.preventDefault();
+      const altsRaw = document.getElementById('block-alternatives-input').value;
+      const alts = altsRaw ? altsRaw.split(',').map(s=>s.trim()).filter(s=>s) : [];
+      
+      const newBlock = {
+        id: 'b_' + Date.now(),
+        split: document.getElementById('block-split-input').value,
+        target: document.getElementById('block-target-input').value,
+        current: document.getElementById('block-primary-input').value,
+        locked: false,
+        alternatives: alts
+      };
+
+      window.appState.gymBlocks.push(newBlock);
+      window.saveState();
+      renderGymBlocks();
+      window.closeModal('addBlockModal');
+      e.target.reset();
+      window.showToast("Exercise block saved!");
+    }
+
+    // --- PB LOGS ---
+    window.handleLogSet = function(e) {
+      e.preventDefault();
+      const log = {
+        id: 'pb_' + Date.now(),
+        exercise: document.getElementById('log-exercise-name').value,
+        weight: document.getElementById('log-weight-input').value,
+        reps: document.getElementById('log-reps-input').value,
+        date: new Date().toISOString()
+      };
+      window.appState.pbLogs.unshift(log); // Add to top
+      if (window.appState.pbLogs.length > 20) window.appState.pbLogs.pop(); // Keep last 20
+      window.saveState();
+      renderPbLogs();
+      window.closeModal('logSetModal');
+      e.target.reset();
+      window.showToast("Set logged successfully!");
+    }
+
+    function renderPbLogs() {
+      const container = document.getElementById('pb-records-container');
+      if (window.appState.pbLogs.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-xs text-notion-textMuted p-4 border border-dashed border-notion-border rounded-xl text-center">No sets logged yet.</div>`;
+        return;
+      }
+      container.innerHTML = window.appState.pbLogs.map(log => {
+        const d = new Date(log.date).toLocaleDateString();
+        return `
+        <div class="bg-notion-sidebar border border-notion-border rounded-lg p-3 relative overflow-hidden group">
+          <div class="absolute right-0 top-0 bottom-0 w-1 bg-notion-emerald/80 shadow-[0_0_10px_#10B981]"></div>
+          <div class="text-[10px] text-notion-textMuted mb-0.5">${d}</div>
+          <h4 class="text-xs font-bold text-zinc-100 truncate w-[90%]">${log.exercise}</h4>
+          <div class="mt-2 flex items-baseline gap-1 font-mono">
+            <span class="text-base font-black text-notion-emerald">${log.weight}</span>
+            <span class="text-[9px] text-zinc-400">lbs ×</span>
+            <span class="text-sm font-bold text-zinc-200">${log.reps}</span>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    // Init App!
+    initStorage();
+    
+    // Cycle a local quote on load just to populate it before AI overrides it
+    document.addEventListener("DOMContentLoaded", () => {
+       if(!document.getElementById('quote-display-text').innerText) {
+          window.cycleInfiniteQuote();
+       }
+    });
+
   </script>
 </body>
 </html>
