@@ -774,15 +774,18 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
           
           // Listen to unified state
           const docRef = doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state');
-          unsubscribeState = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-              window.appState = { ...window.appState, ...docSnap.data() };
-              renderAll();
-            } else {
-              saveToCloud(); 
-            }
-          }, (error) => console.error("Sync error:", error));
-          return;
+        unsubscribeState = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            window.appState = { ...window.appState, ...docSnap.data() };
+            renderAll();
+          } else {
+            saveToCloud(); 
+            renderAll(); // Tells the screen to draw if the cloud doc is newly created
+          }
+        }, (error) => console.error("Sync error:", error));
+        
+        renderAll(); // Forces the screen to draw immediately while waiting for the cloud to sync
+        return;
         }
       } catch (err) {
         console.warn("Cloud sync disabled. Using local storage.", err);
