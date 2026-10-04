@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Life OS | Student & Gym Command Center</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            notion: {
+              bg: '#141414',
+              sidebar: '#1E1E1E',
+              card: '#222222',
+              hover: '#2A2A2A',
+              border: '#333333',
+              textPrimary: '#E3E3E3',
+              textMuted: '#9B9B9B',
+              accent: '#E4E4E7',
+              emerald: '#10B981',
+              amber: '#F59E0B',
+              purple: '#8B5CF6',
+              rose: '#F43F5E',
+              blue: '#3B82F6'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --color-accent: #E4E4E7;
+      --color-accent-subtle: rgba(255, 255, 255, 0.08);
+      --color-accent-border: rgba(255, 255, 255, 0.22);
+    }
+
+    [data-theme="gray"] { --color-accent: #E4E4E7; }
+    [data-theme="blue"] { --color-accent: #3B82F6; }
+    [data-theme="emerald"] { --color-accent: #10B981; }
+    [data-theme="purple"] { --color-accent: #8B5CF6; }
+    [data-theme="amber"] { --color-accent: #F59E0B; }
+
+    body {
+      background-color: #141414;
+      color: #E3E3E3;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      word-wrap: break-word;
+    }
+
+    .accent-bg { background-color: var(--color-accent) !important; color: #141414 !important; }
+    .accent-text { color: var(--color-accent) !important; }
+    .accent-border { border-color: var(--color-accent) !important; }
+    
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track { background: #191919; }
+    ::-webkit-scrollbar-thumb { background: #333333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444444; }
+
+    .notion-card {
+      background-color: #222222;
+      border: 1px solid #333333;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .notion-card:hover {
+      border-color: #444444;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-enter {
+      animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .tab-content {
+      display: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .tab-content.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .lock-btn { transition: all 0.2s ease; }
+    .lock-btn.locked {
+      color: #F59E0B;
+      background-color: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .modal-backdrop {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      transition: opacity 0.3s ease;
+    }
+
+    .samsung-floating-pill {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 255, 255, 0.05);
+      background: rgba(26, 26, 26, 0.94);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .waterfall-container {
+      column-count: 1;
+      column-gap: 1rem;
+    }
+    @media (min-width: 640px) { .waterfall-container { column-count: 2; } }
+    @media (min-width: 1024px) { .waterfall-container { column-count: 3; } }
+    .waterfall-item {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      display: inline-block;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-28 md:pb-8">
+
+  <header class="sticky top-0 z-30 bg-[#141414]/95 backdrop-blur-md border-b border-notion-border px-3 sm:px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
+      
+      <!-- Brand Logo -->
+      <div class="flex-1 flex items-center justify-start min-w-0">
+        <div class="flex items-center space-x-2.5 cursor-pointer group min-w-0" onclick="switchTab('gym')">
+          <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100 font-bold transition-transform group-hover:scale-105 shrink-0">
+            <i class="fa-solid fa-atom text-sm"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="font-bold text-sm sm:text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LIFE OS</h1>
+            <p class="text-[9px] sm:text-[10px] text-notion-textMuted tracking-wider uppercase font-medium truncate">Student & Gym Hub</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Nav Tabs -->
+      <nav class="hidden md:flex items-center space-x-1 bg-notion-sidebar p-1 rounded-xl border border-notion-border shadow-inner">
+        <button onclick="switchTab('gym')" id="nav-btn-gym" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-dumbbell text-xs"></i> Gym Split
+        </button>
+        <button onclick="switchTab('student')" id="nav-btn-student" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
+          <i class="fa-solid fa-graduation-cap text-xs"></i> Student Hub
+        </button>
+        <button onclick="switchTab('info')" id="nav-btn-info" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
+          <i class="fa-solid fa-compass text-xs"></i> Info & FYP
+        </button>
+      </nav>
+
+      <!-- Right Action Controls -->
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button onclick="openModal('settingsModal')" class="p-2 text-notion-textMuted hover:text-white rounded-lg hover:bg-notion-hover transition-all" title="Settings & Gemini Key">
+          <i class="fa-solid fa-sliders text-sm"></i>
+        </button>
+        <button onclick="openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-lg transition-all transform hover:scale-105 flex items-center gap-1 shadow-sm">
+          <i class="fa-solid fa-plus text-xs"></i> <span class="hidden xs:inline">Task</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section id="daily-quote-banner" class="max-w-6xl mx-auto w-full px-3 sm:px-4 pt-3 sm:pt-4 animate-enter">
+    <div class="notion-card rounded-xl p-3 sm:p-4 flex items-center justify-between relative overflow-hidden bg-gradient-to-r from-[#1E1E1E] via-[#222222] to-[#1A1A1E] border-l-4 border-l-zinc-300">
+      <div class="flex items-center gap-3 pr-2 min-w-0">
+        <div class="text-zinc-300 text-base sm:text-xl pl-1 shrink-0">
+          <i class="fa-solid fa-quote-left"></i>
+        </div>
+        <div class="min-w-0">
+          <p id="banner-quote-text" class="text-xs sm:text-sm font-medium italic text-notion-textPrimary line-clamp-2 leading-relaxed">"The resistance that you physically fight at the gym and the resistance that you fight in life can only build a strong character."</p>
+          <span id="banner-quote-author" class="text-[10px] sm:text-[11px] text-notion-textMuted font-medium block mt-0.5 truncate">— Arnold Schwarzenegger</span>
+        </div>
+      </div>
+      <button onclick="cycleBannerQuote()" class="p-1.5 text-notion-textMuted hover:text-white hover:bg-notion-hover rounded-lg transition-all shrink-0 ml-1" title="Next Quote">
+        <i class="fa-solid fa-rotate text-xs"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- MAIN TAB WRAPPER -->
+  <main class="max-w-6xl mx-auto w-full px-3 sm:px-4 py-4 flex-grow">
+
+    <div id="tab-gym" class="tab-content active space-y-5">
+      
+      <!-- Split Selector Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-notion-sidebar p-3 sm:p-4 rounded-xl border border-notion-border shadow-sm">
+        <div class="min-w-0">
+          <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-100">
+            <i class="fa-solid fa-fire text-notion-amber"></i> Muscle Split Session
+          </h2>
+          <p class="text-xs text-notion-textMuted line-clamp-2">Shuffle unlocked exercise blocks for fresh workout angles while keeping fixed core lifts locked.</p>
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 pt-1 sm:pt-0 shrink-0 scrollbar-none">
+          <button onclick="setGymSplit('chest')" id="split-btn-chest" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200">
+            Chest & Shoulders
+          </button>
+          <button onclick="setGymSplit('back')" id="split-btn-back" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+            Back & Biceps
+          </button>
+          <button onclick="setGymSplit('arms')" id="split-btn-arms" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+            Arms Focus
+          </button>
+          <button onclick="setGymSplit('legs')" id="split-btn-legs" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+            Legs & Core
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Control Toolbar -->
+      <div class="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="shuffle-btn" onclick="shuffleUnlockedBlocks()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+            <i id="shuffle-icon" class="fa-solid fa-shuffle"></i> Shuffle Unlocked Blocks
+          </button>
+          <button onclick="openModal('addBlockModal')" class="bg-notion-hover hover:bg-notion-border text-notion-textPrimary px-3 py-2 rounded-lg text-xs font-medium transition-all border border-notion-border flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-plus"></i> Add Movement Block
+          </button>
+        </div>
+        <div class="text-[11px] text-notion-textMuted flex items-center gap-2 self-start xs:self-auto">
+          <span class="inline-block w-2 h-2 rounded-full bg-notion-amber shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span> Locked blocks stay fixed
+        </div>
+      </div>
+
+      <!-- Dynamic Exercise Blocks Cards Grid -->
+      <div id="exercise-blocks-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <!-- Dynamically Rendered via JS -->
+      </div>
+
+      <!-- Personal Best (PB Log & Benchmarks) -->
+      <div class="mt-8 space-y-3.5">
+        <div class="flex items-center justify-between border-b border-notion-border pb-2">
+          <h3 class="text-sm sm:text-base font-bold flex items-center gap-2 text-notion-emerald">
+            <i class="fa-solid fa-trophy"></i> Personal Best (PB) Log
+          </h3>
+          <button onclick="openModal('logSetModal')" class="text-xs bg-notion-emerald/10 border border-notion-emerald/30 text-notion-emerald hover:bg-notion-emerald/20 font-semibold px-2.5 py-1 rounded-lg transition-all">
+            + Log Set / PR
+          </button>
+        </div>
+
+        <!-- PB Cards Container -->
+        <div id="pb-records-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <!-- Dynamically Rendered via JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <div id="tab-student" class="tab-content space-y-5">
+      
+      <!-- Student Hub Header & Filter Controls -->
+      <div class="bg-notion-sidebar p-3.5 sm:p-4 rounded-xl border border-notion-border space-y-3 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-100">
+              <i class="fa-solid fa-graduation-cap text-zinc-300"></i> Student Assignment Engine
+            </h2>
+            <p class="text-xs text-notion-textMuted">Organize tasks, exams, and labs across all your courses.</p>
+          </div>
+
+          <button onclick="openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
+            <i class="fa-solid fa-plus text-xs"></i> Add Assignment
+          </button>
+        </div>
+
+        <!-- Grouping & Sorting Mobile-optimized Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pt-3 border-t border-notion-border/60 text-xs">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-notion-textMuted font-medium text-[11px] mr-1">Group By:</span>
+            <button onclick="setAssignmentGrouping('date')" id="group-btn-date" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">By Date</button>
+            <button onclick="setAssignmentGrouping('course')" id="group-btn-course" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Course</button>
+            <button onclick="setAssignmentGrouping('type')" id="group-btn-type" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Type</button>
+            <button onclick="setAssignmentGrouping('none')" id="group-btn-none" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Flat List</button>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-notion-textMuted font-medium text-[11px] mr-1">Sort:</span>
+            <button onclick="setAssignmentSorting('dueAsc')" id="sort-btn-dueAsc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">Earliest</button>
+            <button onclick="setAssignmentSorting('dueDesc')" id="sort-btn-dueDesc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Latest</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assignments Container -->
+      <div id="assignments-container" class="space-y-4">
+        <!-- Dynamically Rendered via JS -->
+      </div>
+
+    </div>
+
+    <div id="tab-info" class="tab-content space-y-5">
+      
+      <!-- Info Hub Intro Header -->
+      <div class="bg-notion-sidebar p-3.5 sm:p-4 rounded-xl border border-notion-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-100">
+            <i class="fa-solid fa-sparkles text-zinc-300"></i> Information & "For You" Feed
+          </h2>
+          <p class="text-xs text-notion-textMuted">Self-curated intentional feed, creator network, and persistent notes.</p>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="openModal('addYtChannelModal')" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-plus"></i> Add Channel
+          </button>
+        </div>
+      </div>
+
+      <!-- YouTube Creators Grid View -->
+      <section class="notion-card rounded-xl p-3.5 sm:p-4 space-y-3.5 bg-[#1A1A1E] border border-rose-950/40">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-notion-border pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse"></span>
+            <h3 class="text-xs sm:text-sm font-bold text-zinc-100 tracking-tight uppercase font-mono flex items-center gap-2">
+              <i class="fa-brands fa-youtube text-rose-500"></i> Curated Creators
+            </h3>
+          </div>
+
+          <!-- YouTube Category Filters -->
+          <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs scrollbar-none">
+            <button onclick="filterYtChannels('all')" id="yt-filter-all" class="yt-filter-btn px-2.5 py-1 rounded-md bg-rose-600 text-white font-semibold whitespace-nowrap">#All</button>
+            <button onclick="filterYtChannels('Fitness')" id="yt-filter-Fitness" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Fitness</button>
+            <button onclick="filterYtChannels('Academics')" id="yt-filter-Academics" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Academics</button>
+            <button onclick="filterYtChannels('Tech')" id="yt-filter-Tech" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Tech</button>
+            <button onclick="filterYtChannels('Mindset')" id="yt-filter-Mindset" class="yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap">#Mindset</button>
+          </div>
+        </div>
+
+        <div id="yt-channels-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <!-- Dynamically Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- Utility Columns (Quotes & Scratchpad) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Quote Display -->
+        <div class="space-y-5 h-full">
+          <div class="notion-card rounded-xl p-3.5 sm:p-4 space-y-3 h-full flex flex-col">
+            <div class="flex items-center justify-between border-b border-notion-border pb-2">
+              <h3 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-zinc-200">
+                <i class="fa-solid fa-quote-left text-zinc-400"></i> Mindset & Wisdom Vault
+              </h3>
+            </div>
+
+            <div id="quote-card-display" class="bg-notion-bg p-4 rounded-xl border border-notion-border relative flex-grow flex flex-col justify-center">
+              <p id="quote-display-text" class="text-sm sm:text-base italic font-medium leading-relaxed text-notion-textPrimary text-center">
+                "We don't rise to the level of our expectations, we fall to the level of our training."
+              </p>
+              <div class="flex items-center justify-between mt-6 pt-3 border-t border-notion-border/50 w-full">
+                <span id="quote-display-author" class="text-xs font-semibold text-zinc-300">— Archilochus</span>
+                <div class="flex items-center gap-2">
+                  <button onclick="prevQuote()" class="p-1.5 hover:bg-notion-hover text-notion-textMuted hover:text-white rounded text-xs">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <span id="quote-counter" class="text-[10px] text-notion-textMuted font-mono">1/3</span>
+                  <button onclick="nextQuote()" class="p-1.5 hover:bg-notion-hover text-notion-textMuted hover:text-white rounded text-xs">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persistent Scratchpad Notes -->
+        <div class="space-y-5 h-full">
+          <div class="notion-card rounded-xl p-3.5 sm:p-4 space-y-3 h-full flex flex-col">
+            <div class="flex items-center justify-between border-b border-notion-border pb-2">
+              <h3 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-zinc-200">
+                <i class="fa-solid fa-pen-to-square text-zinc-400"></i> Scratchpad & Notes
+              </h3>
+              <span id="scratch-save-status" class="text-[10px] text-notion-textMuted font-mono">Auto-saved</span>
+            </div>
+            
+            <p class="text-[11px] text-notion-textMuted">Quick thoughts, formulas, or reminders auto-saved locally.</p>
+
+            <textarea id="scratchpad-textarea" oninput="saveScratchpad()" placeholder="Write thoughts, lecture notes, or quick reminders..." class="w-full flex-grow min-h-[160px] bg-notion-bg border border-notion-border rounded-lg p-3 text-xs text-notion-textPrimary focus:outline-none focus:border-zinc-400 font-mono leading-relaxed resize-none"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div class="md:hidden fixed bottom-4 inset-x-0 z-40 flex justify-center w-full px-4 pointer-events-none">
+    <footer class="samsung-floating-pill rounded-full px-6 py-2.5 w-full max-w-xs pointer-events-auto shadow-2xl">
+      <div class="flex items-center justify-around">
+        <button onclick="switchTab('gym')" id="mob-btn-gym" class="mob-nav-btn flex flex-col items-center gap-1 text-white transition-all transform active:scale-95">
+          <i class="fa-solid fa-dumbbell text-base"></i>
+          <span class="text-[9px] font-bold tracking-wider uppercase">Gym</span>
+        </button>
+        <button onclick="switchTab('student')" id="mob-btn-student" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
+          <i class="fa-solid fa-graduation-cap text-base"></i>
+          <span class="text-[9px] font-bold tracking-wider uppercase">School</span>
+        </button>
+        <button onclick="switchTab('info')" id="mob-btn-info" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
+          <i class="fa-solid fa-compass text-base"></i>
+          <span class="text-[9px] font-bold tracking-wider uppercase">Info</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+
+  <!-- MODAL 1: SETTINGS & GEMINI API KEY -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
+    <div class="notion-card rounded-xl max-w-lg w-full p-4 sm:p-5 space-y-4 bg-notion-card max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-notion-border pb-3">
+        <h3 class="text-sm font-bold flex items-center gap-2">
+          <i class="fa-solid fa-sliders accent-text"></i> Settings & AI Configuration
+        </h3>
+        <button onclick="closeModal('settingsModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Gemini API Key Input Card -->
+      <div class="bg-notion-bg p-3.5 rounded-xl border border-purple-900/50 space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-key"></i> Google Gemini API Key
+          </label>
+          <span id="api-key-status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-zinc-800 text-zinc-400">
+            Not Set
+          </span>
+        </div>
+        <p class="text-[11px] text-notion-textMuted leading-normal">
+          Add your Google API key to enable instant AI exercise classification. The key is saved strictly in your browser's local storage and is never sent to any server other than Google's API.
+        </p>
+        <div class="flex gap-2">
+          <input type="password" id="gemini-key-input" placeholder="AIzaSy..." class="w-full bg-notion-sidebar border border-notion-border rounded-lg p-2 text-xs font-mono text-notion-textPrimary focus:outline-none focus:border-purple-500" />
+          <button onclick="saveGeminiApiKey()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0">
+            Save Key
+          </button>
+        </div>
+      </div>
+
+      <!-- Accent Theme Color Chooser -->
+      <div class="space-y-2 pt-1">
+        <label class="text-xs font-bold text-notion-textPrimary block">Global Accent Theme</label>
+        <div class="grid grid-cols-5 gap-2">
+          <button onclick="setGlobalTheme('gray')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-zinc-400 flex flex-col items-center gap-1 text-[10px] font-semibold">
+            <span class="w-3.5 h-3.5 rounded-full bg-zinc-300"></span> Gray
+          </button>
+          <button onclick="setGlobalTheme('blue')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-blue-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
+            <span class="w-3.5 h-3.5 rounded-full bg-blue-500"></span> Blue
+          </button>
+          <button onclick="setGlobalTheme('emerald')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-emerald-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
+            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span> Emerald
+          </button>
+          <button onclick="setGlobalTheme('purple')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-purple-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
+            <span class="w-3.5 h-3.5 rounded-full bg-purple-500"></span> Purple
+          </button>
+          <button onclick="setGlobalTheme('amber')" class="p-2 rounded-lg border border-notion-border bg-[#252525] hover:border-amber-500 flex flex-col items-center gap-1 text-[10px] font-semibold">
+            <span class="w-3.5 h-3.5 rounded-full bg-amber-500"></span> Amber
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-3 border-t border-notion-border">
+        <button onclick="closeModal('settingsModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: ADD ASSIGNMENT -->
+  <div id="addAssignmentModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
+    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+      <div class="flex items-center justify-between border-b border-notion-border pb-2">
+        <h3 class="text-sm font-bold text-zinc-100">+ Add New Assignment</h3>
+        <button onclick="closeModal('addAssignmentModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleAddAssignment(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Assignment Title</label>
+          <input type="text" id="asgn-title-input" required placeholder="e.g. Problem Set #4 or Lab Report" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400" />
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-notion-textMuted mb-1 font-medium">Course</label>
+            <select id="asgn-course-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400">
+              <option value="AP Chemistry">AP Chemistry</option>
+              <option value="AP Precalculus">AP Precalculus</option>
+              <option value="AP Economics">AP Economics</option>
+              <option value="Spanish Lit">Spanish Lit</option>
+              <option value="American Lit">American Lit</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Elaboración de Proyectos">Elaboración de Proyectos</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-notion-textMuted mb-1 font-medium">Type</label>
+            <select id="asgn-type-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400">
+              <option value="Homework">Homework</option>
+              <option value="Classwork">Classwork</option>
+              <option value="Project">Project</option>
+              <option value="Quiz">Quiz</option>
+              <option value="Exam">Exam</option>
+              <option value="Note">Note / Study</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Due Date</label>
+          <input type="date" id="asgn-date-input" required class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
+          <button type="button" onclick="closeModal('addAssignmentModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-zinc-200 text-zinc-950 font-bold hover:bg-white">Save Assignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: ADD EXERCISE BLOCK -->
+  <div id="addBlockModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
+    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+      <div class="flex items-center justify-between border-b border-notion-border pb-2">
+        <h3 class="text-sm font-bold text-notion-amber">+ Add Exercise Block</h3>
+        <button onclick="closeModal('addBlockModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleAddExerciseBlock(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Primary Exercise Name</label>
+          <input type="text" id="block-primary-input" required placeholder="e.g. Incline Dumbbell Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber mb-2" />
+          
+          <button type="button" onclick="aiAutoDetectExercise()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold py-2 rounded-lg border border-zinc-700 transition-colors shadow-sm">
+            Detect Muscle Group
+          </button>
+        </div>
+
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Target Muscle / Muscle Head</label>
+          <input type="text" id="block-target-input" required placeholder="e.g. Upper Chest (Clavicular Head)" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber" />
+        </div>
+
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Split Category</label>
+          <select id="block-split-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber">
+            <option value="chest">Chest & Shoulders</option>
+            <option value="back">Back & Biceps</option>
+            <option value="arms">Arms Focus</option>
+            <option value="legs">Legs & Core</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Alternative Movements (Comma Separated)</label>
+          <input type="text" id="block-alternatives-input" placeholder="e.g. Low-to-High Cable Fly, Smith Machine Incline" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
+          <button type="button" onclick="closeModal('addBlockModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-amber text-black font-bold hover:bg-yellow-500">Save Block</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: LOG SET / PB -->
+  <div id="logSetModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
+    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+      <div class="flex items-center justify-between border-b border-notion-border pb-2">
+        <h3 class="text-sm font-bold text-notion-emerald"><i class="fa-solid fa-trophy"></i> Log Set / Personal Best</h3>
+        <button onclick="closeModal('logSetModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleLogSet(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Exercise Name</label>
+          <input type="text" id="log-exercise-name" required placeholder="e.g. Barbell Bench Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-notion-textMuted mb-1 font-medium">Weight (lbs/kg)</label>
+            <input type="number" id="log-weight-input" required step="0.5" placeholder="185" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+          </div>
+          <div>
+            <label class="block text-notion-textMuted mb-1 font-medium">Reps Performed</label>
+            <input type="number" id="log-reps-input" required step="1" placeholder="8" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
+          <button type="button" onclick="closeModal('logSetModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-emerald text-black font-bold hover:bg-emerald-400">Log PR</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 6: ADD YOUTUBE CHANNEL -->
+  <div id="addYtChannelModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
+    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+      <div class="flex items-center justify-between border-b border-notion-border pb-2">
+        <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
+          <i class="fa-brands fa-youtube text-rose-500"></i> Add Creator to Feed
+        </h3>
+        <button onclick="closeModal('addYtChannelModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleAddChannel(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">YouTube Handle</label>
+          <input type="text" id="yt-handle-input" required placeholder="e.g. @JeffNippard" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500 font-mono" />
+          <p class="text-[10px] text-notion-textMuted mt-1">Profile picture will be fetched automatically.</p>
+        </div>
+        <div>
+          <label class="block text-notion-textMuted mb-1 font-medium">Category</label>
+          <select id="yt-category-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500">
+            <option value="Fitness">Fitness</option>
+            <option value="Academics">Academics</option>
+            <option value="Tech">Tech</option>
+            <option value="Mindset">Mindset</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
+          <button type="button" onclick="closeModal('addYtChannelModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold">Add Channel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    /* Default Initial Data */
+    const DEFAULT_CLASS_COLORS = {
+      "AP Chemistry": "#10B981",          
+      "AP Precalculus": "#6366F1",        
+      "AP Economics": "#F59E0B",          
+      "Spanish Lit": "#F43F5E",           
+      "American Lit": "#06B6D4",          
+      "Computer Science": "#8B5CF6",       
+      "Elaboración de Proyectos": "#F97316" 
+    };
+
+    const DEFAULT_GYM_BLOCKS = [
+      { id: 'b1', split: 'chest', target: 'Upper Chest (Clavicular)', current: 'Incline Dumbbell Press', locked: false, alternatives: ['Incline Smith Machine Press', 'Low-to-High Cable Fly', 'Incline Barbell Bench'] },
+      { id: 'b2', split: 'chest', target: 'Mid/Lower Pecs', current: 'Flat Barbell Bench Press', locked: true, alternatives: ['Weighted Dips', 'Machine Chest Press', 'Flat Dumbbell Press'] },
+      { id: 'b3', split: 'chest', target: 'Lateral Deltoids', current: 'Cable Lateral Raises', locked: false, alternatives: ['Dumbbell Lateral Raise', 'Egyptian Lateral Raise', 'Machine Lateral Raise'] },
+      { id: 'b4', split: 'back', target: 'Lats (Width)', current: 'Lat Pulldown (Neutral Grip)', locked: false, alternatives: ['Single-Arm Cable Lat Pulldown', 'Meadows Row', 'Weighted Chin-Ups'] },
+      { id: 'b5', split: 'back', target: 'Upper Back / Rhomboids', current: 'Chest-Supported T-Bar Row', locked: true, alternatives: ['Seated Cable Row (Wide)', 'Barbell Bent Over Row', 'Face Pulls'] },
+      { id: 'b6', split: 'arms', target: 'Biceps Long Head', current: 'Incline Dumbbell Curls', locked: false, alternatives: ['Bayesian Cable Curl', 'Behind-the-Back Cable Curl', 'Drag Curl'] },
+      { id: 'b7', split: 'arms', target: 'Triceps Lateral Head', current: 'Tricep Rope Pushdowns', locked: false, alternatives: ['Single-Arm Overhead Extension', 'Skullcrushers', 'EZ Bar Overhead Ext'] },
+      { id: 'b8', split: 'legs', target: 'Quads (Quadriceps)', current: 'Barbell Back Squat', locked: true, alternatives: ['Bulgarian Split Squat', 'Leg Press', 'Hack Squat'] }
+    ];
+
+    const DEFAULT_ASSIGNMENTS = [
+      { id: 'a1', title: 'Thermochemistry Problem Set #4', course: 'AP Chemistry', type: 'Homework', date: '2026-10-06', completed: false },
+      { id: 'a2', title: 'Trigonometric Identities Quiz', course: 'AP Precalculus', type: 'Quiz', date: '2026-10-07', completed: false },
+      { id: 'a3', title: 'Fiscal Policy Analysis Essay', course: 'AP Economics', type: 'Project', date: '2026-10-09', completed: false },
+      { id: 'a4', title: 'Poema 20 Explicación de Texto', course: 'Spanish Lit', type: 'Homework', date: '2026-10-08', completed: true }
+    ];
+
+    const DEFAULT_PBS = [
+      { id: 'p1', name: 'Barbell Bench Press', weight: '225', reps: '5', date: '2026-09-28' },
+      { id: 'p2', name: 'Barbell Back Squat', weight: '315', reps: '3', date: '2026-09-25' },
+      { id: 'p3', name: 'Incline Dumbbell Press', weight: '85', reps: '8', date: '2026-09-30' }
+    ];
+
+    const DEFAULT_QUOTES = [
+      { text: "The resistance that you physically fight at the gym and the resistance that you fight in life can only build a strong character.", author: "Arnold Schwarzenegger" },
+      { text: "We don't rise to the level of our expectations, we fall to the level of our training.", author: "Archilochus" },
+      { text: "Quality is not an act, it is a habit.", author: "Aristotle" }
+    ];
+
+    const DEFAULT_CHANNELS = [
+      { id: "ch-1", handle: "@JeffNippard", category: "Fitness" },
+      { id: "ch-2", handle: "@HubermanLab", category: "Mindset" },
+      { id: "ch-3", handle: "@mkbhd", category: "Tech" },
+      { id: "ch-4", handle: "@CrashCourse", category: "Academics" }
+    ];
+
+    /* State Initialization */
+    let currentTheme = localStorage.getItem('lifeos_theme') || 'gray';
+    let geminiApiKey = localStorage.getItem('lifeos_gemini_api_key') || '';
+    let classColors = JSON.parse(localStorage.getItem('lifeos_class_colors')) || DEFAULT_CLASS_COLORS;
+    let gymBlocks = JSON.parse(localStorage.getItem('lifeos_gym_blocks')) || DEFAULT_GYM_BLOCKS;
+    let assignments = JSON.parse(localStorage.getItem('lifeos_assignments')) || DEFAULT_ASSIGNMENTS;
+    let pbRecords = JSON.parse(localStorage.getItem('lifeos_pbs')) || DEFAULT_PBS;
+    let quotesList = JSON.parse(localStorage.getItem('lifeos_quotes')) || DEFAULT_QUOTES;
+    let ytChannels = JSON.parse(localStorage.getItem('lifeos_yt_channels')) || DEFAULT_CHANNELS;
+
+    let currentSplit = 'chest';
+    let assignmentGrouping = 'date';
+    let assignmentSorting = 'dueAsc';
+    let currentQuoteIdx = 0;
+    let activeYtFilter = 'all';
+
+    window.onload = function() {
+      applyTheme(currentTheme);
+      updateApiKeyBadge();
+      renderGymBlocks();
+      renderPbRecords();
+      renderAssignments();
+      renderChannels();
+      renderQuoteDisplay();
+      loadScratchpad();
+    };
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('lifeos_theme', theme);
+    }
+
+    function setGlobalTheme(theme) {
+      currentTheme = theme;
+      applyTheme(theme);
+      showToast(`Accent theme updated to ${theme.toUpperCase()}`);
+    }
+
+    /* Fixed Mobile & Desktop Navigation */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('active');
+      });
+      
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) {
+        targetTab.classList.add('active');
+      }
+
+      document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+        btn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50";
+      });
+      const activeDeskBtn = document.getElementById(`nav-btn-${tabId}`);
+      if (activeDeskBtn) {
+        activeDeskBtn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2";
+      }
+
+      document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+        btn.classList.remove('text-white');
+        btn.classList.add('text-notion-textMuted');
+      });
+      const activeMobBtn = document.getElementById(`mob-btn-${tabId}`);
+      if (activeMobBtn) {
+        activeMobBtn.classList.remove('text-notion-textMuted');
+        activeMobBtn.classList.add('text-white');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function saveGeminiApiKey() {
+      const val = document.getElementById('gemini-key-input').value.trim();
+      geminiApiKey = val;
+      localStorage.setItem('lifeos_gemini_api_key', val);
+      updateApiKeyBadge();
+      showToast("Google Gemini API Key Saved");
+    }
+
+    function updateApiKeyBadge() {
+      const badge = document.getElementById('api-key-status-badge');
+      const input = document.getElementById('gemini-key-input');
+      if (input) input.value = geminiApiKey;
+
+      if (geminiApiKey) {
+        badge.innerText = "Key Active";
+        badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-950 text-emerald-400 border border-emerald-800";
+      } else {
+        badge.innerText = "Not Set";
+        badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-zinc-800 text-zinc-400";
+      }
+    }
+
+    /* AI Auto-Detect Workout Muscle Groups & Split */
+    async function aiAutoDetectExercise() {
+      const exName = document.getElementById('block-primary-input').value.trim();
+      if (!exName) {
+        showToast("Enter an exercise name first");
+        return;
+      }
+
+      showToast("Analyzing movement pattern...");
+      
+      const apiKeyToUse = geminiApiKey || "";
+      const prompt = `Analyze the gym workout exercise: "${exName}". Return JSON ONLY with:
+      {
+        "target": "<Short primary muscle target and head, e.g. Upper Chest>",
+        "split": "<Must be exactly one of: chest, back, arms, legs>",
+        "alternatives": "<2 comma separated alternative exercises>"
+      }`;
+
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKeyToUse}`;
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+
+        const data = await res.json();
+        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (jsonText) {
+          const parsed = JSON.parse(jsonText);
+          if (parsed.target) document.getElementById('block-target-input').value = parsed.target;
+          if (parsed.split) document.getElementById('block-split-input').value = parsed.split;
+          if (parsed.alternatives) document.getElementById('block-alternatives-input').value = parsed.alternatives;
+          showToast("Detection complete");
+        } else {
+          fallbackDetect(exName);
+        }
+      } catch (e) {
+        console.warn("AI Auto-detect fallback", e);
+        fallbackDetect(exName);
+      }
+    }
+
+    function fallbackDetect(exName) {
+      const lower = exName.toLowerCase();
+      if (lower.includes("chest") || lower.includes("bench") || lower.includes("fly") || lower.includes("press")) {
+        document.getElementById('block-target-input').value = "Chest / Pecs";
+        document.getElementById('block-split-input').value = "chest";
+      } else if (lower.includes("squat") || lower.includes("leg") || lower.includes("calf") || lower.includes("deadlift")) {
+        document.getElementById('block-target-input').value = "Quads / Leg Compound";
+        document.getElementById('block-split-input').value = "legs";
+      } else {
+        document.getElementById('block-target-input').value = "Target Muscle Head";
+      }
+      showToast("Auto-filled estimated details");
+    }
+
+    function setGymSplit(split) {
+      currentSplit = split;
+      document.querySelectorAll('.split-btn').forEach(btn => {
+        btn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap";
+      });
+      const activeBtn = document.getElementById(`split-btn-${split}`);
+      if (activeBtn) {
+        activeBtn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200";
+      }
+      renderGymBlocks();
+    }
+
+    function toggleBlockLock(blockId) {
+      const b = gymBlocks.find(x => x.id === blockId);
+      if (b) {
+        b.locked = !b.locked;
+        saveGymBlocks();
+        renderGymBlocks();
+        showToast(b.locked ? "Block Locked in Position" : "Block Unlocked for Shuffling");
+      }
+    }
+
+    function shuffleUnlockedBlocks() {
+      let shuffled = 0;
+      gymBlocks.forEach(b => {
+        if (b.split === currentSplit && !b.locked && b.alternatives && b.alternatives.length > 0) {
+          const options = [b.current, ...b.alternatives];
+          const next = options[Math.floor(Math.random() * options.length)];
+          if (next !== b.current) {
+            b.current = next;
+            shuffled++;
+          }
+        }
+      });
+      saveGymBlocks();
+      renderGymBlocks();
+      showToast(shuffled > 0 ? `Shuffled ${shuffled} exercise movements` : "No unlocked blocks to shuffle");
+    }
+
+    function renderGymBlocks() {
+      const container = document.getElementById('exercise-blocks-container');
+      const filtered = gymBlocks.filter(b => b.split === currentSplit);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-notion-textMuted text-xs">No exercise blocks configured for this split. Click "+ Add Movement Block" to create one.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(b => `
+        <div class="notion-card rounded-xl p-3.5 space-y-3 flex flex-col justify-between relative group">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="text-[10px] font-bold uppercase font-mono px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 truncate">
+                ${escapeHtml(b.target)}
+              </span>
+              <button onclick="toggleBlockLock('${b.id}')" class="lock-btn p-1.5 rounded-md border border-zinc-700/60 ${b.locked ? 'locked' : 'text-notion-textMuted hover:text-white'}" title="${b.locked ? 'Locked' : 'Unlocked'}">
+                <i class="fa-solid ${b.locked ? 'fa-lock text-notion-amber' : 'fa-lock-open'} text-xs"></i>
+              </button>
+            </div>
+            
+            <h4 class="text-xs sm:text-sm font-bold text-zinc-100 leading-snug line-clamp-2">${escapeHtml(b.current)}</h4>
+          </div>
+
+          <div class="pt-2 border-t border-notion-border/60">
+            <span class="text-[10px] text-notion-textMuted font-medium block mb-1">Rotation Pool:</span>
+            <div class="flex flex-wrap gap-1">
+              ${b.alternatives ? b.alternatives.map(alt => `
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-notion-bg border border-notion-border text-notion-textMuted truncate max-w-[120px]">
+                  ${escapeHtml(alt)}
+                </span>
+              `).join('') : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleAddExerciseBlock(e) {
+      e.preventDefault();
+      const target = document.getElementById('block-target-input').value.trim();
+      const split = document.getElementById('block-split-input').value;
+      const primary = document.getElementById('block-primary-input').value.trim();
+      const altsRaw = document.getElementById('block-alternatives-input').value.trim();
+      const alts = altsRaw ? altsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+      const newBlock = {
+        id: 'b_' + Date.now(),
+        split: split,
+        target: target,
+        current: primary,
+        locked: false,
+        alternatives: alts
+      };
+
+      gymBlocks.push(newBlock);
+      saveGymBlocks();
+      closeModal('addBlockModal');
+      e.target.reset();
+      renderGymBlocks();
+      showToast("New Movement Block Added");
+    }
+
+    function saveGymBlocks() {
+      localStorage.setItem('lifeos_gym_blocks', JSON.stringify(gymBlocks));
+    }
+
+    function renderPbRecords() {
+      const container = document.getElementById('pb-records-container');
+      if (pbRecords.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-xs text-notion-textMuted">No benchmark PRs logged yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = pbRecords.map(r => `
+        <div class="notion-card rounded-xl p-3 flex items-center justify-between">
+          <div class="min-w-0 pr-2">
+            <h5 class="text-xs font-bold text-zinc-200 truncate">${escapeHtml(r.name)}</h5>
+            <span class="text-[10px] text-notion-textMuted font-mono block">${r.date}</span>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="text-xs font-extrabold text-notion-emerald block">${r.weight} lbs</span>
+            <span class="text-[10px] text-notion-textMuted font-semibold">${r.reps} reps</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleLogSet(e) {
+      e.preventDefault();
+      const name = document.getElementById('log-exercise-name').value.trim();
+      const weight = document.getElementById('log-weight-input').value;
+      const reps = document.getElementById('log-reps-input').value;
+
+      const newPb = {
+        id: 'p_' + Date.now(),
+        name: name,
+        weight: weight,
+        reps: reps,
+        date: new Date().toISOString().split('T')[0]
+      };
+
+      pbRecords.unshift(newPb);
+      localStorage.setItem('lifeos_pbs', JSON.stringify(pbRecords));
+      closeModal('logSetModal');
+      e.target.reset();
+      renderPbRecords();
+      showToast("Personal Best Logged!");
+    }
+
+    function setAssignmentGrouping(group) {
+      assignmentGrouping = group;
+      document.querySelectorAll('.group-btn').forEach(btn => {
+        btn.className = "group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white";
+      });
+      const active = document.getElementById(`group-btn-${group}`);
+      if (active) active.className = "group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700";
+      renderAssignments();
+    }
+
+    function setAssignmentSorting(sort) {
+      assignmentSorting = sort;
+      document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.className = "sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white";
+      });
+      const active = document.getElementById(`sort-btn-${sort}`);
+      if (active) active.className = "sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700";
+      renderAssignments();
+    }
+
+    function toggleAssignmentComplete(id) {
+      const a = assignments.find(x => x.id === id);
+      if (a) {
+        a.completed = !a.completed;
+        saveAssignments();
+        renderAssignments();
+        showToast(a.completed ? "Task Completed" : "Task Reopened");
+      }
+    }
+
+    function renderAssignments() {
+      const container = document.getElementById('assignments-container');
+      
+      let list = [...assignments];
+      list.sort((a, b) => {
+        if (assignmentSorting === 'dueAsc') return new Date(a.date) - new Date(b.date);
+        return new Date(b.date) - new Date(a.date);
+      });
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-notion-textMuted text-xs">No assignments found. Add one above!</div>`;
+        return;
+      }
+
+      if (assignmentGrouping === 'none') {
+        container.innerHTML = `<div class="space-y-2">${list.map(renderAssignmentItem).join('')}</div>`;
+        return;
+      }
+
+      const groups = {};
+      list.forEach(item => {
+        let key = item.date;
+        if (assignmentGrouping === 'course') key = item.course;
+        if (assignmentGrouping === 'type') key = item.type;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+      });
+
+      container.innerHTML = Object.keys(groups).map(groupKey => `
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 border-b border-notion-border pb-1">
+            <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">${escapeHtml(groupKey)}</span>
+            <span class="text-[10px] text-notion-textMuted bg-zinc-800 px-1.5 py-0.5 rounded-full font-bold">${groups[groupKey].length}</span>
+          </div>
+          <div class="space-y-2">
+            ${groups[groupKey].map(renderAssignmentItem).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAssignmentItem(item) {
+      const color = classColors[item.course] || '#8B5CF6';
+      return `
+        <div class="notion-card rounded-xl p-3 flex items-center justify-between gap-3 ${item.completed ? 'opacity-50' : ''}">
+          <div class="flex items-center gap-3 min-w-0">
+            <button onclick="toggleAssignmentComplete('${item.id}')" class="w-5 h-5 rounded border border-zinc-600 flex items-center justify-center shrink-0 ${item.completed ? 'bg-emerald-500 border-emerald-500 text-black' : 'hover:border-zinc-400'}">
+              ${item.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+            </button>
+            <div class="min-w-0">
+              <h4 class="text-xs sm:text-sm font-semibold text-zinc-100 ${item.completed ? 'line-through text-notion-textMuted' : ''} truncate">${escapeHtml(item.title)}</h4>
+              <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded text-white truncate" style="background-color: ${color}">
+                  ${escapeHtml(item.course)}
+                </span>
+                <span class="text-[10px] text-notion-textMuted font-mono">Due: ${item.date}</span>
+              </div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded border border-notion-border text-notion-textMuted shrink-0 font-medium hidden xs:inline-block">
+            ${escapeHtml(item.type)}
+          </span>
+        </div>
+      `;
+    }
+
+    function handleAddAssignment(e) {
+      e.preventDefault();
+      const title = document.getElementById('asgn-title-input').value.trim();
+      const course = document.getElementById('asgn-course-input').value;
+      const type = document.getElementById('asgn-type-input').value;
+      const date = document.getElementById('asgn-date-input').value;
+
+      const newAsgn = {
+        id: 'a_' + Date.now(),
+        title: title,
+        course: course,
+        type: type,
+        date: date,
+        completed: false
+      };
+
+      assignments.push(newAsgn);
+      saveAssignments();
+      closeModal('addAssignmentModal');
+      e.target.reset();
+      renderAssignments();
+      showToast("Assignment Created");
+    }
+
+    function saveAssignments() {
+      localStorage.setItem('lifeos_assignments', JSON.stringify(assignments));
+    }
+
+    function filterYtChannels(cat) {
+      activeYtFilter = cat;
+      document.querySelectorAll('.yt-filter-btn').forEach(b => {
+        b.className = "yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap";
+      });
+      const active = document.getElementById(`yt-filter-${cat}`);
+      if (active) active.className = "yt-filter-btn px-2.5 py-1 rounded-md bg-rose-600 text-white font-semibold whitespace-nowrap";
+      renderChannels();
+    }
+
+    function renderChannels() {
+      const container = document.getElementById('yt-channels-container');
+      const filtered = activeYtFilter === 'all' ? ytChannels : ytChannels.filter(c => c.category === activeYtFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-6 text-notion-textMuted text-xs">No channels found for this tag.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        // Strip out the '@' for the avatar request if present, but keep it for display
+        const cleanHandle = c.handle.startsWith('@') ? c.handle.substring(1) : c.handle;
+        const displayHandle = c.handle.startsWith('@') ? c.handle : `@${c.handle}`;
+        
+        // unavatar.io is a free service that extracts avatars based on social handles!
+        const avatarUrl = `https://unavatar.io/youtube/${cleanHandle}`;
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${cleanHandle}&background=random&color=fff`;
+
+        return `
+          <a href="https://youtube.com/${displayHandle}" target="_blank" class="notion-card rounded-xl p-4 flex flex-col items-center gap-2.5 hover:bg-zinc-800 transition-colors group">
+            <div class="relative">
+              <img src="${avatarUrl}" alt="${displayHandle}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-notion-border object-cover group-hover:border-rose-500 transition-colors shadow-lg" onerror="this.src='${fallbackUrl}'" />
+              <div class="absolute bottom-0 right-0 bg-rose-600 text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center border border-zinc-900">
+                <i class="fa-brands fa-youtube"></i>
+              </div>
+            </div>
+            <div class="text-center w-full min-w-0">
+              <h5 class="text-xs font-bold text-zinc-100 truncate">${displayHandle}</h5>
+              <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 border border-zinc-700 text-notion-textMuted">
+                ${escapeHtml(c.category)}
+              </span>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function handleAddChannel(e) {
+      e.preventDefault();
+      const handle = document.getElementById('yt-handle-input').value.trim();
+      const category = document.getElementById('yt-category-input').value;
+
+      const newChannel = {
+        id: 'ch_' + Date.now(),
+        handle: handle,
+        category: category
+      };
+
+      ytChannels.push(newChannel);
+      localStorage.setItem('lifeos_yt_channels', JSON.stringify(ytChannels));
+      closeModal('addYtChannelModal');
+      e.target.reset();
+      renderChannels();
+      showToast("Creator Added to Feed!");
+    }
+
+    function renderQuoteDisplay() {
+      const q = quotesList[currentQuoteIdx] || quotesList[0];
+      if (q) {
+        document.getElementById('quote-display-text').innerText = `"${q.text}"`;
+        document.getElementById('quote-display-author').innerText = `— ${q.author}`;
+        document.getElementById('quote-counter').innerText = `${currentQuoteIdx + 1}/${quotesList.length}`;
+      }
+    }
+
+    function cycleBannerQuote() {
+      currentQuoteIdx = (currentQuoteIdx + 1) % quotesList.length;
+      const q = quotesList[currentQuoteIdx];
+      document.getElementById('banner-quote-text').innerText = `"${q.text}"`;
+      document.getElementById('banner-quote-author').innerText = `— ${q.author}`;
+    }
+
+    function prevQuote() {
+      currentQuoteIdx = (currentQuoteIdx - 1 + quotesList.length) % quotesList.length;
+      renderQuoteDisplay();
+    }
+
+    function nextQuote() {
+      currentQuoteIdx = (currentQuoteIdx + 1) % quotesList.length;
+      renderQuoteDisplay();
+    }
+
+    /* Scratchpad Notes Auto-Save */
+    function saveScratchpad() {
+      const txt = document.getElementById('scratchpad-textarea').value;
+      localStorage.setItem('lifeos_scratchpad', txt);
+      const status = document.getElementById('scratch-save-status');
+      status.innerText = "Saving...";
+      setTimeout(() => { status.innerText = "Auto-saved"; }, 500);
+    }
+
+    function loadScratchpad() {
+      const saved = localStorage.getItem('lifeos_scratchpad') || '';
+      document.getElementById('scratchpad-textarea').value = saved;
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = "bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 animate-enter pointer-events-auto";
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-notion-emerald"></i> ${msg}`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+  </script>
+</body>
+</html>
