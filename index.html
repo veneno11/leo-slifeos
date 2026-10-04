@@ -745,39 +745,44 @@
     let db, auth, userId, unsubscribeState;
     let usingCloudSync = false;
 
-    async function initStorage() {
+   async function initStorage() {
       try {
-        if (typeof __firebase_config !== 'undefined') {
-          const fbConfig = JSON.parse(__firebase_config);
-          const app = initializeApp(fbConfig);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-              await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-              await signInAnonymously(auth);
-          }
+        // 1. Paste your actual Firebase configuration keys here
+        const firebaseConfig = {
+apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
+  authDomain: "leo-slifeos.firebaseapp.com",
+  databaseURL: "https://leo-slifeos-default-rtdb.firebaseio.com",
+  projectId: "leo-slifeos",
+  storageBucket: "leo-slifeos.firebasestorage.app",
+  messagingSenderId: "458227150112",
+  appId: "1:458227150112:web:1c4b78e9b65fdaa6ebbb45"
+        };
 
-          userId = auth.currentUser?.uid;
-          if (userId) {
-            usingCloudSync = true;
-            document.getElementById('sync-status-dot').className = "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#141414] rounded-full animate-pulse";
-            document.getElementById('sync-badge-text').innerText = "Synced";
-            document.getElementById('sync-badge-text').className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono hidden sm:inline-block";
-            
-            // Listen to unified state
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'appData', 'state');
-            unsubscribeState = onSnapshot(docRef, (docSnap) => {
-              if (docSnap.exists()) {
-                window.appState = { ...window.appState, ...docSnap.data() };
-                renderAll();
-              } else {
-                saveToCloud(); // Save defaults if empty
-              }
-            }, (error) => console.error("Sync error:", error));
-            return;
-          }
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        
+        // 2. Sign in anonymously to enable database access
+        await signInAnonymously(auth);
+
+        userId = auth.currentUser?.uid;
+        if (userId) {
+          usingCloudSync = true;
+          document.getElementById('sync-status-dot').className = "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#141414] rounded-full animate-pulse";
+          document.getElementById('sync-badge-text').innerText = "Synced";
+          document.getElementById('sync-badge-text').className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono hidden sm:inline-block";
+          
+          // Listen to unified state
+          const docRef = doc(db, 'artifacts', appId, 'users', userId, 'appData', 'state');
+          unsubscribeState = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+              window.appState = { ...window.appState, ...docSnap.data() };
+              renderAll();
+            } else {
+              saveToCloud(); 
+            }
+          }, (error) => console.error("Sync error:", error));
+          return;
         }
       } catch (err) {
         console.warn("Cloud sync disabled. Using local storage.", err);
