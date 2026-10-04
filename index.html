@@ -9,7 +9,7 @@
   <title>Leo's LifeOS</title>
   
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E3E3E3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'></path></svg>" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -57,6 +57,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const bookIconSvg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E3E3E3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'></path></svg>";
       const manifest = {
         name: "Leo's LifeOS",
         short_name: "LifeOS",
@@ -65,13 +66,13 @@
         background_color: "#141414",
         theme_color: "#141414",
         icons: [{
-          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>",
+          src: bookIconSvg,
           sizes: "192x192",
           type: "image/svg+xml",
           purpose: "any maskable"
         },
         {
-          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>",
+          src: bookIconSvg,
           sizes: "512x512",
           type: "image/svg+xml",
           purpose: "any maskable"
@@ -97,7 +98,7 @@
         navigator.serviceWorker.register(swUrl).then(() => {
           console.log('PWA Service Worker Registered (Blob)');
         }).catch(err => {
-          console.log('PWA Service Worker skipped (expected in some iframe environments)', err);
+          console.log('PWA Service Worker skipped', err);
         });
       }
     });
@@ -137,27 +138,61 @@
     ::-webkit-scrollbar-thumb { background: #333333; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #444444; }
 
+    /* Custom Animation Keyframes */
+    @keyframes fadeSlideUp {
+      from { 
+        opacity: 0; 
+        transform: translateY(14px) scale(0.98); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+
+    @keyframes modalPop {
+      0% {
+        opacity: 0;
+        transform: scale(0.94) translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.8); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .animate-enter {
+      animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     .notion-card {
       background-color: #222222;
       border: 1px solid #333333;
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .notion-card:hover {
       border-color: #444444;
-      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-    }
-
-    @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-enter {
-      animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.6);
     }
 
     .task-card {
-      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .task-card:hover {
+      transform: translateX(2px);
+    }
+
     .task-title-text {
       position: relative;
       transition: color 0.3s ease, opacity 0.3s ease;
@@ -170,51 +205,76 @@
     }
 
     @keyframes popCheck {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.25); }
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.3); }
       100% { transform: scale(1); }
     }
     .animate-check {
-      animation: popCheck 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: popCheck 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .tab-content {
       display: none;
       opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transform: translateY(10px);
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .tab-content.active {
       display: block;
       opacity: 1;
       transform: translateY(0);
+      animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .lock-btn { transition: all 0.2s ease; }
+    .lock-btn { transition: all 0.25s ease; }
     .lock-btn.locked {
       color: #F59E0B;
-      background-color: rgba(245, 158, 11, 0.1);
-      border-color: rgba(245, 158, 11, 0.3);
+      background-color: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.35);
     }
 
     .modal-backdrop {
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(10px);
       transition: opacity 0.3s ease;
     }
 
+    .modal-content-animated {
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     .samsung-floating-pill {
-      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 255, 255, 0.05);
-      background: rgba(26, 26, 26, 0.94);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.05);
+      background: rgba(24, 24, 27, 0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      transition: all 0.3s ease;
+    }
+
+    .mob-nav-btn {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mob-nav-btn.active-tab-mob {
+      color: #FFFFFF !important;
+      transform: translateY(-2px) scale(1.05);
+    }
+    .mob-nav-btn.active-tab-mob i {
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+    }
+
+    .btn-press {
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+    .btn-press:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-28 md:pb-8">
 
-  <header class="sticky top-0 z-30 bg-[#141414]/95 backdrop-blur-md border-b border-notion-border px-3 sm:px-4 py-3">
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
+  <!-- TOP HEADER BAR: Hidden on Mobile (md:flex), Visible on Tablet & Desktop -->
+  <header class="hidden md:flex sticky top-0 z-30 bg-[#141414]/95 backdrop-blur-md border-b border-notion-border px-4 py-3 animate-enter">
+    <div class="max-w-6xl mx-auto w-full flex items-center justify-between gap-2">
       
       <!-- Brand Logo with Live Sync Badge -->
       <div class="flex-1 flex items-center justify-start min-w-0">
@@ -227,39 +287,41 @@
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
-              <h1 class="font-bold text-sm sm:text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LEO'S LIFEOS</h1>
-              <span id="sync-badge-text" class="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 font-mono hidden sm:inline-block">Local</span>
+              <h1 class="font-bold text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LEO'S LIFEOS</h1>
+              <span id="sync-badge-text" class="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 font-mono inline-block">Local</span>
             </div>
-            <p class="text-[9px] sm:text-[10px] text-notion-textMuted tracking-wider uppercase font-medium truncate">Student & Gym Hub</p>
+            <p class="text-[10px] text-notion-textMuted tracking-wider uppercase font-medium truncate">Student & Gym Hub</p>
           </div>
         </div>
       </div>
 
-      <nav class="hidden md:flex items-center space-x-1 bg-notion-sidebar p-1 rounded-xl border border-notion-border shadow-inner">
-        <button onclick="window.switchTab('gym')" id="nav-btn-gym" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2">
+      <!-- Desktop Navigation -->
+      <nav class="flex items-center space-x-1 bg-notion-sidebar p-1 rounded-xl border border-notion-border shadow-inner">
+        <button onclick="window.switchTab('gym')" id="nav-btn-gym" class="tab-nav-btn btn-press px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2">
           <i class="fa-solid fa-dumbbell text-xs"></i> Gym Split
         </button>
-        <button onclick="window.switchTab('student')" id="nav-btn-student" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
+        <button onclick="window.switchTab('student')" id="nav-btn-student" class="tab-nav-btn btn-press px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
           <i class="fa-solid fa-graduation-cap text-xs"></i> Student Hub
         </button>
-        <button onclick="window.switchTab('info')" id="nav-btn-info" class="tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
-          <i class="fa-solid fa-quote-right text-xs"></i> Quotes & Feed
+        <button onclick="window.switchTab('info')" id="nav-btn-info" class="tab-nav-btn btn-press px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50">
+          <i class="fa-solid fa-lightbulb text-xs"></i> Mindset Hub
         </button>
       </nav>
 
       <!-- Right Action Controls -->
-      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <button onclick="window.openModal('settingsModal')" class="p-2 text-notion-textMuted hover:text-white rounded-lg hover:bg-notion-hover transition-all relative" title="Settings & Gemini Key">
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="window.openModal('settingsModal')" class="btn-press p-2 text-notion-textMuted hover:text-white rounded-lg hover:bg-notion-hover transition-all relative" title="Settings & Gemini Key">
           <i class="fa-solid fa-sliders text-sm"></i>
-          <span id="api-indicator" class="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full hidden shadow-[0_0_5px_#8B5CF6]"></span>
+          <span id="api-indicator" class="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full hidden shadow-[0_0_6px_#8B5CF6]"></span>
         </button>
-        <button onclick="window.openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-lg transition-all transform hover:scale-105 flex items-center gap-1 shadow-sm">
-          <i class="fa-solid fa-plus text-xs"></i> <span class="hidden xs:inline">Task</span>
+        <button onclick="window.openModal('addAssignmentModal')" class="btn-press bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-3 py-1.5 rounded-lg transition-all transform hover:scale-105 flex items-center gap-1 shadow-sm">
+          <i class="fa-solid fa-plus text-xs"></i> <span>Task</span>
         </button>
       </div>
     </div>
   </header>
 
+  <!-- DAILY QUOTE BANNER -->
   <section id="daily-quote-banner" class="max-w-6xl mx-auto w-full px-3 sm:px-4 pt-3 sm:pt-4 animate-enter">
     <div class="notion-card rounded-xl p-3 sm:p-4 flex items-center justify-between relative overflow-hidden bg-gradient-to-r from-[#1E1E1E] via-[#222222] to-[#1A1A1E] border-l-4 border-l-zinc-300">
       <div class="flex items-center gap-3 pr-2 min-w-0">
@@ -267,13 +329,13 @@
           <i class="fa-solid fa-quote-left"></i>
         </div>
         <div class="min-w-0">
-          <p id="banner-quote-text" class="text-xs sm:text-sm font-medium italic text-notion-textPrimary line-clamp-2 leading-relaxed">"You have no enemies. No one has any enemies."</p>
+          <p id="banner-quote-text" class="text-xs sm:text-sm font-medium italic text-notion-textPrimary line-clamp-2 leading-relaxed transition-all duration-300">"You have no enemies. No one has any enemies."</p>
           <div class="flex items-center gap-2 mt-0.5">
             <span id="banner-quote-author" class="text-[10px] sm:text-[11px] text-notion-textMuted font-medium block truncate">— Thors Snorresson</span>
           </div>
         </div>
       </div>
-      <button id="banner-refresh-btn" onclick="window.cycleInfiniteQuote()" class="p-2 text-notion-textMuted hover:text-white hover:bg-notion-hover rounded-lg transition-all shrink-0 ml-1 flex items-center justify-center" title="Next Quote">
+      <button id="banner-refresh-btn" onclick="window.cycleInfiniteQuote()" class="btn-press p-2 text-notion-textMuted hover:text-white hover:bg-notion-hover rounded-lg transition-all shrink-0 ml-1 flex items-center justify-center" title="Next Quote">
         <i id="banner-refresh-icon" class="fa-solid fa-wand-magic-sparkles text-xs"></i>
       </button>
     </div>
@@ -294,16 +356,16 @@
         </div>
 
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 pt-1 sm:pt-0 shrink-0 scrollbar-none">
-          <button onclick="window.setGymSplit('chest')" id="split-btn-chest" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200">
+          <button onclick="window.setGymSplit('chest')" id="split-btn-chest" class="split-btn btn-press px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200">
             Chest & Shoulders
           </button>
-          <button onclick="window.setGymSplit('back')" id="split-btn-back" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+          <button onclick="window.setGymSplit('back')" id="split-btn-back" class="split-btn btn-press px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
             Back & Biceps
           </button>
-          <button onclick="window.setGymSplit('arms')" id="split-btn-arms" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+          <button onclick="window.setGymSplit('arms')" id="split-btn-arms" class="split-btn btn-press px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
             Arms Focus
           </button>
-          <button onclick="window.setGymSplit('legs')" id="split-btn-legs" class="split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
+          <button onclick="window.setGymSplit('legs')" id="split-btn-legs" class="split-btn btn-press px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap">
             Legs & Core
           </button>
         </div>
@@ -312,15 +374,15 @@
       <!-- Action Control Toolbar -->
       <div class="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5">
         <div class="flex flex-wrap items-center gap-2">
-          <button id="shuffle-btn" onclick="window.shuffleUnlockedBlocks()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+          <button id="shuffle-btn" onclick="window.shuffleUnlockedBlocks()" class="btn-press bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
             <i id="shuffle-icon" class="fa-solid fa-shuffle"></i> Shuffle Unlocked Blocks
           </button>
-          <button onclick="window.openModal('addBlockModal')" class="bg-notion-hover hover:bg-notion-border text-notion-textPrimary px-3 py-2 rounded-lg text-xs font-medium transition-all border border-notion-border flex items-center justify-center gap-1.5">
+          <button onclick="window.openModal('addBlockModal')" class="btn-press bg-notion-hover hover:bg-notion-border text-notion-textPrimary px-3 py-2 rounded-lg text-xs font-medium transition-all border border-notion-border flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-plus"></i> Add Movement Block
           </button>
         </div>
         <div class="text-[11px] text-notion-textMuted flex items-center gap-2 self-start xs:self-auto">
-          <span class="inline-block w-2 h-2 rounded-full bg-notion-amber shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span> Locked blocks stay fixed
+          <span class="inline-block w-2 h-2 rounded-full bg-notion-amber shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse"></span> Locked blocks stay fixed
         </div>
       </div>
 
@@ -335,7 +397,7 @@
           <h3 class="text-sm sm:text-base font-bold flex items-center gap-2 text-notion-emerald">
             <i class="fa-solid fa-trophy"></i> Personal Best (PB) Log
           </h3>
-          <button onclick="window.openModal('logSetModal')" class="text-xs bg-notion-emerald/10 border border-notion-emerald/30 text-notion-emerald hover:bg-notion-emerald/20 font-semibold px-2.5 py-1 rounded-lg transition-all">
+          <button onclick="window.openModal('logSetModal')" class="btn-press text-xs bg-notion-emerald/10 border border-notion-emerald/30 text-notion-emerald hover:bg-notion-emerald/20 font-semibold px-2.5 py-1 rounded-lg transition-all">
             + Log Set / PR
           </button>
         </div>
@@ -358,25 +420,25 @@
             <p class="text-xs text-notion-textMuted">Organize tasks, exams, and labs across all your courses.</p>
           </div>
 
-          <button onclick="window.openModal('addAssignmentModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
+          <button onclick="window.openModal('addAssignmentModal')" class="btn-press bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
             <i class="fa-solid fa-plus text-xs"></i> Add Assignment
           </button>
         </div>
 
-        <!-- Grouping & Sorting Mobile-optimized Bar -->
+        <!-- Grouping & Sorting Bar -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pt-3 border-t border-notion-border/60 text-xs">
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="text-notion-textMuted font-medium text-[11px] mr-1">Group By:</span>
-            <button onclick="window.setAssignmentGrouping('date')" id="group-btn-date" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">By Date</button>
-            <button onclick="window.setAssignmentGrouping('course')" id="group-btn-course" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Course</button>
-            <button onclick="window.setAssignmentGrouping('type')" id="group-btn-type" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Type</button>
-            <button onclick="window.setAssignmentGrouping('none')" id="group-btn-none" class="group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Flat List</button>
+            <button onclick="window.setAssignmentGrouping('date')" id="group-btn-date" class="group-btn btn-press px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">By Date</button>
+            <button onclick="window.setAssignmentGrouping('course')" id="group-btn-course" class="group-btn btn-press px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Course</button>
+            <button onclick="window.setAssignmentGrouping('type')" id="group-btn-type" class="group-btn btn-press px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">By Type</button>
+            <button onclick="window.setAssignmentGrouping('none')" id="group-btn-none" class="group-btn btn-press px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Flat List</button>
           </div>
 
           <div class="flex items-center gap-1.5">
             <span class="text-notion-textMuted font-medium text-[11px] mr-1">Sort:</span>
-            <button onclick="window.setAssignmentSorting('dueAsc')" id="sort-btn-dueAsc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">Earliest</button>
-            <button onclick="window.setAssignmentSorting('dueDesc')" id="sort-btn-dueDesc" class="sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Latest</button>
+            <button onclick="window.setAssignmentSorting('dueAsc')" id="sort-btn-dueAsc" class="sort-btn btn-press px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700">Earliest</button>
+            <button onclick="window.setAssignmentSorting('dueDesc')" id="sort-btn-dueDesc" class="sort-btn btn-press px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white">Latest</button>
           </div>
         </div>
       </div>
@@ -393,13 +455,13 @@
       <div class="bg-notion-sidebar p-3.5 sm:p-4 rounded-xl border border-notion-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div>
           <h2 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-100">
-            <i class="fa-solid fa-quote-right text-zinc-300"></i> Quotes & Feed
+            <i class="fa-solid fa-lightbulb text-zinc-300"></i> Mindset Hub & Feed
           </h2>
           <p class="text-xs text-notion-textMuted">Curated creator network, daily perspective, and personal notes.</p>
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <button onclick="window.openModal('addYtChannelModal')" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+          <button onclick="window.openModal('addYtChannelModal')" class="btn-press bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
             <i class="fa-solid fa-plus"></i> Add Channel
           </button>
         </div>
@@ -417,7 +479,7 @@
 
           <!-- YouTube Category Filters -->
           <div id="yt-filter-container" class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs scrollbar-none">
-            <!-- Rendered by JS based on unique categories -->
+            <!-- Rendered by JS -->
           </div>
         </div>
 
@@ -436,12 +498,12 @@
               <h3 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-zinc-200">
                 <i class="fa-solid fa-quote-left text-purple-400"></i> Quotes
               </h3>
-              <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="text-xs bg-purple-900/30 hover:bg-purple-800/40 text-purple-200 border border-purple-800/50 font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
+              <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn-press text-xs bg-purple-900/30 hover:bg-purple-800/40 text-purple-200 border border-purple-800/50 font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
                 <i class="fa-solid fa-rotate text-xs"></i> Next
               </button>
             </div>
 
-            <div id="quote-card-display" class="bg-notion-bg p-4 rounded-xl border border-notion-border relative flex-grow flex flex-col justify-center my-2 z-10">
+            <div id="quote-card-display" class="bg-notion-bg p-4 rounded-xl border border-notion-border relative flex-grow flex flex-col justify-center my-2 z-10 transition-all duration-300">
               <p id="quote-display-text" class="text-sm sm:text-base italic font-medium leading-relaxed text-notion-textPrimary text-center">
                 "There is no shame in falling down. True shame is in not standing back up."
               </p>
@@ -465,12 +527,12 @@
               <h3 class="text-xs sm:text-sm font-bold flex items-center gap-2 text-zinc-200">
                 <i class="fa-solid fa-pen-to-square text-zinc-400"></i> Scratchpad & Notes
               </h3>
-              <span id="scratch-save-status" class="text-[10px] text-notion-textMuted font-mono">Auto-saved</span>
+              <span id="scratch-save-status" class="text-[10px] text-notion-textMuted font-mono transition-colors">Auto-saved</span>
             </div>
             
             <p class="text-[11px] text-notion-textMuted">Quick thoughts, formulas, or reminders auto-saved locally.</p>
 
-            <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Write thoughts, lecture notes, or quick reminders..." class="w-full flex-grow min-h-[160px] bg-notion-bg border border-notion-border rounded-lg p-3 text-xs text-notion-textPrimary focus:outline-none focus:border-zinc-400 font-mono leading-relaxed resize-none"></textarea>
+            <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Write thoughts, lecture notes, or quick reminders..." class="w-full flex-grow min-h-[160px] bg-notion-bg border border-notion-border rounded-lg p-3 text-xs text-notion-textPrimary focus:outline-none focus:border-zinc-400 font-mono leading-relaxed resize-none transition-all"></textarea>
           </div>
         </div>
 
@@ -478,34 +540,54 @@
     </div>
   </main>
 
-  <!-- MOBILE FLOATING NAVIGATION PILL -->
+  <!-- MOBILE FLOATING NAVIGATION PILL (Includes integrated Settings button & active indicators) -->
   <div class="md:hidden fixed bottom-4 inset-x-0 z-40 flex justify-center w-full px-4 pointer-events-none">
-    <footer class="samsung-floating-pill rounded-full px-6 py-2.5 w-full max-w-xs pointer-events-auto shadow-2xl">
+    <footer class="samsung-floating-pill rounded-full px-5 py-2.5 w-full max-w-sm pointer-events-auto shadow-2xl">
       <div class="flex items-center justify-around">
-        <button onclick="window.switchTab('gym')" id="mob-btn-gym" class="mob-nav-btn flex flex-col items-center gap-1 text-white transition-all transform active:scale-95">
+        <button onclick="window.switchTab('gym')" id="mob-btn-gym" class="mob-nav-btn active-tab-mob flex flex-col items-center gap-1 text-white">
           <i class="fa-solid fa-dumbbell text-base"></i>
           <span class="text-[9px] font-bold tracking-wider uppercase">Gym</span>
         </button>
-        <button onclick="window.switchTab('student')" id="mob-btn-student" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
+        <button onclick="window.switchTab('student')" id="mob-btn-student" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted">
           <i class="fa-solid fa-graduation-cap text-base"></i>
           <span class="text-[9px] font-bold tracking-wider uppercase">School</span>
         </button>
-        <button onclick="window.switchTab('info')" id="mob-btn-info" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted transition-all transform active:scale-95">
-          <i class="fa-solid fa-quote-right text-base"></i>
-          <span class="text-[9px] font-bold tracking-wider uppercase">Quotes</span>
+        <button onclick="window.switchTab('info')" id="mob-btn-info" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted">
+          <i class="fa-solid fa-lightbulb text-base"></i>
+          <span class="text-[9px] font-bold tracking-wider uppercase">Mindset</span>
+        </button>
+        <button onclick="window.openModal('settingsModal')" class="mob-nav-btn flex flex-col items-center gap-1 text-notion-textMuted relative">
+          <i class="fa-solid fa-gear text-base"></i>
+          <span class="text-[9px] font-bold tracking-wider uppercase">Settings</span>
+          <span id="mob-api-indicator" class="absolute top-0 right-1 w-2 h-2 bg-purple-500 rounded-full hidden shadow-[0_0_6px_#8B5CF6]"></span>
         </button>
       </div>
     </footer>
   </div>
 
   <!-- MODALS SECTION -->
+
+  <!-- MODAL: SETTINGS -->
   <div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
-    <div class="notion-card rounded-xl max-w-lg w-full p-4 sm:p-5 space-y-4 bg-notion-card max-h-[90vh] overflow-y-auto">
+    <div class="notion-card modal-content-animated rounded-xl max-w-lg w-full p-4 sm:p-5 space-y-4 bg-notion-card max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="flex items-center justify-between border-b border-notion-border pb-3">
-        <h3 class="text-sm font-bold flex items-center gap-2">
-          <i class="fa-solid fa-sliders accent-text"></i> Settings & Configuration
-        </h3>
-        <button onclick="window.closeModal('settingsModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-purple-400"></i>
+          <h3 class="text-sm font-bold text-zinc-100">Settings & Configuration</h3>
+        </div>
+        <button onclick="window.closeModal('settingsModal')" class="btn-press text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Sync Status Banner inside Settings -->
+      <div class="bg-notion-bg p-3 rounded-xl border border-notion-border flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div id="settings-sync-dot" class="w-2.5 h-2.5 rounded-full bg-zinc-500"></div>
+          <div>
+            <div class="text-xs font-bold text-zinc-200">Cloud Sync Status</div>
+            <div id="settings-sync-label" class="text-[10px] text-notion-textMuted">Local Mode</div>
+          </div>
+        </div>
+        <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">LifeOS Engine</span>
       </div>
 
       <!-- Gemini API Key Input Card -->
@@ -521,37 +603,37 @@
         <p class="text-[11px] text-notion-textMuted leading-normal">
           Add your Google API key to enable instant exercise muscle classification, quote generation, and auto-sorting YouTube channels into topics!
         </p>
-        <div class="flex gap-2">
-          <input type="password" id="gemini-key-input" placeholder="AIzaSy..." class="w-full bg-notion-sidebar border border-notion-border rounded-lg p-2 text-xs font-mono text-notion-textPrimary focus:outline-none focus:border-purple-500" />
-          <button onclick="window.saveGeminiApiKey()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 shadow-sm transition-all">
+        <div class="flex gap-2 pt-1">
+          <input type="password" id="gemini-key-input" placeholder="AIzaSy..." class="w-full bg-notion-sidebar border border-notion-border rounded-lg p-2 text-xs font-mono text-notion-textPrimary focus:outline-none focus:border-purple-500 transition-all" />
+          <button onclick="window.saveGeminiApiKey()" class="btn-press bg-purple-600 hover:bg-purple-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold shrink-0 shadow-sm transition-all">
             Save Key
           </button>
         </div>
       </div>
 
       <div class="flex justify-end pt-3 border-t border-notion-border">
-        <button onclick="window.closeModal('settingsModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg">Done</button>
+        <button onclick="window.closeModal('settingsModal')" class="btn-press bg-zinc-200 hover:bg-white text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg">Done</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: ADD ASSIGNMENT -->
   <div id="addAssignmentModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
-    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+    <div class="notion-card modal-content-animated rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card shadow-2xl">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-zinc-100">+ Add New Assignment</h3>
-        <button onclick="window.closeModal('addAssignmentModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('addAssignmentModal')" class="btn-press text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="window.handleAddAssignment(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Assignment Title</label>
-          <input type="text" id="asgn-title-input" required placeholder="e.g. Problem Set #4 or Lab Report" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400" />
+          <input type="text" id="asgn-title-input" required placeholder="e.g. Problem Set #4 or Lab Report" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400 transition-all" />
         </div>
         
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="block text-notion-textMuted mb-1 font-medium">Course</label>
-            <select id="asgn-course-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400">
+            <select id="asgn-course-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400 transition-all">
               <option value="AP Chemistry">AP Chemistry</option>
               <option value="AP Precalculus">AP Precalculus</option>
               <option value="AP Economics">AP Economics</option>
@@ -563,7 +645,7 @@
           </div>
           <div>
             <label class="block text-notion-textMuted mb-1 font-medium">Type</label>
-            <select id="asgn-type-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400">
+            <select id="asgn-type-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400 transition-all">
               <option value="Homework">Homework</option>
               <option value="Classwork">Classwork</option>
               <option value="Project">Project</option>
@@ -576,12 +658,12 @@
 
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Due Date</label>
-          <input type="date" id="asgn-date-input" required class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400" />
+          <input type="date" id="asgn-date-input" required class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-zinc-400 transition-all" />
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="window.closeModal('addAssignmentModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-zinc-200 text-zinc-950 font-bold hover:bg-white">Save Assignment</button>
+          <button type="button" onclick="window.closeModal('addAssignmentModal')" class="btn-press px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="btn-press px-4 py-1.5 rounded-lg bg-zinc-200 text-zinc-950 font-bold hover:bg-white">Save Assignment</button>
         </div>
       </form>
     </div>
@@ -589,29 +671,29 @@
 
   <!-- MODAL: ADD EXERCISE BLOCK -->
   <div id="addBlockModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
-    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+    <div class="notion-card modal-content-animated rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card shadow-2xl">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-notion-amber">+ Add Exercise Block</h3>
-        <button onclick="window.closeModal('addBlockModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('addBlockModal')" class="btn-press text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="window.handleAddExerciseBlock(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Primary Exercise Name</label>
-          <input type="text" id="block-primary-input" required placeholder="e.g. Incline Dumbbell Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber mb-2" />
+          <input type="text" id="block-primary-input" required placeholder="e.g. Incline Dumbbell Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber mb-2 transition-all" />
           
-          <button type="button" onclick="window.aiAutoDetectExercise()" id="btn-detect-muscle" class="w-full bg-zinc-800 hover:bg-zinc-700 text-purple-300 text-xs font-semibold py-2 rounded-lg border border-zinc-700 transition-colors shadow-sm flex items-center justify-center gap-1.5">
+          <button type="button" onclick="window.aiAutoDetectExercise()" id="btn-detect-muscle" class="btn-press w-full bg-zinc-800 hover:bg-zinc-700 text-purple-300 text-xs font-semibold py-2 rounded-lg border border-zinc-700 transition-colors shadow-sm flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-wand-magic-sparkles"></i> Detect Muscle Group
           </button>
         </div>
 
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Target Muscle / Muscle Head</label>
-          <input type="text" id="block-target-input" required placeholder="e.g. Upper Chest" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber" />
+          <input type="text" id="block-target-input" required placeholder="e.g. Upper Chest" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber transition-all" />
         </div>
 
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Split Category</label>
-          <select id="block-split-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber">
+          <select id="block-split-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber transition-all">
             <option value="chest">Chest & Shoulders</option>
             <option value="back">Back & Biceps</option>
             <option value="arms">Arms Focus</option>
@@ -621,12 +703,12 @@
 
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Alternative Movements (Comma Separated)</label>
-          <input type="text" id="block-alternatives-input" placeholder="e.g. Low-to-High Cable Fly, Smith Machine Incline" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber" />
+          <input type="text" id="block-alternatives-input" placeholder="e.g. Low-to-High Cable Fly, Smith Machine Incline" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-amber transition-all" />
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="window.closeModal('addBlockModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-amber text-black font-bold hover:bg-yellow-500">Save Block</button>
+          <button type="button" onclick="window.closeModal('addBlockModal')" class="btn-press px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="btn-press px-4 py-1.5 rounded-lg bg-notion-amber text-black font-bold hover:bg-yellow-500">Save Block</button>
         </div>
       </form>
     </div>
@@ -634,22 +716,22 @@
 
   <!-- MODAL: LOG SET / PB -->
   <div id="logSetModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
-    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+    <div class="notion-card modal-content-animated rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card shadow-2xl">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-notion-emerald"><i class="fa-solid fa-trophy"></i> Log Set / Personal Best</h3>
-        <button onclick="window.closeModal('logSetModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('logSetModal')" class="btn-press text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="window.handleLogSet(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">Exercise Name</label>
-          <input type="text" id="log-exercise-name" required placeholder="e.g. Barbell Bench Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+          <input type="text" id="log-exercise-name" required placeholder="e.g. Barbell Bench Press" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald transition-all" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-notion-textMuted mb-1 font-medium">Weight</label>
             <div class="flex gap-2">
-              <input type="number" id="log-weight-input" required step="0.5" placeholder="185" oninput="window.updateWeightHint()" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
-              <select id="log-weight-unit" onchange="window.updateWeightHint()" class="bg-notion-sidebar border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald shrink-0 w-[65px] text-center">
+              <input type="number" id="log-weight-input" required step="0.5" placeholder="185" oninput="window.updateWeightHint()" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald transition-all" />
+              <select id="log-weight-unit" onchange="window.updateWeightHint()" class="bg-notion-sidebar border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald shrink-0 w-[65px] text-center transition-all">
                 <option value="lbs">lbs</option>
                 <option value="kg">kg</option>
               </select>
@@ -658,12 +740,12 @@
           </div>
           <div>
             <label class="block text-notion-textMuted mb-1 font-medium">Reps Performed</label>
-            <input type="number" id="log-reps-input" required step="1" placeholder="8" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+            <input type="number" id="log-reps-input" required step="1" placeholder="8" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald transition-all" />
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border mt-1">
-          <button type="button" onclick="window.closeModal('logSetModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-emerald text-black font-bold hover:bg-emerald-400">Log PR</button>
+          <button type="button" onclick="window.closeModal('logSetModal')" class="btn-press px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" class="btn-press px-4 py-1.5 rounded-lg bg-notion-emerald text-black font-bold hover:bg-emerald-400">Log PR</button>
         </div>
       </form>
     </div>
@@ -671,24 +753,24 @@
 
   <!-- MODAL: ADD YOUTUBE CHANNEL -->
   <div id="addYtChannelModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-4">
-    <div class="notion-card rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card">
+    <div class="notion-card modal-content-animated rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4 bg-notion-card shadow-2xl">
       <div class="flex items-center justify-between border-b border-notion-border pb-2">
         <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
           <i class="fa-brands fa-youtube text-rose-500"></i> Add Creator to Feed
         </h3>
-        <button onclick="window.closeModal('addYtChannelModal')" class="text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="window.closeModal('addYtChannelModal')" class="btn-press text-notion-textMuted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="window.handleAddChannel(event)" class="space-y-3 text-xs">
         <div>
           <label class="block text-notion-textMuted mb-1 font-medium">YouTube Handle</label>
-          <input type="text" id="yt-handle-input" required placeholder="e.g. @JeffNippard" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500 font-mono" />
+          <input type="text" id="yt-handle-input" required placeholder="e.g. @JeffNippard" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500 font-mono transition-all" />
         </div>
         <div id="yt-category-container">
           <label class="block text-notion-textMuted mb-1 font-medium flex justify-between">
             <span>Category</span>
             <span class="text-[9px] text-purple-400 hidden" id="yt-ai-note"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Sort enabled</span>
           </label>
-          <select id="yt-category-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500">
+          <select id="yt-category-input" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-rose-500 transition-all">
             <option value="Fitness">Fitness</option>
             <option value="Academics">Academics</option>
             <option value="Tech">Tech</option>
@@ -697,8 +779,8 @@
           </select>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
-          <button type="button" onclick="window.closeModal('addYtChannelModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
-          <button type="submit" id="btn-add-yt" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all">Add Channel</button>
+          <button type="button" onclick="window.closeModal('addYtChannelModal')" class="btn-press px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
+          <button type="submit" id="btn-add-yt" class="btn-press px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all">Add Channel</button>
         </div>
       </form>
     </div>
@@ -709,8 +791,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- State Initialization & Globals ---
     window.appState = {
@@ -749,7 +831,7 @@
     let db, auth, userId, unsubscribeState;
     let usingCloudSync = false;
 
-   async function initStorage() {
+    async function initStorage() {
       try {
         const firebaseConfig = {
           apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
@@ -770,10 +852,20 @@
         userId = auth.currentUser?.uid;
         if (userId) {
           usingCloudSync = true;
-          document.getElementById('sync-status-dot').className = "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#141414] rounded-full animate-pulse";
-          document.getElementById('sync-badge-text').innerText = "Synced";
-          document.getElementById('sync-badge-text').className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono hidden sm:inline-block";
+          const statusDot = document.getElementById('sync-status-dot');
+          if (statusDot) statusDot.className = "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#141414] rounded-full animate-pulse";
           
+          const badgeText = document.getElementById('sync-badge-text');
+          if (badgeText) {
+            badgeText.innerText = "Synced";
+            badgeText.className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono inline-block";
+          }
+
+          const setSyncDot = document.getElementById('settings-sync-dot');
+          const setSyncLbl = document.getElementById('settings-sync-label');
+          if (setSyncDot) setSyncDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+          if (setSyncLbl) setSyncLbl.innerText = "Synced to Cloud";
+
           const docRef = doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state');
           unsubscribeState = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
@@ -816,12 +908,12 @@
       }
     }
 
-    // --- STREAMING_CHUNK:Setting up Gemini API Helpers... ---
-    
+    // --- Gemini API Key Helpers ---
     window.addEventListener('DOMContentLoaded', () => {
       const savedKey = localStorage.getItem('geminiApiKey');
       if (savedKey) {
-        document.getElementById('gemini-key-input').value = savedKey;
+        const input = document.getElementById('gemini-key-input');
+        if (input) input.value = savedKey;
         updateApiUIStatus(true);
       }
     });
@@ -843,17 +935,24 @@
     function updateApiUIStatus(hasKey) {
       const badge = document.getElementById('api-key-status-badge');
       const indicator = document.getElementById('api-indicator');
+      const mobIndicator = document.getElementById('mob-api-indicator');
       const ytAiNote = document.getElementById('yt-ai-note');
       
       if (hasKey) {
-        badge.innerText = "Active";
-        badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-900 text-purple-200";
-        indicator.classList.remove('hidden');
+        if (badge) {
+          badge.innerText = "Active";
+          badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-900 text-purple-200";
+        }
+        if (indicator) indicator.classList.remove('hidden');
+        if (mobIndicator) mobIndicator.classList.remove('hidden');
         if (ytAiNote) ytAiNote.classList.remove('hidden');
       } else {
-        badge.innerText = "Not Set";
-        badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-zinc-800 text-zinc-400";
-        indicator.classList.add('hidden');
+        if (badge) {
+          badge.innerText = "Not Set";
+          badge.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-zinc-800 text-zinc-400";
+        }
+        if (indicator) indicator.classList.add('hidden');
+        if (mobIndicator) mobIndicator.classList.add('hidden');
         if (ytAiNote) ytAiNote.classList.add('hidden');
       }
     }
@@ -880,12 +979,13 @@
       throw new Error("UNEXPECTED_RESPONSE");
     }
 
-    // --- STREAMING_CHUNK:Implementing UI Tab & Notification Logic... ---
-
+    // --- Tab Switching & Navigation Logic ---
     window.switchTab = function(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.classList.add('active');
       
+      // Desktop Nav Styling
       document.querySelectorAll('.tab-nav-btn').forEach(el => {
         el.classList.remove('text-white', 'bg-zinc-800', 'border-zinc-700');
         el.classList.add('text-notion-textMuted');
@@ -896,21 +996,28 @@
         activeDesktop.classList.remove('text-notion-textMuted');
       }
 
+      // Mobile Nav Styling
       document.querySelectorAll('.mob-nav-btn').forEach(el => {
-        el.classList.remove('text-white');
+        el.classList.remove('active-tab-mob');
         el.classList.add('text-notion-textMuted');
       });
       const activeMob = document.getElementById('mob-btn-' + tabId);
-      if (activeMob) activeMob.classList.add('text-white');
+      if (activeMob) {
+        activeMob.classList.add('active-tab-mob');
+        activeMob.classList.remove('text-notion-textMuted');
+      }
       
       window.currentTab = tabId;
     }
 
     window.openModal = function(id) {
-      document.getElementById(id).classList.remove('hidden');
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('hidden');
     }
+    
     window.closeModal = function(id) {
-      document.getElementById(id).classList.add('hidden');
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('hidden');
     }
 
     window.showToast = function(msg, type="info") {
@@ -922,7 +1029,7 @@
       if (type === 'success') { icon = '<i class="fa-solid fa-check-circle"></i>'; colorClass = 'bg-emerald-950 border-emerald-800 text-emerald-300'; }
       if (type === 'error') { icon = '<i class="fa-solid fa-circle-exclamation"></i>'; colorClass = 'bg-rose-950 border-rose-800 text-rose-300'; }
 
-      toast.className = `flex items-center gap-2 px-4 py-2.5 rounded-lg border shadow-lg text-xs font-semibold animate-enter ${colorClass}`;
+      toast.className = `flex items-center gap-2 px-4 py-2.5 rounded-lg border shadow-xl text-xs font-semibold animate-enter ${colorClass}`;
       toast.innerHTML = `${icon} <span>${msg}</span>`;
       
       container.appendChild(toast);
@@ -939,10 +1046,11 @@
       renderPbLogs();
       renderTasks();
       renderYtChannels();
-      document.getElementById('scratchpad-textarea').value = window.appState.scratchpadText || "";
+      const scratch = document.getElementById('scratchpad-textarea');
+      if (scratch) scratch.value = window.appState.scratchpadText || "";
     }
 
-    // --- GYM LOGIC ---
+    // --- GYM SPLIT LOGIC ---
     window.setGymSplit = function(split) {
       window.currentGymSplit = split;
       document.querySelectorAll('.split-btn').forEach(btn => {
@@ -951,8 +1059,10 @@
         btn.classList.replace('border-zinc-200', 'border-notion-border');
       });
       const activeBtn = document.getElementById('split-btn-' + split);
-      activeBtn.classList.add('bg-zinc-200', 'text-zinc-950', 'border-zinc-200');
-      activeBtn.classList.remove('bg-transparent', 'text-notion-textMuted', 'border-notion-border');
+      if (activeBtn) {
+        activeBtn.classList.add('bg-zinc-200', 'text-zinc-950', 'border-zinc-200');
+        activeBtn.classList.remove('bg-transparent', 'text-notion-textMuted', 'border-notion-border');
+      }
       renderGymBlocks();
     }
 
@@ -967,8 +1077,8 @@
 
     window.shuffleUnlockedBlocks = function() {
       const icon = document.getElementById('shuffle-icon');
-      icon.classList.add('fa-spin');
-      setTimeout(() => icon.classList.remove('fa-spin'), 500);
+      if (icon) icon.classList.add('fa-spin');
+      setTimeout(() => { if (icon) icon.classList.remove('fa-spin'); }, 500);
 
       let shuffled = false;
       window.appState.gymBlocks.filter(b => b.split === window.currentGymSplit && !b.locked).forEach(block => {
@@ -994,22 +1104,23 @@
 
     function renderGymBlocks() {
       const container = document.getElementById('exercise-blocks-container');
+      if (!container) return;
       const blocks = window.appState.gymBlocks.filter(b => b.split === window.currentGymSplit);
       
       if (blocks.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl">No exercise blocks configured for this split. Add one to start.</div>`;
+        container.innerHTML = `<div class="col-span-full p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl animate-enter">No exercise blocks configured for this split. Add one to start.</div>`;
         return;
       }
       
       container.innerHTML = blocks.map(b => `
-        <div class="notion-card rounded-xl p-3 sm:p-4 flex flex-col justify-between border-l-4 ${b.locked ? 'border-l-notion-amber' : 'border-l-zinc-700'} relative overflow-hidden group">
-          <button onclick="window.deleteGymBlock('${b.id}')" class="absolute top-2 right-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all z-10" title="Delete Block">
+        <div class="notion-card animate-enter rounded-xl p-3.5 sm:p-4 flex flex-col justify-between border-l-4 ${b.locked ? 'border-l-notion-amber' : 'border-l-zinc-700'} relative overflow-hidden group">
+          <button onclick="window.deleteGymBlock('${b.id}')" class="btn-press absolute top-2 right-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all z-10" title="Delete Block">
             <i class="fa-solid fa-trash text-[10px]"></i>
           </button>
           <div>
             <div class="flex items-start justify-between gap-2">
               <span class="text-[10px] font-semibold tracking-wider uppercase text-notion-textMuted">${b.target}</span>
-              <button onclick="window.toggleBlockLock('${b.id}')" class="lock-btn ${b.locked ? 'locked' : 'text-zinc-500 hover:text-white'} px-1.5 py-0.5 rounded text-[10px] z-10">
+              <button onclick="window.toggleBlockLock('${b.id}')" class="lock-btn btn-press ${b.locked ? 'locked' : 'text-zinc-500 hover:text-white'} px-1.5 py-0.5 rounded text-[10px] z-10">
                 <i class="fa-solid ${b.locked ? 'fa-lock' : 'fa-lock-open'}"></i>
               </button>
             </div>
@@ -1019,7 +1130,7 @@
              <div class="text-[10px] text-notion-textMuted flex items-center gap-1.5 max-w-[70%]">
                <i class="fa-solid fa-rotate text-[9px]"></i> <span class="truncate">${b.alternatives.length > 0 ? b.alternatives.join(', ') : 'No alternatives'}</span>
              </div>
-             <div class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">
+             <div class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700/60">
                3 x 8-12
              </div>
           </div>
@@ -1027,21 +1138,23 @@
       `).join('');
     }
 
-    // --- STREAMING_CHUNK:Implementing Weight Conversion & Handling ---
+    // Weight conversion & PB logging
     window.updateWeightHint = function() {
       let val = parseFloat(document.getElementById('log-weight-input').value);
       let unit = document.getElementById('log-weight-unit').value;
       let hint = document.getElementById('weight-conversion-hint');
       
       if (isNaN(val)) {
-        hint.innerText = '';
+        if (hint) hint.innerText = '';
         return;
       }
       
-      if (unit === 'kg') {
-        hint.innerText = `≈ ${(val * 2.20462).toFixed(1)} lbs`;
-      } else {
-        hint.innerText = `≈ ${(val / 2.20462).toFixed(1)} kg`;
+      if (hint) {
+        if (unit === 'kg') {
+          hint.innerText = `≈ ${(val * 2.20462).toFixed(1)} lbs`;
+        } else {
+          hint.innerText = `≈ ${(val / 2.20462).toFixed(1)} kg`;
+        }
       }
     };
 
@@ -1051,7 +1164,6 @@
       let weightVal = parseFloat(document.getElementById('log-weight-input').value);
       let unit = document.getElementById('log-weight-unit').value;
       
-      // Always store as lbs
       let finalLbs = weightVal;
       if (unit === 'kg') {
         finalLbs = parseFloat((weightVal * 2.20462).toFixed(1));
@@ -1070,22 +1182,24 @@
       renderPbLogs();
       window.closeModal('logSetModal');
       e.target.reset();
-      document.getElementById('weight-conversion-hint').innerText = '';
+      const hint = document.getElementById('weight-conversion-hint');
+      if (hint) hint.innerText = '';
       window.showToast("Personal Best Logged!", "success");
     };
 
     function renderPbLogs() {
       const container = document.getElementById('pb-records-container');
+      if (!container) return;
       const sortedLogs = [...window.appState.pbLogs].sort((a,b) => new Date(b.date) - new Date(a.date));
       
       if (sortedLogs.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-4 text-center text-notion-textMuted text-xs">No PRs logged yet.</div>`;
+        container.innerHTML = `<div class="col-span-full p-4 text-center text-notion-textMuted text-xs animate-enter">No PRs logged yet.</div>`;
         return;
       }
       
       container.innerHTML = sortedLogs.map(l => `
-        <div class="bg-notion-bg border border-notion-border rounded-lg p-3 relative group">
-          <button onclick="window.deletePbLog('${l.id}')" class="absolute top-1.5 right-1.5 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all" title="Delete PR">
+        <div class="bg-notion-bg border border-notion-border rounded-lg p-3 relative group animate-enter hover:border-notion-emerald/40 transition-all">
+          <button onclick="window.deletePbLog('${l.id}')" class="btn-press absolute top-1.5 right-1.5 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all" title="Delete PR">
             <i class="fa-solid fa-trash text-[10px]"></i>
           </button>
           <div class="text-[10px] text-notion-textMuted mb-0.5">${new Date(l.date).toLocaleDateString()}</div>
@@ -1161,7 +1275,7 @@
         }
         window.showToast("Muscle grouped by AI", "success");
       } catch (err) {
-        if(err.message === "API_KEY_MISSING") {
+        if (err.message === "API_KEY_MISSING") {
            window.showToast("Please configure Gemini API Key in Settings", "error");
         } else {
            window.showToast("Detection failed. Enter manually.", "error");
@@ -1172,7 +1286,7 @@
       }
     }
 
-    // --- STUDENT LOGIC ---
+    // --- STUDENT HUB LOGIC ---
     window.setAssignmentGrouping = function(group) {
       window.taskGroupBy = group;
       document.querySelectorAll('.group-btn').forEach(btn => {
@@ -1180,8 +1294,10 @@
         btn.classList.add('text-notion-textMuted', 'border-transparent');
       });
       const activeBtn = document.getElementById('group-btn-' + group);
-      activeBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-700');
-      activeBtn.classList.remove('text-notion-textMuted', 'border-transparent');
+      if (activeBtn) {
+        activeBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-700');
+        activeBtn.classList.remove('text-notion-textMuted', 'border-transparent');
+      }
       renderTasks();
     }
 
@@ -1192,8 +1308,10 @@
         btn.classList.add('text-notion-textMuted', 'border-transparent');
       });
       const activeBtn = document.getElementById('sort-btn-' + sort);
-      activeBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-700');
-      activeBtn.classList.remove('text-notion-textMuted', 'border-transparent');
+      if (activeBtn) {
+        activeBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-700');
+        activeBtn.classList.remove('text-notion-textMuted', 'border-transparent');
+      }
       renderTasks();
     }
 
@@ -1212,7 +1330,7 @@
       renderTasks();
       window.closeModal('addAssignmentModal');
       e.target.reset();
-      window.showToast("Task Saved!");
+      window.showToast("Task Saved!", "success");
     }
 
     window.toggleTaskCompletion = function(id) {
@@ -1249,6 +1367,7 @@
 
     function renderTasks() {
       const container = document.getElementById('assignments-container');
+      if (!container) return;
       
       let sortedTasks = [...window.appState.tasks];
       sortedTasks.sort((a, b) => {
@@ -1258,7 +1377,7 @@
       });
 
       if (sortedTasks.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-notion-textMuted border border-dashed border-notion-border rounded-xl">No active assignments. You're all caught up!</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-notion-textMuted border border-dashed border-notion-border rounded-xl animate-enter">No active assignments. You're all caught up!</div>`;
         return;
       }
 
@@ -1288,7 +1407,7 @@
       let html = '';
       for (const [groupName, tasks] of Object.entries(groups)) {
         html += `
-          <div class="space-y-2 mb-6">
+          <div class="space-y-2 mb-6 animate-enter">
             <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider pl-1">${groupName} <span class="text-zinc-600 font-normal ml-1">(${tasks.length})</span></h3>
             <div class="space-y-1.5">
               ${tasks.map(t => {
@@ -1296,7 +1415,7 @@
                 return `
                 <div id="task-card-${t.id}" class="task-card ${t.completed ? 'completed' : ''} bg-notion-bg border border-notion-border hover:border-zinc-700 rounded-lg p-2.5 sm:p-3 flex items-center justify-between group">
                   <div class="flex items-center gap-3 min-w-0">
-                    <button onclick="window.toggleTaskCompletion('${t.id}')" class="shrink-0 pt-0.5 outline-none">
+                    <button onclick="window.toggleTaskCompletion('${t.id}')" class="btn-press shrink-0 pt-0.5 outline-none">
                       <i id="task-check-${t.id}" class="fa-regular ${t.completed ? 'fa-circle-check text-notion-emerald' : 'fa-circle text-zinc-600 hover:text-white'} text-base transition-colors"></i>
                     </button>
                     <div class="min-w-0">
@@ -1308,7 +1427,7 @@
                       </div>
                     </div>
                   </div>
-                  <button onclick="window.deleteTask('${t.id}')" class="shrink-0 p-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all outline-none" title="Delete Task">
+                  <button onclick="window.deleteTask('${t.id}')" class="btn-press shrink-0 p-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all outline-none" title="Delete Task">
                     <i class="fa-solid fa-trash text-xs"></i>
                   </button>
                 </div>
@@ -1320,9 +1439,7 @@
       container.innerHTML = html;
     }
 
-    // --- STREAMING_CHUNK:Refined Info Tab, API Integration, and YouTube Logic ---
-
-    // YouTube Logic
+    // --- YOUTUBE & INFO HUB LOGIC ---
     window.setYtFilter = function(category) {
       window.currentYtFilter = category;
       renderYtChannels();
@@ -1365,7 +1482,7 @@
     }
 
     window.removeYtChannel = function(event, id) {
-      if(event) { event.preventDefault(); event.stopPropagation(); }
+      if (event) { event.preventDefault(); event.stopPropagation(); }
       window.appState.ytChannels = window.appState.ytChannels.filter(c => c.id !== id);
       window.saveState();
       renderYtChannels();
@@ -1374,12 +1491,13 @@
     function renderYtChannels() {
       const container = document.getElementById('yt-channels-container');
       const filterContainer = document.getElementById('yt-filter-container');
+      if (!container || !filterContainer) return;
       
       const categories = ['All', ...new Set(window.appState.ytChannels.map(c => c.category))];
       
       filterContainer.innerHTML = categories.map(cat => {
         const isActive = (cat === 'All' && window.currentYtFilter === 'all') || (cat === window.currentYtFilter);
-        return `<button onclick="window.setYtFilter('${cat === 'All' ? 'all' : cat}')" class="px-2.5 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap transition-colors ${isActive ? 'bg-zinc-200 text-zinc-950' : 'bg-transparent text-notion-textMuted border border-notion-border hover:text-white'}">${cat}</button>`;
+        return `<button onclick="window.setYtFilter('${cat === 'All' ? 'all' : cat}')" class="btn-press px-2.5 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap transition-colors ${isActive ? 'bg-zinc-200 text-zinc-950' : 'bg-transparent text-notion-textMuted border border-notion-border hover:text-white'}">${cat}</button>`;
       }).join('');
 
       let channels = window.appState.ytChannels;
@@ -1388,7 +1506,7 @@
       }
 
       if (channels.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-4 text-center text-[11px] text-notion-textMuted border border-dashed border-notion-border rounded-xl">No channels in this view. Add some creators!</div>`;
+        container.innerHTML = `<div class="col-span-full p-4 text-center text-[11px] text-notion-textMuted border border-dashed border-notion-border rounded-xl animate-enter">No channels in this view. Add some creators!</div>`;
         return;
       }
 
@@ -1398,14 +1516,11 @@
         const fallbackUrl = `https://ui-avatars.com/api/?name=${handleClean}&background=2A2A2A&color=fff&rounded=true&bold=true`;
         
         return `
-        <div class="bg-notion-bg border border-notion-border rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center group relative overflow-hidden transition-all hover:border-rose-500/50 hover:bg-rose-950/20">
-          
-          <!-- Delete Button (Fixed, styled cohesive) -->
-          <button onclick="window.removeYtChannel(event, '${ch.id}')" class="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center bg-zinc-800/90 hover:bg-rose-500 text-zinc-500 hover:text-white rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20 shadow-sm" title="Remove Channel">
+        <div class="bg-notion-bg border border-notion-border rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center group relative overflow-hidden transition-all duration-300 hover:border-rose-500/50 hover:bg-rose-950/20 animate-enter">
+          <button onclick="window.removeYtChannel(event, '${ch.id}')" class="btn-press absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center bg-zinc-800/90 hover:bg-rose-500 text-zinc-500 hover:text-white rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20 shadow-sm" title="Remove Channel">
             <i class="fa-solid fa-xmark text-[10px]"></i>
           </button>
 
-          <!-- Clickable Link wrapper for whole visual card -->
           <a href="https://youtube.com/${ch.handle}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2 w-full outline-none pt-2">
             <img src="${avatarUrl}" onerror="this.src='${fallbackUrl}'" alt="${ch.handle}" class="w-12 h-12 rounded-full object-cover border-2 border-zinc-800 shadow-lg group-hover:border-rose-500 transition-colors" />
             <div class="w-full">
@@ -1424,16 +1539,24 @@
       window.appState.scratchpadText = val;
       
       const status = document.getElementById('scratch-save-status');
-      status.innerText = "Saving...";
-      status.classList.add("text-notion-amber");
+      if (status) {
+        status.innerText = "Saving...";
+        status.className = "text-[10px] font-mono text-notion-amber transition-colors";
+      }
       
       clearTimeout(scratchTimeout);
       scratchTimeout = setTimeout(() => {
         window.saveState();
-        status.innerText = "Saved";
-        status.classList.remove("text-notion-amber");
-        status.classList.add("text-notion-textMuted");
-        setTimeout(() => status.innerText = "Auto-saved", 2000);
+        if (status) {
+          status.innerText = "Saved";
+          status.className = "text-[10px] font-mono text-emerald-400 transition-colors";
+          setTimeout(() => {
+            if (status) {
+              status.innerText = "Auto-saved";
+              status.className = "text-[10px] font-mono text-notion-textMuted transition-colors";
+            }
+          }, 2000);
+        }
       }, 1000);
     }
 
@@ -1456,8 +1579,8 @@
       const apiKey = localStorage.getItem('geminiApiKey');
 
       const applyQuote = (text, author) => {
-        if(bText) { bText.innerText = `"${text}"`; bAuth.innerText = `— ${author}`; }
-        if(dText) { dText.innerText = `"${text}"`; dAuth.innerText = `— ${author}`; }
+        if (bText) { bText.innerText = `"${text}"`; bAuth.innerText = `— ${author}`; }
+        if (dText) { dText.innerText = `"${text}"`; dAuth.innerText = `— ${author}`; }
       };
 
       if (apiKey) {
