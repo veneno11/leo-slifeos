@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Life OS | Student & Gym Command Center</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Leo's LifeOS</title>
   
+  <!-- Atom SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>" />
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -153,7 +159,7 @@
             <i class="fa-solid fa-atom text-sm"></i>
           </div>
           <div class="min-w-0">
-            <h1 class="font-bold text-sm sm:text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LIFE OS</h1>
+            <h1 class="font-bold text-sm sm:text-base tracking-tight leading-none text-zinc-100 group-hover:text-white transition-colors truncate">LEO'S LIFEOS</h1>
             <p class="text-[9px] sm:text-[10px] text-notion-textMuted tracking-wider uppercase font-medium truncate">Student & Gym Hub</p>
           </div>
         </div>
@@ -480,6 +486,22 @@
         </div>
       </div>
 
+      <!-- Anti-Cache & Code Sync Utilities -->
+      <div class="pt-3 border-t border-notion-border space-y-2">
+        <label class="text-xs font-bold text-notion-textPrimary block">Cross-Device Code Export & Refresh</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="hardRefreshPage()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 p-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-rotate-right text-notion-amber"></i> Hard Refresh
+          </button>
+          <button onclick="exportUpdatedHTMLCode()" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 p-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-file-code text-emerald-400"></i> Export HTML File
+          </button>
+        </div>
+        <p class="text-[10px] text-notion-textMuted">
+          <strong>Export HTML File</strong> bakes your current API keys, YouTube creators, gym blocks, and notes directly into the source code as new defaults, making it easy to sync cross-device.
+        </p>
+      </div>
+
       <div class="flex justify-end pt-3 border-t border-notion-border">
         <button onclick="closeModal('settingsModal')" class="bg-zinc-200 hover:bg-white text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg">Done</button>
       </div>
@@ -648,7 +670,25 @@
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'lifeos-default';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    
+    let app, auth, db;
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch (e) {
+      console.error("Firebase init error (ensure config is provided):", e);
+    }
+
+    let currentUserId = null;
+
     /* Default Initial Data */
     const DEFAULT_CLASS_COLORS = {
       "AP Chemistry": "#10B981",          
@@ -697,15 +737,15 @@
       { id: "ch-4", handle: "@CrashCourse", category: "Academics" }
     ];
 
-    /* State Initialization */
-    let currentTheme = localStorage.getItem('lifeos_theme') || 'gray';
-    let geminiApiKey = localStorage.getItem('lifeos_gemini_api_key') || '';
-    let classColors = JSON.parse(localStorage.getItem('lifeos_class_colors')) || DEFAULT_CLASS_COLORS;
-    let gymBlocks = JSON.parse(localStorage.getItem('lifeos_gym_blocks')) || DEFAULT_GYM_BLOCKS;
-    let assignments = JSON.parse(localStorage.getItem('lifeos_assignments')) || DEFAULT_ASSIGNMENTS;
-    let pbRecords = JSON.parse(localStorage.getItem('lifeos_pbs')) || DEFAULT_PBS;
-    let quotesList = JSON.parse(localStorage.getItem('lifeos_quotes')) || DEFAULT_QUOTES;
-    let ytChannels = JSON.parse(localStorage.getItem('lifeos_yt_channels')) || DEFAULT_CHANNELS;
+    let currentTheme = 'gray';
+    let geminiApiKey = '';
+    let classColors = DEFAULT_CLASS_COLORS;
+    let gymBlocks = DEFAULT_GYM_BLOCKS;
+    let assignments = DEFAULT_ASSIGNMENTS;
+    let pbRecords = DEFAULT_PBS;
+    let quotesList = DEFAULT_QUOTES;
+    let ytChannels = DEFAULT_CHANNELS;
+    let scratchpadData = "";
 
     let currentSplit = 'chest';
     let assignmentGrouping = 'date';
@@ -713,7 +753,84 @@
     let currentQuoteIdx = 0;
     let activeYtFilter = 'all';
 
-    window.onload = function() {
+    /* Cloud Sync Engine */
+    async function initAuthAndData() {
+      if (!auth) return;
+      try {
+        if (typeof __initial_auth_token !== 'undefined') {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+        currentUserId = auth.currentUser?.uid;
+        
+        if (currentUserId) {
+          showToast("Connected to Cloud Storage");
+          setupFirestore();
+        }
+      } catch (e) {
+        console.error("Auth error", e);
+        showToast("Offline Mode (Auth Failed)");
+        renderAll();
+      }
+    }
+
+    function setupFirestore() {
+      if (!currentUserId) return;
+      const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'appData', 'state');
+      
+      onSnapshot(docRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (data.gymBlocks) gymBlocks = data.gymBlocks;
+          if (data.assignments) assignments = data.assignments;
+          if (data.pbRecords) pbRecords = data.pbRecords;
+          if (data.ytChannels) ytChannels = data.ytChannels;
+          
+          if (data.theme) {
+            currentTheme = data.theme;
+          }
+          if (data.geminiApiKey !== undefined) geminiApiKey = data.geminiApiKey;
+          
+          if (data.scratchpad !== undefined) {
+             scratchpadData = data.scratchpad;
+             const textarea = document.getElementById('scratchpad-textarea');
+             // Only update if not actively typing to avoid cursor jumps
+             if (textarea && document.activeElement !== textarea) {
+               textarea.value = scratchpadData;
+             } else if (textarea && textarea.value === "") {
+               textarea.value = scratchpadData;
+             }
+          }
+          renderAll();
+        } else {
+          // No document yet, save defaults to cloud
+          syncToCloud();
+          renderAll();
+        }
+      }, (error) => {
+        console.error("Sync error:", error);
+        showToast("Error syncing with cloud.");
+      });
+    }
+
+    function syncToCloud() {
+      if (!currentUserId || !db) return;
+      const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'appData', 'state');
+      const scratch = document.getElementById('scratchpad-textarea')?.value || '';
+      
+      setDoc(docRef, {
+        gymBlocks,
+        assignments,
+        pbRecords,
+        ytChannels,
+        theme: currentTheme,
+        geminiApiKey,
+        scratchpad: scratch
+      }).catch(e => console.error("Cloud save error", e));
+    }
+
+    function renderAll() {
       applyTheme(currentTheme);
       updateApiKeyBadge();
       renderGymBlocks();
@@ -721,38 +838,18 @@
       renderAssignments();
       renderChannels();
       renderQuoteDisplay();
-      loadScratchpad();
-    };
-
-    function applyTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('lifeos_theme', theme);
     }
 
-    function setGlobalTheme(theme) {
-      currentTheme = theme;
-      applyTheme(theme);
-      showToast(`Accent theme updated to ${theme.toUpperCase()}`);
-    }
-
-    /* Fixed Mobile & Desktop Navigation */
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.remove('active');
-      });
-      
+    window.switchTab = function(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       const targetTab = document.getElementById(`tab-${tabId}`);
-      if (targetTab) {
-        targetTab.classList.add('active');
-      }
+      if (targetTab) targetTab.classList.add('active');
 
       document.querySelectorAll('.tab-nav-btn').forEach(btn => {
         btn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-notion-textMuted hover:text-white transition-all flex items-center gap-2 hover:bg-zinc-800/50";
       });
       const activeDeskBtn = document.getElementById(`nav-btn-${tabId}`);
-      if (activeDeskBtn) {
-        activeDeskBtn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2";
-      }
+      if (activeDeskBtn) activeDeskBtn.className = "tab-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-zinc-800 border border-zinc-700 transition-all flex items-center gap-2";
 
       document.querySelectorAll('.mob-nav-btn').forEach(btn => {
         btn.classList.remove('text-white');
@@ -763,17 +860,37 @@
         activeMobBtn.classList.remove('text-notion-textMuted');
         activeMobBtn.classList.add('text-white');
       }
-
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.openModal = function(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeModal = function(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.setGlobalTheme = function(theme) {
+      currentTheme = theme;
+      applyTheme(theme);
+      syncToCloud();
+      showToast(`Accent theme updated to ${theme.toUpperCase()}`);
+    };
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
     }
 
-    function saveGeminiApiKey() {
+    window.saveGeminiApiKey = function() {
       const val = document.getElementById('gemini-key-input').value.trim();
       geminiApiKey = val;
-      localStorage.setItem('lifeos_gemini_api_key', val);
+      syncToCloud();
       updateApiKeyBadge();
-      showToast("Google Gemini API Key Saved");
-    }
+      showToast("Google Gemini API Key Saved to Cloud");
+    };
 
     function updateApiKeyBadge() {
       const badge = document.getElementById('api-key-status-badge');
@@ -789,14 +906,12 @@
       }
     }
 
-    /* AI Auto-Detect Workout Muscle Groups & Split */
-    async function aiAutoDetectExercise() {
+    window.aiAutoDetectExercise = async function() {
       const exName = document.getElementById('block-primary-input').value.trim();
       if (!exName) {
         showToast("Enter an exercise name first");
         return;
       }
-
       showToast("Analyzing movement pattern...");
       
       const apiKeyToUse = geminiApiKey || "";
@@ -834,7 +949,7 @@
         console.warn("AI Auto-detect fallback", e);
         fallbackDetect(exName);
       }
-    }
+    };
 
     function fallbackDetect(exName) {
       const lower = exName.toLowerCase();
@@ -850,29 +965,27 @@
       showToast("Auto-filled estimated details");
     }
 
-    function setGymSplit(split) {
+    window.setGymSplit = function(split) {
       currentSplit = split;
       document.querySelectorAll('.split-btn').forEach(btn => {
         btn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-notion-border text-notion-textMuted hover:text-white hover:bg-zinc-800 transition-all whitespace-nowrap";
       });
       const activeBtn = document.getElementById(`split-btn-${split}`);
-      if (activeBtn) {
-        activeBtn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200";
-      }
+      if (activeBtn) activeBtn.className = "split-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap bg-zinc-200 text-zinc-950 border-zinc-200";
       renderGymBlocks();
-    }
+    };
 
-    function toggleBlockLock(blockId) {
+    window.toggleBlockLock = function(blockId) {
       const b = gymBlocks.find(x => x.id === blockId);
       if (b) {
         b.locked = !b.locked;
-        saveGymBlocks();
+        syncToCloud();
         renderGymBlocks();
         showToast(b.locked ? "Block Locked in Position" : "Block Unlocked for Shuffling");
       }
-    }
+    };
 
-    function shuffleUnlockedBlocks() {
+    window.shuffleUnlockedBlocks = function() {
       let shuffled = 0;
       gymBlocks.forEach(b => {
         if (b.split === currentSplit && !b.locked && b.alternatives && b.alternatives.length > 0) {
@@ -884,20 +997,49 @@
           }
         }
       });
-      saveGymBlocks();
+      syncToCloud();
       renderGymBlocks();
       showToast(shuffled > 0 ? `Shuffled ${shuffled} exercise movements` : "No unlocked blocks to shuffle");
-    }
+    };
+
+    window.handleAddExerciseBlock = function(e) {
+      e.preventDefault();
+      const target = document.getElementById('block-target-input').value.trim();
+      const split = document.getElementById('block-split-input').value;
+      const primary = document.getElementById('block-primary-input').value.trim();
+      const altsRaw = document.getElementById('block-alternatives-input').value.trim();
+      const alts = altsRaw ? altsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+      gymBlocks.push({ id: 'b_' + Date.now(), split, target, current: primary, locked: false, alternatives: alts });
+      syncToCloud();
+      window.closeModal('addBlockModal');
+      e.target.reset();
+      renderGymBlocks();
+      showToast("New Movement Block Added");
+    };
+
+    window.handleLogSet = function(e) {
+      e.preventDefault();
+      const name = document.getElementById('log-exercise-name').value.trim();
+      const weight = document.getElementById('log-weight-input').value;
+      const reps = document.getElementById('log-reps-input').value;
+
+      pbRecords.unshift({ id: 'p_' + Date.now(), name, weight, reps, date: new Date().toISOString().split('T')[0] });
+      syncToCloud();
+      window.closeModal('logSetModal');
+      e.target.reset();
+      renderPbRecords();
+      showToast("Personal Best Logged!");
+    };
 
     function renderGymBlocks() {
       const container = document.getElementById('exercise-blocks-container');
+      if (!container) return;
       const filtered = gymBlocks.filter(b => b.split === currentSplit);
-
       if (filtered.length === 0) {
         container.innerHTML = `<div class="col-span-full text-center py-8 text-notion-textMuted text-xs">No exercise blocks configured for this split. Click "+ Add Movement Block" to create one.</div>`;
         return;
       }
-
       container.innerHTML = filtered.map(b => `
         <div class="notion-card rounded-xl p-3.5 space-y-3 flex flex-col justify-between relative group">
           <div>
@@ -909,17 +1051,13 @@
                 <i class="fa-solid ${b.locked ? 'fa-lock text-notion-amber' : 'fa-lock-open'} text-xs"></i>
               </button>
             </div>
-            
             <h4 class="text-xs sm:text-sm font-bold text-zinc-100 leading-snug line-clamp-2">${escapeHtml(b.current)}</h4>
           </div>
-
           <div class="pt-2 border-t border-notion-border/60">
             <span class="text-[10px] text-notion-textMuted font-medium block mb-1">Rotation Pool:</span>
             <div class="flex flex-wrap gap-1">
               ${b.alternatives ? b.alternatives.map(alt => `
-                <span class="text-[9px] px-1.5 py-0.5 rounded bg-notion-bg border border-notion-border text-notion-textMuted truncate max-w-[120px]">
-                  ${escapeHtml(alt)}
-                </span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-notion-bg border border-notion-border text-notion-textMuted truncate max-w-[120px]">${escapeHtml(alt)}</span>
               `).join('') : ''}
             </div>
           </div>
@@ -927,42 +1065,13 @@
       `).join('');
     }
 
-    function handleAddExerciseBlock(e) {
-      e.preventDefault();
-      const target = document.getElementById('block-target-input').value.trim();
-      const split = document.getElementById('block-split-input').value;
-      const primary = document.getElementById('block-primary-input').value.trim();
-      const altsRaw = document.getElementById('block-alternatives-input').value.trim();
-      const alts = altsRaw ? altsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-      const newBlock = {
-        id: 'b_' + Date.now(),
-        split: split,
-        target: target,
-        current: primary,
-        locked: false,
-        alternatives: alts
-      };
-
-      gymBlocks.push(newBlock);
-      saveGymBlocks();
-      closeModal('addBlockModal');
-      e.target.reset();
-      renderGymBlocks();
-      showToast("New Movement Block Added");
-    }
-
-    function saveGymBlocks() {
-      localStorage.setItem('lifeos_gym_blocks', JSON.stringify(gymBlocks));
-    }
-
     function renderPbRecords() {
       const container = document.getElementById('pb-records-container');
+      if (!container) return;
       if (pbRecords.length === 0) {
         container.innerHTML = `<div class="col-span-full text-xs text-notion-textMuted">No benchmark PRs logged yet.</div>`;
         return;
       }
-
       container.innerHTML = pbRecords.map(r => `
         <div class="notion-card rounded-xl p-3 flex items-center justify-between">
           <div class="min-w-0 pr-2">
@@ -977,29 +1086,7 @@
       `).join('');
     }
 
-    function handleLogSet(e) {
-      e.preventDefault();
-      const name = document.getElementById('log-exercise-name').value.trim();
-      const weight = document.getElementById('log-weight-input').value;
-      const reps = document.getElementById('log-reps-input').value;
-
-      const newPb = {
-        id: 'p_' + Date.now(),
-        name: name,
-        weight: weight,
-        reps: reps,
-        date: new Date().toISOString().split('T')[0]
-      };
-
-      pbRecords.unshift(newPb);
-      localStorage.setItem('lifeos_pbs', JSON.stringify(pbRecords));
-      closeModal('logSetModal');
-      e.target.reset();
-      renderPbRecords();
-      showToast("Personal Best Logged!");
-    }
-
-    function setAssignmentGrouping(group) {
+    window.setAssignmentGrouping = function(group) {
       assignmentGrouping = group;
       document.querySelectorAll('.group-btn').forEach(btn => {
         btn.className = "group-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white";
@@ -1007,9 +1094,9 @@
       const active = document.getElementById(`group-btn-${group}`);
       if (active) active.className = "group-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700";
       renderAssignments();
-    }
+    };
 
-    function setAssignmentSorting(sort) {
+    window.setAssignmentSorting = function(sort) {
       assignmentSorting = sort;
       document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.className = "sort-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-notion-textMuted hover:text-white";
@@ -1017,21 +1104,36 @@
       const active = document.getElementById(`sort-btn-${sort}`);
       if (active) active.className = "sort-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-zinc-800 text-white border border-zinc-700";
       renderAssignments();
-    }
+    };
 
-    function toggleAssignmentComplete(id) {
+    window.toggleAssignmentComplete = function(id) {
       const a = assignments.find(x => x.id === id);
       if (a) {
         a.completed = !a.completed;
-        saveAssignments();
+        syncToCloud();
         renderAssignments();
         showToast(a.completed ? "Task Completed" : "Task Reopened");
       }
-    }
+    };
+
+    window.handleAddAssignment = function(e) {
+      e.preventDefault();
+      const title = document.getElementById('asgn-title-input').value.trim();
+      const course = document.getElementById('asgn-course-input').value;
+      const type = document.getElementById('asgn-type-input').value;
+      const date = document.getElementById('asgn-date-input').value;
+
+      assignments.push({ id: 'a_' + Date.now(), title, course, type, date, completed: false });
+      syncToCloud();
+      window.closeModal('addAssignmentModal');
+      e.target.reset();
+      renderAssignments();
+      showToast("Assignment Created");
+    };
 
     function renderAssignments() {
       const container = document.getElementById('assignments-container');
-      
+      if (!container) return;
       let list = [...assignments];
       list.sort((a, b) => {
         if (assignmentSorting === 'dueAsc') return new Date(a.date) - new Date(b.date);
@@ -1081,49 +1183,17 @@
             <div class="min-w-0">
               <h4 class="text-xs sm:text-sm font-semibold text-zinc-100 ${item.completed ? 'line-through text-notion-textMuted' : ''} truncate">${escapeHtml(item.title)}</h4>
               <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded text-white truncate" style="background-color: ${color}">
-                  ${escapeHtml(item.course)}
-                </span>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded text-white truncate" style="background-color: ${color}">${escapeHtml(item.course)}</span>
                 <span class="text-[10px] text-notion-textMuted font-mono">Due: ${item.date}</span>
               </div>
             </div>
           </div>
-          <span class="text-[10px] px-2 py-0.5 rounded border border-notion-border text-notion-textMuted shrink-0 font-medium hidden xs:inline-block">
-            ${escapeHtml(item.type)}
-          </span>
+          <span class="text-[10px] px-2 py-0.5 rounded border border-notion-border text-notion-textMuted shrink-0 font-medium hidden xs:inline-block">${escapeHtml(item.type)}</span>
         </div>
       `;
     }
 
-    function handleAddAssignment(e) {
-      e.preventDefault();
-      const title = document.getElementById('asgn-title-input').value.trim();
-      const course = document.getElementById('asgn-course-input').value;
-      const type = document.getElementById('asgn-type-input').value;
-      const date = document.getElementById('asgn-date-input').value;
-
-      const newAsgn = {
-        id: 'a_' + Date.now(),
-        title: title,
-        course: course,
-        type: type,
-        date: date,
-        completed: false
-      };
-
-      assignments.push(newAsgn);
-      saveAssignments();
-      closeModal('addAssignmentModal');
-      e.target.reset();
-      renderAssignments();
-      showToast("Assignment Created");
-    }
-
-    function saveAssignments() {
-      localStorage.setItem('lifeos_assignments', JSON.stringify(assignments));
-    }
-
-    function filterYtChannels(cat) {
+    window.filterYtChannels = function(cat) {
       activeYtFilter = cat;
       document.querySelectorAll('.yt-filter-btn').forEach(b => {
         b.className = "yt-filter-btn px-2.5 py-1 rounded-md bg-notion-bg text-notion-textMuted border border-notion-border font-medium hover:text-white whitespace-nowrap";
@@ -1131,23 +1201,33 @@
       const active = document.getElementById(`yt-filter-${cat}`);
       if (active) active.className = "yt-filter-btn px-2.5 py-1 rounded-md bg-rose-600 text-white font-semibold whitespace-nowrap";
       renderChannels();
-    }
+    };
+
+    window.handleAddChannel = function(e) {
+      e.preventDefault();
+      const handle = document.getElementById('yt-handle-input').value.trim();
+      const category = document.getElementById('yt-category-input').value;
+
+      ytChannels.push({ id: 'ch_' + Date.now(), handle, category });
+      syncToCloud();
+      window.closeModal('addYtChannelModal');
+      e.target.reset();
+      renderChannels();
+      showToast("Creator Added to Feed!");
+    };
 
     function renderChannels() {
       const container = document.getElementById('yt-channels-container');
+      if (!container) return;
       const filtered = activeYtFilter === 'all' ? ytChannels : ytChannels.filter(c => c.category === activeYtFilter);
 
       if (filtered.length === 0) {
         container.innerHTML = `<div class="col-span-full text-center py-6 text-notion-textMuted text-xs">No channels found for this tag.</div>`;
         return;
       }
-
       container.innerHTML = filtered.map(c => {
-        // Strip out the '@' for the avatar request if present, but keep it for display
         const cleanHandle = c.handle.startsWith('@') ? c.handle.substring(1) : c.handle;
         const displayHandle = c.handle.startsWith('@') ? c.handle : `@${c.handle}`;
-        
-        // unavatar.io is a free service that extracts avatars based on social handles!
         const avatarUrl = `https://unavatar.io/youtube/${cleanHandle}`;
         const fallbackUrl = `https://ui-avatars.com/api/?name=${cleanHandle}&background=random&color=fff`;
 
@@ -1161,90 +1241,88 @@
             </div>
             <div class="text-center w-full min-w-0">
               <h5 class="text-xs font-bold text-zinc-100 truncate">${displayHandle}</h5>
-              <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 border border-zinc-700 text-notion-textMuted">
-                ${escapeHtml(c.category)}
-              </span>
+              <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 border border-zinc-700 text-notion-textMuted">${escapeHtml(c.category)}</span>
             </div>
           </a>
         `;
       }).join('');
     }
 
-    function handleAddChannel(e) {
-      e.preventDefault();
-      const handle = document.getElementById('yt-handle-input').value.trim();
-      const category = document.getElementById('yt-category-input').value;
-
-      const newChannel = {
-        id: 'ch_' + Date.now(),
-        handle: handle,
-        category: category
-      };
-
-      ytChannels.push(newChannel);
-      localStorage.setItem('lifeos_yt_channels', JSON.stringify(ytChannels));
-      closeModal('addYtChannelModal');
-      e.target.reset();
-      renderChannels();
-      showToast("Creator Added to Feed!");
-    }
-
     function renderQuoteDisplay() {
       const q = quotesList[currentQuoteIdx] || quotesList[0];
       if (q) {
-        document.getElementById('quote-display-text').innerText = `"${q.text}"`;
-        document.getElementById('quote-display-author').innerText = `— ${q.author}`;
-        document.getElementById('quote-counter').innerText = `${currentQuoteIdx + 1}/${quotesList.length}`;
+        const qt = document.getElementById('quote-display-text');
+        const qa = document.getElementById('quote-display-author');
+        const qc = document.getElementById('quote-counter');
+        if(qt) qt.innerText = `"${q.text}"`;
+        if(qa) qa.innerText = `— ${q.author}`;
+        if(qc) qc.innerText = `${currentQuoteIdx + 1}/${quotesList.length}`;
       }
     }
 
-    function cycleBannerQuote() {
+    window.cycleBannerQuote = function() {
       currentQuoteIdx = (currentQuoteIdx + 1) % quotesList.length;
       const q = quotesList[currentQuoteIdx];
-      document.getElementById('banner-quote-text').innerText = `"${q.text}"`;
-      document.getElementById('banner-quote-author').innerText = `— ${q.author}`;
-    }
+      const bt = document.getElementById('banner-quote-text');
+      const ba = document.getElementById('banner-quote-author');
+      if(bt) bt.innerText = `"${q.text}"`;
+      if(ba) ba.innerText = `— ${q.author}`;
+    };
 
-    function prevQuote() {
+    window.prevQuote = function() {
       currentQuoteIdx = (currentQuoteIdx - 1 + quotesList.length) % quotesList.length;
       renderQuoteDisplay();
-    }
+    };
 
-    function nextQuote() {
+    window.nextQuote = function() {
       currentQuoteIdx = (currentQuoteIdx + 1) % quotesList.length;
       renderQuoteDisplay();
-    }
+    };
 
-    /* Scratchpad Notes Auto-Save */
-    function saveScratchpad() {
-      const txt = document.getElementById('scratchpad-textarea').value;
-      localStorage.setItem('lifeos_scratchpad', txt);
+    // Debounced Scratchpad Cloud Save
+    let scratchpadTimeout;
+    window.saveScratchpad = function() {
       const status = document.getElementById('scratch-save-status');
-      status.innerText = "Saving...";
-      setTimeout(() => { status.innerText = "Auto-saved"; }, 500);
-    }
+      if (status) status.innerText = "Syncing...";
+      
+      clearTimeout(scratchpadTimeout);
+      scratchpadTimeout = setTimeout(() => {
+        syncToCloud();
+        if (status) status.innerText = "Cloud saved";
+      }, 1200); // Wait 1.2s after typing stops before hitting database
+    };
 
-    function loadScratchpad() {
-      const saved = localStorage.getItem('lifeos_scratchpad') || '';
-      document.getElementById('scratchpad-textarea').value = saved;
-    }
+    window.hardRefreshPage = function() {
+      showToast("Forcing hard refresh...");
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', Date.now().toString());
+        window.location.href = url.toString();
+      }, 400);
+    };
 
-    function openModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) {
-        modal.classList.remove('hidden');
-      }
-    }
+    window.exportUpdatedHTMLCode = function() {
+      showToast("NOTE: Data is now auto-synced to Cloud Storage!");
+      setTimeout(() => {
+        showToast("Generating local backup HTML file...");
+        let htmlContent = document.documentElement.outerHTML;
+        
+        // Remove standard inject tags in backup for clean export
+        const blob = new Blob(["<!DOCTYPE html>\n<html lang=\"en\" class=\"dark\">\n" + htmlContent + "\n</html>"], { type: 'text/html' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'Leo_LifeOS_Backup.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+      }, 1500);
+    };
 
-    function closeModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) {
-        modal.classList.add('hidden');
-      }
-    }
-
-    function showToast(msg) {
+    window.showToast = function(msg) {
       const container = document.getElementById('toast-container');
+      if (!container) return;
       const toast = document.createElement('div');
       toast.className = "bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 animate-enter pointer-events-auto";
       toast.innerHTML = `<i class="fa-solid fa-circle-check text-notion-emerald"></i> ${msg}`;
@@ -1254,20 +1332,17 @@
         toast.style.transition = 'opacity 0.3s ease';
         setTimeout(() => toast.remove(), 300);
       }, 2500);
-    }
+    };
 
     function escapeHtml(str) {
       if (!str) return '';
       return str.replace(/[&<>"']/g, function(m) {
-        return {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        }[m];
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
       });
     }
+
+    // Launch App
+    initAuthAndData();
   </script>
 </body>
 </html>
