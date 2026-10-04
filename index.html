@@ -773,7 +773,7 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
           document.getElementById('sync-badge-text').className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono hidden sm:inline-block";
           
           // Listen to unified state
-          const docRef = doc(db, 'artifacts', appId, 'users', userId, 'appData', 'state');
+          const docRef = doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state');
           unsubscribeState = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
               window.appState = { ...window.appState, ...docSnap.data() };
@@ -807,7 +807,7 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
     async function saveToCloud() {
       if (!userId || !db) return;
       try {
-        await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'appData', 'state'), window.appState);
+        await setDoc(doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state'), window.appState);
       } catch (e) {
         console.error("Cloud save failed", e);
       }
