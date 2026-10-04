@@ -57,7 +57,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Dynamic Manifest Generation for Chrome Installability
       const manifest = {
         name: "Leo's LifeOS",
         short_name: "LifeOS",
@@ -86,7 +85,6 @@
       link.href = manifestUrl;
       document.head.appendChild(link);
 
-      // 2. Dummy Service Worker for Chrome "Add to Home Screen" Requirement
       if ('serviceWorker' in navigator) {
         const swCode = `
           self.addEventListener('install', (e) => { self.skipWaiting(); });
@@ -157,7 +155,6 @@
       animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Task completion smooth animation */
     .task-card {
       transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -649,15 +646,22 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-notion-textMuted mb-1 font-medium">Weight (lbs/kg)</label>
-            <input type="number" id="log-weight-input" required step="0.5" placeholder="185" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+            <label class="block text-notion-textMuted mb-1 font-medium">Weight</label>
+            <div class="flex gap-2">
+              <input type="number" id="log-weight-input" required step="0.5" placeholder="185" oninput="window.updateWeightHint()" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
+              <select id="log-weight-unit" onchange="window.updateWeightHint()" class="bg-notion-sidebar border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald shrink-0 w-[65px] text-center">
+                <option value="lbs">lbs</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
+            <div id="weight-conversion-hint" class="text-[10px] text-notion-emerald/80 mt-1 h-3 font-mono"></div>
           </div>
           <div>
             <label class="block text-notion-textMuted mb-1 font-medium">Reps Performed</label>
             <input type="number" id="log-reps-input" required step="1" placeholder="8" class="w-full bg-notion-bg border border-notion-border rounded-lg p-2.5 text-notion-textPrimary focus:outline-none focus:border-notion-emerald" />
           </div>
         </div>
-        <div class="flex justify-end gap-2 pt-2 border-t border-notion-border">
+        <div class="flex justify-end gap-2 pt-2 border-t border-notion-border mt-1">
           <button type="button" onclick="window.closeModal('logSetModal')" class="px-3 py-1.5 rounded-lg border border-notion-border text-notion-textMuted hover:text-white">Cancel</button>
           <button type="submit" class="px-4 py-1.5 rounded-lg bg-notion-emerald text-black font-bold hover:bg-emerald-400">Log PR</button>
         </div>
@@ -747,22 +751,20 @@
 
    async function initStorage() {
       try {
-        // 1. Paste your actual Firebase configuration keys here
         const firebaseConfig = {
-apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
-  authDomain: "leo-slifeos.firebaseapp.com",
-  databaseURL: "https://leo-slifeos-default-rtdb.firebaseio.com",
-  projectId: "leo-slifeos",
-  storageBucket: "leo-slifeos.firebasestorage.app",
-  messagingSenderId: "458227150112",
-  appId: "1:458227150112:web:1c4b78e9b65fdaa6ebbb45"
+          apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
+          authDomain: "leo-slifeos.firebaseapp.com",
+          databaseURL: "https://leo-slifeos-default-rtdb.firebaseio.com",
+          projectId: "leo-slifeos",
+          storageBucket: "leo-slifeos.firebasestorage.app",
+          messagingSenderId: "458227150112",
+          appId: "1:458227150112:web:1c4b78e9b65fdaa6ebbb45"
         };
 
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         
-        // 2. Sign in anonymously to enable database access
         await signInAnonymously(auth);
 
         userId = auth.currentUser?.uid;
@@ -772,26 +774,24 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
           document.getElementById('sync-badge-text').innerText = "Synced";
           document.getElementById('sync-badge-text').className = "text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono hidden sm:inline-block";
           
-          // Listen to unified state
           const docRef = doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state');
-        unsubscribeState = onSnapshot(docRef, (docSnap) => {
-          if (docSnap.exists()) {
-            window.appState = { ...window.appState, ...docSnap.data() };
-            renderAll();
-          } else {
-            saveToCloud(); 
-            renderAll(); // Tells the screen to draw if the cloud doc is newly created
-          }
-        }, (error) => console.error("Sync error:", error));
-        
-        renderAll(); // Forces the screen to draw immediately while waiting for the cloud to sync
-        return;
+          unsubscribeState = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+              window.appState = { ...window.appState, ...docSnap.data() };
+              renderAll();
+            } else {
+              saveToCloud(); 
+              renderAll(); 
+            }
+          }, (error) => console.error("Sync error:", error));
+          
+          renderAll(); 
+          return;
         }
       } catch (err) {
         console.warn("Cloud sync disabled. Using local storage.", err);
       }
       
-      // Local Storage Fallback
       const localState = localStorage.getItem('lifeOsState');
       if (localState) {
         window.appState = { ...window.appState, ...JSON.parse(localState) };
@@ -818,7 +818,6 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
 
     // --- STREAMING_CHUNK:Setting up Gemini API Helpers... ---
     
-    // Check key on load
     window.addEventListener('DOMContentLoaded', () => {
       const savedKey = localStorage.getItem('geminiApiKey');
       if (savedKey) {
@@ -881,14 +880,12 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
       throw new Error("UNEXPECTED_RESPONSE");
     }
 
-
-    // --- STREAMING_CHUNK:Implementing UI & Core Logic... ---
+    // --- STREAMING_CHUNK:Implementing UI Tab & Notification Logic... ---
 
     window.switchTab = function(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.getElementById('tab-' + tabId).classList.add('active');
       
-      // Update desktop nav
       document.querySelectorAll('.tab-nav-btn').forEach(el => {
         el.classList.remove('text-white', 'bg-zinc-800', 'border-zinc-700');
         el.classList.add('text-notion-textMuted');
@@ -899,7 +896,6 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
         activeDesktop.classList.remove('text-notion-textMuted');
       }
 
-      // Update mobile nav
       document.querySelectorAll('.mob-nav-btn').forEach(el => {
         el.classList.remove('text-white');
         el.classList.add('text-notion-textMuted');
@@ -980,7 +976,6 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
           const options = [block.current, ...block.alternatives];
           const randomChoice = options[Math.floor(Math.random() * options.length)];
           
-          // Re-adjust alternatives array
           const newAlts = options.filter(opt => opt !== randomChoice);
           block.current = randomChoice;
           block.alternatives = newAlts;
@@ -1002,221 +997,210 @@ apiKey: "AIzaSyAGFU-GLZrF_lUS6qd91qLaW92dr4wCW9c",
       const blocks = window.appState.gymBlocks.filter(b => b.split === window.currentGymSplit);
       
       if (blocks.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl">No exercise blocks added for this split.</div>`;
+        container.innerHTML = `<div class="col-span-full p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl">No exercise blocks configured for this split. Add one to start.</div>`;
         return;
       }
-
-      container.innerHTML = blocks.map(block => `
-        <div class="notion-card rounded-xl p-4 flex flex-col justify-between h-full group ${block.locked ? 'border-notion-amber/30 bg-notion-amber/5' : ''}">
+      
+      container.innerHTML = blocks.map(b => `
+        <div class="notion-card rounded-xl p-3 sm:p-4 flex flex-col justify-between border-l-4 ${b.locked ? 'border-l-notion-amber' : 'border-l-zinc-700'} relative overflow-hidden group">
+          <button onclick="window.deleteGymBlock('${b.id}')" class="absolute top-2 right-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all z-10" title="Delete Block">
+            <i class="fa-solid fa-trash text-[10px]"></i>
+          </button>
           <div>
-            <div class="flex items-start justify-between mb-2">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-notion-textMuted">${block.target}</span>
-              <button onclick="window.toggleBlockLock('${block.id}')" class="lock-btn ${block.locked ? 'locked' : 'text-notion-textMuted hover:text-white'} p-1.5 rounded" title="${block.locked ? 'Unlock' : 'Lock Exercise'}">
-                <i class="fa-solid fa-${block.locked ? 'lock' : 'lock-open'}"></i>
+            <div class="flex items-start justify-between gap-2">
+              <span class="text-[10px] font-semibold tracking-wider uppercase text-notion-textMuted">${b.target}</span>
+              <button onclick="window.toggleBlockLock('${b.id}')" class="lock-btn ${b.locked ? 'locked' : 'text-zinc-500 hover:text-white'} px-1.5 py-0.5 rounded text-[10px] z-10">
+                <i class="fa-solid ${b.locked ? 'fa-lock' : 'fa-lock-open'}"></i>
               </button>
             </div>
-            <h4 class="text-sm font-bold text-zinc-100 mb-2 leading-tight">${block.current}</h4>
+            <h3 class="text-sm font-bold text-zinc-100 mt-1.5 pr-4 leading-tight">${b.current}</h3>
           </div>
-          <div class="mt-3 pt-3 border-t border-notion-border/50">
-             <div class="text-[10px] text-notion-textMuted mb-1 font-medium">Alternative Options:</div>
-             <div class="flex flex-wrap gap-1">
-               ${block.alternatives.length > 0 ? 
-                 block.alternatives.map(alt => `<span class="px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] text-zinc-300 border border-zinc-700 truncate max-w-full">${alt}</span>`).join('') 
-                 : `<span class="text-[9px] italic opacity-50">None set</span>`
-               }
+          <div class="mt-4 flex items-center justify-between">
+             <div class="text-[10px] text-notion-textMuted flex items-center gap-1.5 max-w-[70%]">
+               <i class="fa-solid fa-rotate text-[9px]"></i> <span class="truncate">${b.alternatives.length > 0 ? b.alternatives.join(', ') : 'No alternatives'}</span>
+             </div>
+             <div class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">
+               3 x 8-12
              </div>
           </div>
         </div>
       `).join('');
     }
 
-    // --- STREAMING_CHUNK:AI YouTube Features... ---
-    // --- YOUTUBE LOGIC ---
-    window.removeYtChannel = function(id) {
-  // Filters out the channel with the matching ID
-  window.appState.ytChannels = window.appState.ytChannels.filter(ch => ch.id !== id);
-  
-  window.saveState(); // Saves the removal to Firebase
-  renderYtChannels(); // Redraws the screen
-}
-    function extractCategories() {
-      const cats = new Set(window.appState.ytChannels.map(c => c.category));
-      return Array.from(cats);
-    }
-
-    window.filterYtChannels = function(cat) {
-      window.currentYtFilter = cat;
-      renderYtChannels();
-    }
-
-function renderYtChannels() {
-      // Re-render filters
-      const filterContainer = document.getElementById('yt-filter-container');
-      const cats = extractCategories();
-      let filterHTML = `<button onclick="window.filterYtChannels('all')" class="yt-filter-btn px-2.5 py-1 rounded-md ${window.currentYtFilter === 'all' ? 'bg-rose-600 text-white border-transparent' : 'bg-notion-bg text-notion-textMuted border border-notion-border'} font-semibold whitespace-nowrap transition-all">#All</button>`;
+    // --- STREAMING_CHUNK:Implementing Weight Conversion & Handling ---
+    window.updateWeightHint = function() {
+      let val = parseFloat(document.getElementById('log-weight-input').value);
+      let unit = document.getElementById('log-weight-unit').value;
+      let hint = document.getElementById('weight-conversion-hint');
       
-      cats.forEach(c => {
-        const isActive = window.currentYtFilter === c;
-        filterHTML += `<button onclick="window.filterYtChannels('${c}')" class="yt-filter-btn px-2.5 py-1 rounded-md ${isActive ? 'bg-rose-600 text-white border-transparent' : 'bg-notion-bg text-notion-textMuted border border-notion-border'} font-semibold whitespace-nowrap transition-all">#${c}</button>`;
-      });
-      filterContainer.innerHTML = filterHTML;
+      if (isNaN(val)) {
+        hint.innerText = '';
+        return;
+      }
+      
+      if (unit === 'kg') {
+        hint.innerText = `≈ ${(val * 2.20462).toFixed(1)} lbs`;
+      } else {
+        hint.innerText = `≈ ${(val / 2.20462).toFixed(1)} kg`;
+      }
+    };
 
-      // Render channels
-      const container = document.getElementById('yt-channels-container');
-      let filtered = window.appState.ytChannels;
-      if (window.currentYtFilter !== 'all') {
-        filtered = filtered.filter(c => c.category === window.currentYtFilter);
+    window.handleLogSet = function(e) {
+      e.preventDefault();
+      
+      let weightVal = parseFloat(document.getElementById('log-weight-input').value);
+      let unit = document.getElementById('log-weight-unit').value;
+      
+      // Always store as lbs
+      let finalLbs = weightVal;
+      if (unit === 'kg') {
+        finalLbs = parseFloat((weightVal * 2.20462).toFixed(1));
       }
 
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-4 text-center text-notion-textMuted text-xs">No channels found. Add some!</div>`;
+      const log = {
+        id: 'pb_' + Date.now(),
+        exercise: document.getElementById('log-exercise-name').value,
+        weight: finalLbs,
+        reps: document.getElementById('log-reps-input').value,
+        date: new Date().toISOString()
+      };
+      
+      window.appState.pbLogs.push(log);
+      window.saveState();
+      renderPbLogs();
+      window.closeModal('logSetModal');
+      e.target.reset();
+      document.getElementById('weight-conversion-hint').innerText = '';
+      window.showToast("Personal Best Logged!", "success");
+    };
+
+    function renderPbLogs() {
+      const container = document.getElementById('pb-records-container');
+      const sortedLogs = [...window.appState.pbLogs].sort((a,b) => new Date(b.date) - new Date(a.date));
+      
+      if (sortedLogs.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-4 text-center text-notion-textMuted text-xs">No PRs logged yet.</div>`;
+        return;
+      }
+      
+      container.innerHTML = sortedLogs.map(l => `
+        <div class="bg-notion-bg border border-notion-border rounded-lg p-3 relative group">
+          <button onclick="window.deletePbLog('${l.id}')" class="absolute top-1.5 right-1.5 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all" title="Delete PR">
+            <i class="fa-solid fa-trash text-[10px]"></i>
+          </button>
+          <div class="text-[10px] text-notion-textMuted mb-0.5">${new Date(l.date).toLocaleDateString()}</div>
+          <div class="font-bold text-xs text-zinc-200 truncate pr-4">${l.exercise}</div>
+          <div class="mt-1.5 flex items-baseline gap-1">
+            <span class="text-base font-black text-notion-emerald tracking-tight">${l.weight} <span class="text-[10px] text-notion-emerald/70 font-normal">lbs</span></span>
+            <span class="text-xs text-zinc-400">× ${l.reps}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.deletePbLog = function(id) {
+      window.appState.pbLogs = window.appState.pbLogs.filter(l => l.id !== id);
+      window.saveState();
+      renderPbLogs();
+    }
+
+    window.handleAddExerciseBlock = function(e) {
+      e.preventDefault();
+      const newBlock = {
+        id: 'blk_' + Date.now(),
+        current: document.getElementById('block-primary-input').value,
+        target: document.getElementById('block-target-input').value,
+        split: document.getElementById('block-split-input').value,
+        alternatives: document.getElementById('block-alternatives-input').value.split(',').map(s => s.trim()).filter(s => s),
+        locked: false
+      };
+      
+      window.appState.gymBlocks.push(newBlock);
+      window.saveState();
+      
+      if (window.currentGymSplit !== newBlock.split) {
+        window.setGymSplit(newBlock.split);
+      } else {
+        renderGymBlocks();
+      }
+      
+      window.closeModal('addBlockModal');
+      e.target.reset();
+      window.showToast("Block added!");
+    }
+
+    window.deleteGymBlock = function(id) {
+      window.appState.gymBlocks = window.appState.gymBlocks.filter(b => b.id !== id);
+      window.saveState();
+      renderGymBlocks();
+    }
+
+    // AI Helper for Gym Block
+    window.aiAutoDetectExercise = async function() {
+      const exerciseName = document.getElementById('block-primary-input').value;
+      if (!exerciseName) {
+        window.showToast("Please enter an exercise name first", "error");
         return;
       }
 
-      container.innerHTML = filtered.map(ch => {
-        // Unavatar.io is an open service for social avatars. 
-        // We strip the '@' to ensure the handle formats correctly for YouTube.
-        const cleanHandle = ch.handle.replace('@', '');
-        const avatarUrl = `https://unavatar.io/youtube/${cleanHandle}`;
-        const fallbackUrl = `https://ui-avatars.com/api/?name=${cleanHandle}&background=222&color=fff`;
-
-        return `
-        <div class="bg-notion-bg border border-notion-border rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center group relative overflow-hidden transition-all hover:border-rose-500/50 hover:bg-rose-950/20">
-          
-          <!-- Delete Button -->
-          <button onclick="window.removeYtChannel('${ch.id}')" class="absolute top-2 right-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all z-10" title="Remove Channel">
-            <i class="fa-solid fa-trash text-[10px]"></i>
-          </button>
-
-          <img src="${avatarUrl}" onerror="this.src='${fallbackUrl}'" alt="${ch.handle}" class="w-12 h-12 rounded-full object-cover border-2 border-zinc-800 shadow-lg group-hover:border-rose-500 transition-colors" />
-          <div class="w-full">
-            <h4 class="text-xs font-bold text-zinc-200 truncate w-full" title="${ch.handle}">${ch.handle}</h4>
-            <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 text-notion-textMuted tracking-wide uppercase">${ch.category}</span>
-          </div>
-        </div>
-      `}).join('');
-    }
-
-    window.handleAddChannel = async function(e) {
-      e.preventDefault();
-      let handle = document.getElementById('yt-handle-input').value.trim();
-      let category = document.getElementById('yt-category-input').value;
-      
-      if (!handle.startsWith('@')) handle = '@' + handle; // enforce @
-
-      const btn = document.getElementById('btn-add-yt');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+      const btn = document.getElementById('btn-detect-muscle');
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Detecting...`;
       btn.disabled = true;
 
       try {
-        const apiKey = localStorage.getItem('geminiApiKey');
-        if (apiKey) {
-           // AI Sorting Active
-           const aiCat = await askGemini(`Analyze the YouTube channel "${handle}". What is its primary topic? Pick ONE category from this list: Fitness, Academics, Tech, Mindset, Finance. If none of those fit well, invent ONE single-word category that fits best. Respond ONLY with the single word category name, nothing else.`);
-           if (aiCat) {
-             category = aiCat.replace(/[^a-zA-Z]/g, ''); // Clean punctuation
-             window.showToast(`AI sorted ${handle} into ${category}`, "success");
-           }
-        } else {
-           window.showToast(`Added manually as ${category}`);
+        const sysPrompt = "You are a fitness expert API. You receive an exercise name and return ONLY a valid JSON object with 'target' (string, specific muscle head/group e.g. 'Upper Chest') and 'split' (string, MUST BE exactly one of: 'chest', 'back', 'arms', 'legs'). Do not include markdown formatting.";
+        const responseText = await askGemini(exerciseName, sysPrompt);
+        
+        let cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(cleanedJSON);
+        
+        if (data.target) document.getElementById('block-target-input').value = data.target;
+        if (data.split && ['chest', 'back', 'arms', 'legs'].includes(data.split)) {
+          document.getElementById('block-split-input').value = data.split;
         }
-
-        const newCh = { id: Date.now().toString(), handle, category };
-        window.appState.ytChannels.push(newCh);
-        window.saveState();
-        renderYtChannels();
-        window.closeModal('addYtChannelModal');
-        e.target.reset();
-
+        window.showToast("Muscle grouped by AI", "success");
       } catch (err) {
-        console.error(err);
-        window.showToast("Failed to add channel or AI error.", "error");
+        if(err.message === "API_KEY_MISSING") {
+           window.showToast("Please configure Gemini API Key in Settings", "error");
+        } else {
+           window.showToast("Detection failed. Enter manually.", "error");
+        }
       } finally {
-        btn.innerHTML = originalText;
+        btn.innerHTML = origText;
         btn.disabled = false;
       }
     }
 
-
-    // --- STREAMING_CHUNK:AI Generated Quotes & Minor Tasks... ---
-    // --- QUOTES LOGIC ---
-    window.cycleInfiniteQuote = async function() {
-      const btn = document.getElementById('main-quote-btn') || document.getElementById('banner-refresh-btn');
-      const icon = btn.querySelector('i');
-      if (icon) icon.classList.add('fa-spin');
-      
-      try {
-        // Try Gemini API first
-        const apiKey = localStorage.getItem('geminiApiKey');
-        if (!apiKey) throw new Error("No API Key");
-
-        const prompt = "Generate a short, profound, and highly unique motivational quote about discipline, focus, or strength. Respond EXACTLY in this format: \"The quote text here\" — Author Name";
-        const result = await askGemini(prompt);
-        
-        // Parse result (e.g. "quote" - author)
-        const parts = result.split('—');
-        if (parts.length >= 2) {
-           const quote = parts[0].trim();
-           const author = "— " + parts[1].trim();
-           document.getElementById('quote-display-text').innerText = quote;
-           document.getElementById('quote-display-author').innerText = author;
-           document.getElementById('banner-quote-text').innerText = quote;
-           document.getElementById('banner-quote-author').innerText = author;
-           window.showToast("Generated new AI Quote!", "success");
-        } else {
-           throw new Error("Parsing failed");
-        }
-
-      } catch (err) {
-        // Fallback to local arrays if API fails or no key
-        const fallbacks = [
-          { q: "We suffer more often in imagination than in reality.", a: "— Seneca" },
-          { q: "He who has a why to live for can bear almost any how.", a: "— Friedrich Nietzsche" },
-          { q: "No man has the right to be an amateur in the matter of physical training.", a: "— Socrates" }
-        ];
-        const random = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-        document.getElementById('quote-display-text').innerText = random.q;
-        document.getElementById('quote-display-author').innerText = random.a;
-        document.getElementById('banner-quote-text').innerText = random.q;
-        document.getElementById('banner-quote-author').innerText = random.a;
-        
-        if (err.message === "No API Key") {
-           window.showToast("Using local quotes. Add API Key in Settings for AI quotes.", "info");
-        } else {
-           window.showToast("AI generation failed, using local quote.", "error");
-        }
-      } finally {
-        if (icon) icon.classList.remove('fa-spin');
-      }
+    // --- STUDENT LOGIC ---
+    window.setAssignmentGrouping = function(group) {
+      window.taskGroupBy = group;
+      document.querySelectorAll('.group-btn').forEach(btn => {
+        btn.classList.remove('bg-zinc-800', 'text-white', 'border-zinc-700');
+        btn.classList.add('text-notion-textMuted', 'border-transparent');
+      });
+      const activeBtn = document.getElementById('group-btn-' + group);
+      activeBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-700');
+      activeBtn.classList.remove('text-notion-textMuted', 'border-transparent');
+      renderTasks();
     }
 
-
-    // --- SCRATCHPAD LOGIC ---
-    let scratchpadTimeout;
-    window.saveScratchpad = function() {
-      const status = document.getElementById('scratch-save-status');
-      status.innerText = "Saving...";
-      status.classList.add('text-notion-amber');
-      
-      clearTimeout(scratchpadTimeout);
-      scratchpadTimeout = setTimeout(() => {
-        window.appState.scratchpadText = document.getElementById('scratchpad-textarea').value;
-        window.saveState();
-        status.innerText = "Auto-saved";
-        status.classList.remove('text-notion-amber');
-      }, 1000);
+    window.setAssignmentSorting = function(sort) {
+      window.taskSortBy = sort;
+      document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.remove('bg-zinc-800', 'text-white', 'border-zinc-700');
+        btn.classList.add('text-notion-textMuted', 'border-transparent');
+      });
+      const activeBtn = document.getElementById('sort-btn-' + sort);
+      activeBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-700');
+      activeBtn.classList.remove('text-notion-textMuted', 'border-transparent');
+      renderTasks();
     }
 
-
-    // --- STUDENT HUB TASKS LOGIC (abbreviated for completeness) ---
-    window.setAssignmentGrouping = function(by) { window.taskGroupBy = by; renderTasks(); }
-    window.setAssignmentSorting = function(sort) { window.taskSortBy = sort; renderTasks(); }
-    
     window.handleAddAssignment = function(e) {
       e.preventDefault();
       const newTask = {
-        id: Date.now().toString(),
+        id: 't_' + Date.now(),
         title: document.getElementById('asgn-title-input').value,
         course: document.getElementById('asgn-course-input').value,
         type: document.getElementById('asgn-type-input').value,
@@ -1228,161 +1212,273 @@ function renderYtChannels() {
       renderTasks();
       window.closeModal('addAssignmentModal');
       e.target.reset();
-      window.showToast("Assignment added");
+      window.showToast("Task Saved!");
     }
 
-    window.toggleTask = function(id) {
-      const t = window.appState.tasks.find(x => x.id === id);
-      if(t) {
-        t.completed = !t.completed;
+    window.toggleTaskCompletion = function(id) {
+      const task = window.appState.tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
         window.saveState();
-        renderTasks();
+        
+        const card = document.getElementById(`task-card-${id}`);
+        const check = document.getElementById(`task-check-${id}`);
+        if(card && check) {
+           if(task.completed) {
+               card.classList.add('completed');
+               check.classList.replace('text-zinc-600', 'text-notion-emerald');
+               check.classList.replace('fa-circle', 'fa-circle-check');
+               check.classList.add('animate-check');
+           } else {
+               card.classList.remove('completed');
+               check.classList.replace('text-notion-emerald', 'text-zinc-600');
+               check.classList.replace('fa-circle-check', 'fa-circle');
+               check.classList.remove('animate-check');
+           }
+        } else {
+           renderTasks();
+        }
       }
+    }
+
+    window.deleteTask = function(id) {
+      window.appState.tasks = window.appState.tasks.filter(t => t.id !== id);
+      window.saveState();
+      renderTasks();
     }
 
     function renderTasks() {
       const container = document.getElementById('assignments-container');
-      if (window.appState.tasks.length === 0) {
-         container.innerHTML = `<div class="p-6 text-center text-notion-textMuted text-sm border border-dashed border-notion-border rounded-xl">No pending assignments. You're caught up!</div>`;
-         return;
-      }
-
-      // Sort
-      let sorted = [...window.appState.tasks].sort((a,b) => {
-        const da = new Date(a.dueDate).getTime();
-        const db = new Date(b.dueDate).getTime();
-        return window.taskSortBy === 'dueAsc' ? da - db : db - da;
+      
+      let sortedTasks = [...window.appState.tasks];
+      sortedTasks.sort((a, b) => {
+        const dateA = new Date(a.dueDate);
+        const dateB = new Date(b.dueDate);
+        return window.taskSortBy === 'dueAsc' ? dateA - dateB : dateB - dateA;
       });
 
-      container.innerHTML = sorted.map(t => {
-        const color = CLASS_COLORS[t.course] || '#9B9B9B';
-        const dateObj = new Date(t.dueDate + 'T00:00:00');
-        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        return `
-        <div class="task-card notion-card rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3 ${t.completed ? 'completed' : ''}">
-          <div class="flex items-center gap-3.5 flex-1 min-w-0">
-            <button onclick="window.toggleTask('${t.id}')" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-zinc-600 flex items-center justify-center shrink-0 hover:border-notion-emerald transition-colors ${t.completed ? 'bg-notion-emerald border-notion-emerald animate-check' : 'bg-transparent'}">
-              <i class="fa-solid fa-check text-[10px] sm:text-xs text-[#141414] ${t.completed ? 'opacity-100' : 'opacity-0'}"></i>
-            </button>
-            <div class="min-w-0 flex-1">
-              <h4 class="task-title-text text-sm sm:text-base font-bold text-zinc-100 truncate">${t.title}</h4>
-              <div class="flex flex-wrap items-center gap-2 mt-1">
-                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">
-                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${color};"></span> ${t.course}
-                </span>
-                <span class="text-[10px] text-notion-textMuted flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
-                <span class="text-[9px] uppercase tracking-wider text-zinc-500 font-bold border border-zinc-700 px-1 rounded">${t.type}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `}).join('');
-    }
-
-    // --- STREAMING_CHUNK:AI Gym Helper and Logs... ---
-    // --- GYM ADD & AI DETECT ---
-    window.aiAutoDetectExercise = async function() {
-       const primary = document.getElementById('block-primary-input').value.trim();
-       if(!primary) return window.showToast("Enter a primary exercise name first.", "error");
-
-       const btn = document.getElementById('btn-detect-muscle');
-       const originalText = btn.innerHTML;
-       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
-       
-       try {
-         const apiKey = localStorage.getItem('geminiApiKey');
-         if (!apiKey) throw new Error("No API Key");
-
-         const res = await askGemini(`Analyze the exercise "${primary}". Return exactly two things separated by a pipe (|). 1) The main target muscle head using common names instead of formal scientific names (e.g. use "Tricep (Long Head)", "Tricep (Short Head)", "Upper Chest", "Front Delt"). Always specify the specific head of the muscle if applicable. 2) The best workout split category for it from this exact list: [chest, back, arms, legs]. Example output: Tricep (Long Head) | arms`);
-         
-         const parts = res.split('|');
-         if(parts.length === 2) {
-            document.getElementById('block-target-input').value = parts[0].trim();
-            document.getElementById('block-split-input').value = parts[1].trim().toLowerCase();
-            window.showToast("Detected muscle and split!", "success");
-         } else {
-           throw new Error("Bad parse");
-         }
-       } catch (err) {
-         window.showToast("Detection failed. Do you have your API key set?", "error");
-       } finally {
-         btn.innerHTML = originalText;
-       }
-    }
-
-    window.handleAddExerciseBlock = function(e) {
-      e.preventDefault();
-      const altsRaw = document.getElementById('block-alternatives-input').value;
-      const alts = altsRaw ? altsRaw.split(',').map(s=>s.trim()).filter(s=>s) : [];
-      
-      const newBlock = {
-        id: 'b_' + Date.now(),
-        split: document.getElementById('block-split-input').value,
-        target: document.getElementById('block-target-input').value,
-        current: document.getElementById('block-primary-input').value,
-        locked: false,
-        alternatives: alts
-      };
-
-      window.appState.gymBlocks.push(newBlock);
-      window.saveState();
-      renderGymBlocks();
-      window.closeModal('addBlockModal');
-      e.target.reset();
-      window.showToast("Exercise block saved!");
-    }
-
-    // --- PB LOGS ---
-    window.handleLogSet = function(e) {
-      e.preventDefault();
-      const log = {
-        id: 'pb_' + Date.now(),
-        exercise: document.getElementById('log-exercise-name').value,
-        weight: document.getElementById('log-weight-input').value,
-        reps: document.getElementById('log-reps-input').value,
-        date: new Date().toISOString()
-      };
-      window.appState.pbLogs.unshift(log); // Add to top
-      if (window.appState.pbLogs.length > 20) window.appState.pbLogs.pop(); // Keep last 20
-      window.saveState();
-      renderPbLogs();
-      window.closeModal('logSetModal');
-      e.target.reset();
-      window.showToast("Set logged successfully!");
-    }
-
-    function renderPbLogs() {
-      const container = document.getElementById('pb-records-container');
-      if (window.appState.pbLogs.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-xs text-notion-textMuted p-4 border border-dashed border-notion-border rounded-xl text-center">No sets logged yet.</div>`;
+      if (sortedTasks.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-notion-textMuted border border-dashed border-notion-border rounded-xl">No active assignments. You're all caught up!</div>`;
         return;
       }
-      container.innerHTML = window.appState.pbLogs.map(log => {
-        const d = new Date(log.date).toLocaleDateString();
-        return `
-        <div class="bg-notion-sidebar border border-notion-border rounded-lg p-3 relative overflow-hidden group">
-          <div class="absolute right-0 top-0 bottom-0 w-1 bg-notion-emerald/80 shadow-[0_0_10px_#10B981]"></div>
-          <div class="text-[10px] text-notion-textMuted mb-0.5">${d}</div>
-          <h4 class="text-xs font-bold text-zinc-100 truncate w-[90%]">${log.exercise}</h4>
-          <div class="mt-2 flex items-baseline gap-1 font-mono">
-            <span class="text-base font-black text-notion-emerald">${log.weight}</span>
-            <span class="text-[9px] text-zinc-400">lbs ×</span>
-            <span class="text-sm font-bold text-zinc-200">${log.reps}</span>
+
+      const groups = {};
+      if (window.taskGroupBy === 'none') {
+        groups['All Assignments'] = sortedTasks;
+      } else {
+        sortedTasks.forEach(task => {
+          let key = 'Other';
+          if (window.taskGroupBy === 'course') key = task.course;
+          if (window.taskGroupBy === 'type') key = task.type;
+          if (window.taskGroupBy === 'date') {
+            const dateObj = new Date(task.dueDate);
+            const today = new Date();
+            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            if (dateObj.toDateString() === today.toDateString()) key = 'Today';
+            else if (dateObj.toDateString() === tomorrow.toDateString()) key = 'Tomorrow';
+            else if (dateObj < today) key = 'Overdue';
+            else key = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+          }
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(task);
+        });
+      }
+
+      let html = '';
+      for (const [groupName, tasks] of Object.entries(groups)) {
+        html += `
+          <div class="space-y-2 mb-6">
+            <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider pl-1">${groupName} <span class="text-zinc-600 font-normal ml-1">(${tasks.length})</span></h3>
+            <div class="space-y-1.5">
+              ${tasks.map(t => {
+                const color = CLASS_COLORS[t.course] || '#9B9B9B';
+                return `
+                <div id="task-card-${t.id}" class="task-card ${t.completed ? 'completed' : ''} bg-notion-bg border border-notion-border hover:border-zinc-700 rounded-lg p-2.5 sm:p-3 flex items-center justify-between group">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <button onclick="window.toggleTaskCompletion('${t.id}')" class="shrink-0 pt-0.5 outline-none">
+                      <i id="task-check-${t.id}" class="fa-regular ${t.completed ? 'fa-circle-check text-notion-emerald' : 'fa-circle text-zinc-600 hover:text-white'} text-base transition-colors"></i>
+                    </button>
+                    <div class="min-w-0">
+                      <h4 class="task-title-text text-xs sm:text-sm font-semibold text-zinc-100 truncate pr-2">${t.title}</h4>
+                      <div class="flex items-center gap-2 mt-1 text-[9px] sm:text-[10px]">
+                        <span class="px-1.5 py-0.5 rounded-sm bg-zinc-800/80 font-medium" style="color: ${color}; border-left: 2px solid ${color}">${t.course}</span>
+                        <span class="text-zinc-500 flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${new Date(t.dueDate).toLocaleDateString()}</span>
+                        <span class="text-zinc-600">${t.type}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button onclick="window.deleteTask('${t.id}')" class="shrink-0 p-2 text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all outline-none" title="Delete Task">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </button>
+                </div>
+              `}).join('')}
+            </div>
           </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    // --- STREAMING_CHUNK:Refined Info Tab, API Integration, and YouTube Logic ---
+
+    // YouTube Logic
+    window.setYtFilter = function(category) {
+      window.currentYtFilter = category;
+      renderYtChannels();
+    }
+
+    window.handleAddChannel = async function(e) {
+      e.preventDefault();
+      
+      const btn = document.getElementById('btn-add-yt');
+      const origText = btn.innerText;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Adding...`;
+      btn.disabled = true;
+
+      let handle = document.getElementById('yt-handle-input').value.trim();
+      if (!handle.startsWith('@')) handle = '@' + handle;
+
+      let category = document.getElementById('yt-category-input').value;
+
+      try {
+        const apiKey = localStorage.getItem('geminiApiKey');
+        if (apiKey) {
+           const sysPrompt = "Return ONLY a valid JSON object with 'category'. Categorize the youtube channel provided into one of: 'Fitness', 'Academics', 'Tech', 'Mindset', 'Misc'. If unknown, return 'Misc'. No markdown.";
+           const response = await askGemini(`Categorize channel: ${handle}`, sysPrompt);
+           const data = JSON.parse(response.replace(/```json/g, '').replace(/```/g, '').trim());
+           if(data.category) category = data.category;
+        }
+      } catch (err) {
+        console.warn("AI categorization failed, using manual.", err);
+      }
+
+      window.appState.ytChannels.push({ id: 'yt_' + Date.now(), handle, category });
+      window.saveState();
+      renderYtChannels();
+      window.closeModal('addYtChannelModal');
+      e.target.reset();
+      window.showToast(`Added ${handle} to ${category}!`, "success");
+
+      btn.innerText = origText;
+      btn.disabled = false;
+    }
+
+    window.removeYtChannel = function(event, id) {
+      if(event) { event.preventDefault(); event.stopPropagation(); }
+      window.appState.ytChannels = window.appState.ytChannels.filter(c => c.id !== id);
+      window.saveState();
+      renderYtChannels();
+    }
+
+    function renderYtChannels() {
+      const container = document.getElementById('yt-channels-container');
+      const filterContainer = document.getElementById('yt-filter-container');
+      
+      const categories = ['All', ...new Set(window.appState.ytChannels.map(c => c.category))];
+      
+      filterContainer.innerHTML = categories.map(cat => {
+        const isActive = (cat === 'All' && window.currentYtFilter === 'all') || (cat === window.currentYtFilter);
+        return `<button onclick="window.setYtFilter('${cat === 'All' ? 'all' : cat}')" class="px-2.5 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap transition-colors ${isActive ? 'bg-zinc-200 text-zinc-950' : 'bg-transparent text-notion-textMuted border border-notion-border hover:text-white'}">${cat}</button>`;
+      }).join('');
+
+      let channels = window.appState.ytChannels;
+      if (window.currentYtFilter !== 'all') {
+        channels = channels.filter(c => c.category === window.currentYtFilter);
+      }
+
+      if (channels.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-4 text-center text-[11px] text-notion-textMuted border border-dashed border-notion-border rounded-xl">No channels in this view. Add some creators!</div>`;
+        return;
+      }
+
+      container.innerHTML = channels.map(ch => {
+        const handleClean = ch.handle.replace('@', '');
+        const avatarUrl = `https://unavatar.io/youtube/${handleClean}?fallback=false`;
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${handleClean}&background=2A2A2A&color=fff&rounded=true&bold=true`;
+        
+        return `
+        <div class="bg-notion-bg border border-notion-border rounded-xl p-3 flex flex-col items-center justify-center gap-2 text-center group relative overflow-hidden transition-all hover:border-rose-500/50 hover:bg-rose-950/20">
+          
+          <!-- Delete Button (Fixed, styled cohesive) -->
+          <button onclick="window.removeYtChannel(event, '${ch.id}')" class="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center bg-zinc-800/90 hover:bg-rose-500 text-zinc-500 hover:text-white rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20 shadow-sm" title="Remove Channel">
+            <i class="fa-solid fa-xmark text-[10px]"></i>
+          </button>
+
+          <!-- Clickable Link wrapper for whole visual card -->
+          <a href="https://youtube.com/${ch.handle}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2 w-full outline-none pt-2">
+            <img src="${avatarUrl}" onerror="this.src='${fallbackUrl}'" alt="${ch.handle}" class="w-12 h-12 rounded-full object-cover border-2 border-zinc-800 shadow-lg group-hover:border-rose-500 transition-colors" />
+            <div class="w-full">
+              <h4 class="text-xs font-bold text-zinc-200 truncate w-full" title="${ch.handle}">${ch.handle}</h4>
+              <span class="text-[9px] px-1.5 py-0.5 mt-1 inline-block rounded bg-zinc-800 text-notion-textMuted tracking-wide uppercase">${ch.category}</span>
+            </div>
+          </a>
         </div>
       `}).join('');
     }
 
-    // Init App!
+    // Scratchpad Logic
+    let scratchTimeout;
+    window.saveScratchpad = function() {
+      const val = document.getElementById('scratchpad-textarea').value;
+      window.appState.scratchpadText = val;
+      
+      const status = document.getElementById('scratch-save-status');
+      status.innerText = "Saving...";
+      status.classList.add("text-notion-amber");
+      
+      clearTimeout(scratchTimeout);
+      scratchTimeout = setTimeout(() => {
+        window.saveState();
+        status.innerText = "Saved";
+        status.classList.remove("text-notion-amber");
+        status.classList.add("text-notion-textMuted");
+        setTimeout(() => status.innerText = "Auto-saved", 2000);
+      }, 1000);
+    }
+
+    // Quotes Engine
+    const FALLBACK_QUOTES = [
+      { t: "You have no enemies. No one has any enemies.", a: "Thors Snorresson" },
+      { t: "There is no shame in falling down. True shame is in not standing back up.", a: "Miyamoto Musashi" },
+      { t: "I have no enemies.", a: "Thorfinn" },
+      { t: "A true warrior needs no sword.", a: "Thors Snorresson" },
+      { t: "He who fights with monsters might take care lest he thereby become a monster.", a: "Friedrich Nietzsche" }
+    ];
+    let quoteIndex = 0;
+
+    window.cycleInfiniteQuote = async function() {
+      const bText = document.getElementById('banner-quote-text');
+      const bAuth = document.getElementById('banner-quote-author');
+      const dText = document.getElementById('quote-display-text');
+      const dAuth = document.getElementById('quote-display-author');
+      
+      const apiKey = localStorage.getItem('geminiApiKey');
+
+      const applyQuote = (text, author) => {
+        if(bText) { bText.innerText = `"${text}"`; bAuth.innerText = `— ${author}`; }
+        if(dText) { dText.innerText = `"${text}"`; dAuth.innerText = `— ${author}`; }
+      };
+
+      if (apiKey) {
+        try {
+          const sysPrompt = "You are a philosophical quote generator. Generate a deeply profound, slightly stoic or literary quote. Return ONLY JSON format: {'t': 'quote text without quotes', 'a': 'Author name'}. Do not repeat standard cliches.";
+          const res = await askGemini("Give me a new profound quote.", sysPrompt);
+          const data = JSON.parse(res.replace(/```json/g, '').replace(/```/g, '').trim());
+          if (data.t && data.a) {
+            applyQuote(data.t, data.a);
+            return;
+          }
+        } catch (e) { console.warn("Gemini quote failed, using fallback.", e); }
+      }
+      
+      quoteIndex = (quoteIndex + 1) % FALLBACK_QUOTES.length;
+      const q = FALLBACK_QUOTES[quoteIndex];
+      applyQuote(q.t, q.a);
+    }
+
+    // Initialize App
     initStorage();
-    
-    // Cycle a local quote on load just to populate it before AI overrides it
-    document.addEventListener("DOMContentLoaded", () => {
-       if(!document.getElementById('quote-display-text').innerText) {
-          window.cycleInfiniteQuote();
-       }
-    });
 
   </script>
 </body>
