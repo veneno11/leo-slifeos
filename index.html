@@ -2061,8 +2061,7 @@
       });
       const label = $('settings-sync-label');
       if (label) label.textContent = !syncConnected ? 'Saved on this device only'
-        : pending ? Synced, ${pending} book photo${pending === 1 ? '' : 's'} waiting to upload
-        : 'Synced to the cloud';
+      : pending ? 'Synced, ' + pending + ' book photo' + (pending === 1 ? '' : 's') + ' waiting to upload'        : 'Synced to the cloud';
     }
     // --- Tab Navigation ---
     const TAB_ORDER = ['gym', 'student', 'info'];
