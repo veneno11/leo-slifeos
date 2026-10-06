@@ -304,6 +304,9 @@
       background: var(--line-strong); transition: background-color 0.3s;
     }
     .block-card.is-locked::before { background: var(--yellow); }
+    /* Days with more than one muscle: the side bar and number take that muscle's color */
+    .block-card.has-muscle::before { background: var(--muscle); width: 5px; }
+    .block-card.has-muscle .block-num { background: var(--muscle-soft); color: var(--muscle); }
     .block-target { font-size: 13px; font-weight: 500; color: var(--dust); }
     .block-name { font-size: 17px; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; margin-top: 4px; color: #F4F4F5; }
     .block-alts { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 13px; color: var(--dust); }
@@ -326,6 +329,56 @@
     @keyframes flipIn { from { opacity: 0; transform: perspective(500px) rotateX(-80deg); } }
     .hint-line { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--dim); }
     .hint-line i { color: var(--yellow); font-size: 11px; }
+
+    /* ---------- Exercise order: numbers, drag handle, auto-alternate switch ---------- */
+    .block-num {
+      display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-right: 8px;
+      border-radius: 6px; background: #27272A; color: #A1A1AA; font-size: 11.5px; font-weight: 700; vertical-align: 1px;
+    }
+    .drag-handle { touch-action: none; cursor: grab; color: var(--dim); }
+    .drag-handle:hover { color: var(--chalk); }
+    #exercise-blocks-container { position: relative; }
+    .block-card.is-dragging {
+      z-index: 20; transition: none; cursor: grabbing;
+      background: #262626; border-color: #52525B;
+      box-shadow: 0 26px 50px -18px rgba(0, 0, 0, 0.95);
+    }
+    .block-card.is-dragging .drag-handle { color: var(--chalk); background: var(--raised); }
+    body.is-reordering, body.is-reordering * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
+    .order-toggle {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      height: 42px; padding: 0 9px 0 14px; border-radius: 12px;
+      background: var(--raised); border: 1px solid var(--line);
+      font-size: 14px; font-weight: 600; color: var(--chalk); white-space: nowrap;
+      transition: border-color 0.2s, transform 0.15s var(--ease-out);
+    }
+    .order-toggle:hover { border-color: var(--line-strong); }
+    .order-toggle:active { transform: scale(0.98); }
+    .order-toggle .order-label { display: inline-flex; align-items: center; gap: 8px; }
+    .order-toggle .order-label i { font-size: 13px; color: #A1A1AA; }
+    .mini-switch { position: relative; flex-shrink: 0; width: 38px; height: 24px; border-radius: 999px; background: var(--line-strong); transition: background-color 0.25s; }
+    .mini-switch::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+      background: var(--chalk); transition: transform 0.3s var(--ease-spring);
+    }
+    .order-toggle[aria-checked="true"] .mini-switch { background: var(--green); }
+    .order-toggle[aria-checked="true"] .mini-switch::after { transform: translateX(14px); }
+
+    /* ---------- Editable cards + training days ---------- */
+    .block-main { display: block; flex: 1; min-width: 0; border-radius: 10px; cursor: pointer; }
+    .block-main:focus-visible { outline-offset: 4px; }
+    .split-ago:empty { display: none; }
+    .trained-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
+    .tl-text { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--dust); min-width: 0; }
+    .tl-text.is-today { color: var(--green); font-weight: 600; }
+    .tl-text.just-marked i { animation: lockSnap 0.45s var(--ease-spring); }
+    .tl-undo { font-size: 12.5px; font-weight: 600; color: var(--dim); padding: 6px 8px; border-radius: 8px; flex-shrink: 0; }
+    .tl-undo:hover { color: var(--chalk); background: var(--raised); }
+
+    /* ---------- Quick due dates ---------- */
+    .quick-dates { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; }
+    .quick-dates .chip { height: 32px; padding: 0 12px; font-size: 13px; }
+    .task-main { cursor: pointer; border-radius: 10px; }
 
     /* ---------- PR cards + barbell ---------- */
     .pr-card { padding: 14px 16px 14px; cursor: pointer; }
@@ -378,7 +431,7 @@
       background: var(--card); border: 1px solid var(--line);
       transition: opacity 0.35s, border-color 0.25s, transform 0.2s var(--ease-out);
     }
-    .task-card::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--course); }
+    .task-card::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--course); box-shadow: 0 0 0 1px var(--course-ring, transparent); }
     .task-card.completed { opacity: 0.62; }
     .check-btn { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px; }
     .check-ring {
@@ -402,7 +455,8 @@
     .task-card.completed .task-title::after { width: 100%; }
     .task-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 12.5px; color: var(--dust); }
     .course-tag { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--chalk); }
-    .course-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--course); }
+    .course-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--course); box-shadow: 0 0 0 1px var(--course-ring, transparent); }
+    .course-dot { align-self: center; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--course); box-shadow: 0 0 0 1px var(--course-ring, transparent); }
     .due-tag { font-weight: 600; }
     .due-tag.is-overdue { color: var(--red); }
     .due-tag.is-today { color: var(--yellow); }
@@ -713,18 +767,24 @@
       <p class="hub-sub">Shuffle swaps each unlocked exercise for one of its alternatives. Locked lifts stay put.</p>
 
       <div class="chip-row scrollbar-none mt-4" role="tablist" aria-label="Split">
-        <button onclick="window.setGymSplit('chest')" id="split-btn-chest" class="split-btn chip is-active" role="tab" aria-selected="true">Chest & shoulders</button>
-        <button onclick="window.setGymSplit('back')" id="split-btn-back" class="split-btn chip" role="tab" aria-selected="false">Back & biceps</button>
-        <button onclick="window.setGymSplit('arms')" id="split-btn-arms" class="split-btn chip" role="tab" aria-selected="false">Arms</button>
-        <button onclick="window.setGymSplit('legs')" id="split-btn-legs" class="split-btn chip" role="tab" aria-selected="false">Legs & core</button>
+        <button onclick="window.setGymSplit('chest')" id="split-btn-chest" class="split-btn chip is-active" role="tab" aria-selected="true">Chest & shoulders<span class="chip-count split-ago"></span></button>
+        <button onclick="window.setGymSplit('back')" id="split-btn-back" class="split-btn chip" role="tab" aria-selected="false">Back & biceps<span class="chip-count split-ago"></span></button>
+        <button onclick="window.setGymSplit('arms')" id="split-btn-arms" class="split-btn chip" role="tab" aria-selected="false">Arms<span class="chip-count split-ago"></span></button>
+        <button onclick="window.setGymSplit('legs')" id="split-btn-legs" class="split-btn chip" role="tab" aria-selected="false">Legs & core<span class="chip-count split-ago"></span></button>
       </div>
 
-      <div class="grid grid-cols-2 gap-2.5 mt-4 sm:flex sm:items-center">
+      <div class="grid grid-cols-2 gap-2.5 mt-4 sm:flex sm:flex-wrap sm:items-center">
         <button id="shuffle-btn" onclick="window.shuffleUnlockedBlocks()" class="btn btn-primary"><i id="shuffle-icon" class="fa-solid fa-shuffle"></i> Shuffle</button>
         <button onclick="window.openModal('addBlockModal')" class="btn btn-ghost"><i class="fa-solid fa-plus"></i> Add exercise</button>
-        <p class="hint-line col-span-2 sm:ml-2"><i class="fa-solid fa-lock"></i> Lock a lift to keep it fixed</p>
+        <button id="auto-order-btn" onclick="window.toggleAutoOrder()" class="order-toggle col-span-2" role="switch" aria-checked="true" title="Order lifts so the same muscle group never comes twice in a row">
+          <span class="order-label"><i class="fa-solid fa-arrow-right-arrow-left"></i> Alternate muscle groups</span>
+          <span class="mini-switch" aria-hidden="true"></span>
+        </button>
+        <p class="hint-line col-span-2 sm:ml-2"><i class="fa-solid fa-lock"></i> Lock a lift to keep it fixed. Drag <i class="fa-solid fa-grip-vertical" style="color: var(--dust)"></i> to reorder.</p>
       </div>
 
+      <div id="trained-line" class="trained-line mt-4" aria-live="polite"></div>
+      <p id="order-live" class="sr-only" aria-live="polite"></p>
       <div id="exercise-blocks-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
 
       <section class="mt-10">
@@ -765,6 +825,9 @@
       </div>
 
       <div id="assignments-container" class="mt-6 space-y-6"></div>
+      <div class="flex justify-center mt-6">
+        <button id="clear-done-btn" onclick="window.clearCompletedTasks()" class="btn btn-ghost btn-sm hidden"><i class="fa-solid fa-broom"></i> <span>Clear completed</span></button>
+      </div>
     </div>
 
     <!-- MINDSET TAB -->
@@ -861,6 +924,16 @@
         <p class="text-[12px] text-notion-textMuted mt-3">Model: Gemini 3.5 Flash-Lite, with 3.6 Flash as backup.</p>
       </div>
 
+      <div class="settings-block mt-3">
+        <div class="text-[15px] font-semibold flex items-center gap-2"><i class="fa-solid fa-box-archive text-[13px] text-notion-textMuted"></i> Backup</div>
+        <p class="text-[13px] text-notion-textMuted leading-snug mt-2">Save a copy of your lifts, PRs, assignments, creators and notes as a file, or restore from one. Your API key isn't included.</p>
+        <div class="grid grid-cols-2 gap-2 mt-3">
+          <button type="button" onclick="window.exportBackup()" class="btn btn-ghost"><i class="fa-solid fa-download"></i> Download</button>
+          <button type="button" onclick="document.getElementById('backup-file-input').click()" class="btn btn-ghost"><i class="fa-solid fa-upload"></i> Restore</button>
+        </div>
+        <input type="file" id="backup-file-input" accept="application/json,.json" class="hidden" onchange="window.importBackup(this)" />
+      </div>
+
       <button onclick="window.closeModal('settingsModal')" class="btn btn-ghost w-full mt-5" style="height:48px">Done</button>
     </div>
   </div>
@@ -874,6 +947,7 @@
         <button onclick="window.closeModal('addAssignmentModal')" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="window.handleAddAssignment(event)" class="space-y-4">
+        <input type="hidden" id="asgn-edit-id" value="" />
         <div>
           <label class="field-label" for="asgn-title-input">Title</label>
           <input type="text" id="asgn-title-input" required placeholder="Problem set 4" autocomplete="off" class="field" />
@@ -886,6 +960,7 @@
               <option value="AP Precalculus">AP Precalculus</option>
               <option value="AP Economics">AP Economics</option>
               <option value="Spanish Lit">Spanish Lit</option>
+              <option value="German">German</option>
               <option value="American Lit">American Lit</option>
               <option value="Computer Science">Computer Science</option>
               <option value="Elaboración de Proyectos">Elaboración de Proyectos</option>
@@ -905,12 +980,14 @@
         </div>
         <div>
           <label class="field-label" for="asgn-date-input">Due date</label>
-          <input type="date" id="asgn-date-input" required class="field" />
+          <input type="date" id="asgn-date-input" required class="field" oninput="window.syncQuickDates()" />
+          <div id="asgn-quick-dates" class="quick-dates scrollbar-none" role="group" aria-label="Quick due dates"></div>
         </div>
         <div class="sheet-actions">
           <button type="button" onclick="window.closeModal('addAssignmentModal')" class="btn btn-ghost">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save assignment</button>
+          <button type="submit" id="asgn-submit-btn" class="btn btn-primary">Save assignment</button>
         </div>
+        <button type="button" id="btn-delete-task" onclick="window.deleteTaskFromSheet()" class="hidden btn btn-danger w-full"><i class="fa-solid fa-trash-can"></i> Delete this assignment</button>
       </form>
     </div>
   </div>
@@ -924,6 +1001,7 @@
         <button onclick="window.closeModal('addBlockModal')" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="window.handleAddExerciseBlock(event)" class="space-y-4">
+        <input type="hidden" id="block-edit-id" value="" />
         <div>
           <label class="field-label" for="block-primary-input">Exercise</label>
           <input type="text" id="block-primary-input" required placeholder="Type it fast, e.g. incline db pres" autocomplete="off" autocapitalize="off" spellcheck="false" class="field" />
@@ -951,10 +1029,21 @@
           <label class="field-label" for="block-alternatives-input">Alternatives <span class="font-medium text-notion-textMuted">(comma separated)</span></label>
           <div class="shimmer-wrap"><input type="text" id="block-alternatives-input" placeholder="Low-to-high cable fly, Smith incline press" autocomplete="off" class="field" /></div>
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="field-label" for="block-sets-input">Sets</label>
+            <input type="number" inputmode="numeric" id="block-sets-input" min="1" max="10" step="1" value="3" required class="field tnum" />
+          </div>
+          <div>
+            <label class="field-label" for="block-reps-input">Reps</label>
+            <input type="text" id="block-reps-input" value="8–12" placeholder="8–12" maxlength="12" autocomplete="off" class="field tnum" />
+          </div>
+        </div>
         <div class="sheet-actions">
           <button type="button" onclick="window.closeModal('addBlockModal')" class="btn btn-ghost">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save exercise</button>
+          <button type="submit" id="block-submit-btn" class="btn btn-primary">Save exercise</button>
         </div>
+        <button type="button" id="btn-delete-block" onclick="window.deleteBlockFromSheet()" class="hidden btn btn-danger w-full"><i class="fa-solid fa-trash-can"></i> Remove this exercise</button>
       </form>
     </div>
   </div>
@@ -1094,24 +1183,50 @@
         { id: 'y2', handle: '@Fireship', category: 'Tech' },
         { id: 'y3', handle: '@AliAbdaal', category: 'Academics' }
       ],
-      scratchpadText: ""
+      scratchpadText: "",
+      // Splits the user has put in their own order (no auto-alternating there)
+      gymCustomOrder: {},
+      // Days each split was trained, newest first
+      splitHistory: {}
     };
     
     window.currentTab = 'gym';
-    window.currentGymSplit = 'chest';
+    let blockDrag = null; // the exercise card being dragged, if any
+
+    // Reopen the split day you were last on (remembered on this device)
+    const GYM_SPLIT_IDS = ['chest', 'back', 'arms', 'legs'];
+    const LAST_SPLIT_KEY = 'lifeOsLastSplit';
+    window.currentGymSplit = (() => {
+      try {
+        const saved = localStorage.getItem(LAST_SPLIT_KEY);
+        if (GYM_SPLIT_IDS.includes(saved)) return saved;
+      } catch (_) {}
+      return 'chest';
+    })();
     window.currentYtFilter = 'all';
     window.taskGroupBy = 'date';
     window.taskSortBy = 'dueAsc';
 
     const CLASS_COLORS = {
-      "AP Chemistry": "#10B981",          
-      "AP Precalculus": "#6366F1",        
-      "AP Economics": "#F59E0B",          
-      "Spanish Lit": "#F43F5E",           
-      "American Lit": "#06B6D4",          
-      "Computer Science": "#8B5CF6",       
-      "Elaboración de Proyectos": "#F97316" 
+      "German": "#000000",
+      "AP Chemistry": "#F97316",
+      "American Lit": "#22C55E",
+      "AP Precalculus": "#3B82F6",
+      "Spanish Lit": "#EF4444",
+      "AP Economics": "#FACC15",
+      "Elaboración de Proyectos": "#EC4899",
+      "Computer Science": "#A855F7",
+      "Tech": "#A855F7"
     };
+
+    // Course color as CSS variables. Very dark colors (German's black) get a light
+    // outline so the dot and side bar still show up on the dark cards.
+    function courseVars(course) {
+      const hex = CLASS_COLORS[course] || '#9B9B9B';
+      const n = parseInt(hex.slice(1), 16);
+      const lum = (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+      return `--course:${hex};` + (lum < 0.2 ? '--course-ring:rgba(255,255,255,0.5);' : '');
+    }
 
     // --- Small helpers ---
     const $ = (id) => document.getElementById(id);
@@ -1488,6 +1603,12 @@
       window.addEventListener('resize', moveNavIndicator);
 
       document.querySelectorAll('.modal-backdrop').forEach(enableSheetSwipe);
+      bindBlockReorder();
+      revealActiveSplitChip();
+      // Tidy up data from the removed set-tracking/rest-timer feature
+      try { localStorage.removeItem('lifeOsRest'); localStorage.removeItem('lifeOsRestSeconds'); } catch (_) {}
+      if (window.appState && 'workout' in window.appState) delete window.appState.workout;
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(revealActiveSplitChip);
       bindExerciseForm();
       bindPrForm();
       bindChannelForm();
@@ -1522,6 +1643,70 @@
         updateApiUIStatus(false);
         window.showToast("API key removed.", "info");
       }
+    }
+
+    // --- Backup: download everything as a file, or restore from one ---
+    window.exportBackup = function() {
+      try {
+        const payload = { app: "Leo's LifeOS", version: 1, exportedAt: new Date().toISOString(), state: window.appState };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lifeos-backup-${todayISO()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        haptic(8);
+        window.showToast('Backup downloaded.', 'success');
+      } catch (err) {
+        console.error('Backup failed:', err);
+        window.showToast("Couldn't create the backup file.", 'error');
+      }
+    }
+
+    const asObject = (v, fallback) => (v && typeof v === 'object' && !Array.isArray(v)) ? v : fallback;
+
+    window.importBackup = function(input) {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onerror = () => window.showToast("Couldn't read that file.", 'error');
+      reader.onload = () => {
+        let parsed = null;
+        try { parsed = JSON.parse(reader.result); } catch (_) {}
+        const st = parsed && parsed.state ? parsed.state : parsed;
+        if (!st || !Array.isArray(st.gymBlocks) || !Array.isArray(st.tasks)) {
+          window.showToast("That file isn't a LifeOS backup.", 'error');
+          return;
+        }
+        const pbLogs = Array.isArray(st.pbLogs) ? st.pbLogs : [];
+        const summary = `${st.gymBlocks.length} exercises, ${pbLogs.length} PRs, ${st.tasks.length} assignments`;
+        if (!window.confirm(`Replace everything with this backup?\n\n${summary}\n\nThis also updates your other synced devices.`)) return;
+
+        const previous = window.appState;
+        window.appState = {
+          gymBlocks: st.gymBlocks,
+          tasks: st.tasks,
+          pbLogs,
+          ytChannels: Array.isArray(st.ytChannels) ? st.ytChannels : [],
+          scratchpadText: typeof st.scratchpadText === 'string' ? st.scratchpadText : '',
+          gymCustomOrder: asObject(st.gymCustomOrder, {}),
+          splitHistory: asObject(st.splitHistory, {})
+        };
+        renderedIds.clear();
+        window.saveState();
+        window.renderAll();
+        window.closeModal('settingsModal');
+        haptic([8, 30, 8]);
+        window.showToast('Backup restored.', 'success', {
+          label: 'Undo',
+          onClick: () => { window.appState = previous; renderedIds.clear(); window.saveState(); window.renderAll(); }
+        });
+      };
+      reader.readAsText(file);
     }
 
     window.toggleKeyVisibility = function() {
@@ -1617,16 +1802,14 @@
         $('log-reps-input').value = "";
         $('log-weight-unit').value = "lbs";
         $('log-is-barbell').checked = true;
-        $('log-date-input').value = new Date().toISOString().split('T')[0];
+        $('log-date-input').value = todayISO();
         $('log-modal-title').innerText = "Log personal best";
         $('btn-delete-pr').classList.add('hidden');
       }
       if (id === 'logSetModal') { resetPrForm(); window.updateWeightHint(); warmUpAI(); }
-      if (id === 'addBlockModal') { resetExerciseForm(); warmUpAI(); }
+      if (id === 'addBlockModal') { resetExerciseForm(); setExerciseSheetForNew(); warmUpAI(); }
       if (id === 'addYtChannelModal') { resetChannelForm(); refreshCategorySelect(); warmUpAI(); }
-      if (id === 'addAssignmentModal' && !$('asgn-date-input').value) {
-        $('asgn-date-input').value = new Date().toISOString().split('T')[0];
-      }
+      if (id === 'addAssignmentModal') setAssignmentSheetForNew();
       haptic(6);
     }
 
@@ -1797,15 +1980,35 @@
     // =====================================================================
     // --- GYM SPLIT & BLOCK LOGIC ---
     // =====================================================================
-    window.setGymSplit = function(split) {
-      const changed = window.currentGymSplit !== split;
-      window.currentGymSplit = split;
+    function syncSplitChips(scroll) {
+      const split = window.currentGymSplit;
       document.querySelectorAll('.split-btn').forEach(btn => {
         const on = btn.id === 'split-btn-' + split;
         btn.classList.toggle('is-active', on);
         btn.setAttribute('aria-selected', on);
-        if (on && changed) btn.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+        if (on && scroll) btn.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: scroll === 'smooth' && !prefersReducedMotion() ? 'smooth' : 'auto' });
       });
+    }
+    // Show the remembered split's chip as active before anything renders
+    syncSplitChips(false);
+
+    // On narrow phones "Legs & core" can start off-screen; scroll the chip row
+    // sideways (never the page) so the reopened split is visible
+    function revealActiveSplitChip() {
+      const btn = $('split-btn-' + window.currentGymSplit);
+      const row = btn && btn.parentElement;
+      if (!row || row.scrollWidth <= row.clientWidth) return;
+      const b = btn.getBoundingClientRect(), r = row.getBoundingClientRect();
+      if (b.right > r.right - 16) row.scrollLeft += b.right - r.right + 16;
+      else if (b.left < r.left + 16) row.scrollLeft -= r.left + 16 - b.left;
+    }
+
+    window.setGymSplit = function(split) {
+      if (!GYM_SPLIT_IDS.includes(split)) return;
+      const changed = window.currentGymSplit !== split;
+      window.currentGymSplit = split;
+      try { localStorage.setItem(LAST_SPLIT_KEY, split); } catch (_) {}
+      syncSplitChips(changed ? 'smooth' : false);
       if (changed) haptic(6);
       renderGymBlocks({ animateAll: changed });
     }
@@ -1851,8 +2054,17 @@
     function renderGymBlocks(opts = {}) {
       const container = $('exercise-blocks-container');
       if (!container) return;
+      // A cloud update mid-drag would wipe the card being held; render once it's dropped
+      if (blockDrag) { blockDrag.pendingRender = true; return; }
+
+      const split = window.currentGymSplit;
+      if (isAutoOrder(split) && autoOrderSplit(split)) window.saveState();
+      syncOrderToggle();
+      renderSplitAges();
+      renderTrainedLine();
+
       const changed = opts.changed || new Set();
-      const blocks = window.appState.gymBlocks.filter(b => b.split === window.currentGymSplit);
+      const blocks = window.appState.gymBlocks.filter(b => b.split === split);
       
       if (blocks.length === 0) {
         container.innerHTML = emptyState('fa-dumbbell', 'No exercises in this split yet.', 'Add exercise', "window.openModal('addBlockModal')");
@@ -1860,43 +2072,74 @@
       }
       
       const fresh = makeFresh(!!opts.animateAll);
-      container.innerHTML = blocks.map(b => {
+      const muscleColors = muscleColorsFor(blocks);
+      container.innerHTML = blocks.map((b, i) => {
         const alts = Array.isArray(b.alternatives) ? b.alternatives : [];
+        const muscle = muscleColors && muscleColors.get(muscleGroupOf(b));
+        const muscleStyle = muscle ? `style="--muscle:${muscle};--muscle-soft:${hexToRgba(muscle, 0.16)}"` : '';
+        const name = esc(b.current);
         return `
-        <article class="card block-card group ${b.locked ? 'is-locked' : ''}" data-id="${b.id}" ${fresh(b.id)}>
+        <article class="card block-card group ${b.locked ? 'is-locked' : ''} ${muscle ? 'has-muscle' : ''}" ${muscleStyle} data-id="${b.id}" ${fresh(b.id)}>
           <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0 pt-0.5">
-              <p class="block-target">${esc(b.target)}</p>
-              <h3 class="block-name ${changed.has(b.id) ? 'flip-in' : ''}">${esc(b.current)}</h3>
+            <div class="block-main pt-0.5" role="button" tabindex="0" onclick="window.editGymBlock('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.editGymBlock('${b.id}')}" aria-label="Edit ${name}">
+              <p class="block-target"><span class="block-num tnum">${i + 1}</span>${esc(b.target)}</p>
+              <h3 class="block-name ${changed.has(b.id) ? 'flip-in' : ''}">${name}</h3>
             </div>
             <div class="flex items-center gap-0.5 -mr-1 -mt-1 shrink-0">
-              <button onclick="window.deleteGymBlock('${b.id}')" class="icon-btn icon-btn-sm reveal-on-hover" aria-label="Remove ${esc(b.current)}"><i class="fa-solid fa-trash-can"></i></button>
-              <button onclick="window.toggleBlockLock('${b.id}')" class="lock-btn ${b.locked ? 'locked' : ''} ${opts.toggled === b.id ? 'just-toggled' : ''}" aria-pressed="${b.locked}" aria-label="${b.locked ? 'Unlock' : 'Lock'} ${esc(b.current)}">
+              <button onclick="window.deleteGymBlock('${b.id}')" class="icon-btn icon-btn-sm reveal-on-hover" aria-label="Remove ${name}"><i class="fa-solid fa-trash-can"></i></button>
+              <button onclick="window.toggleBlockLock('${b.id}')" class="lock-btn ${b.locked ? 'locked' : ''} ${opts.toggled === b.id ? 'just-toggled' : ''}" aria-pressed="${b.locked}" aria-label="${b.locked ? 'Unlock' : 'Lock'} ${name}">
                 <i class="fa-solid ${b.locked ? 'fa-lock' : 'fa-lock-open'}"></i>
               </button>
+              <button type="button" class="drag-handle icon-btn icon-btn-sm" title="Drag to reorder" aria-label="Move ${name}, position ${i + 1} of ${blocks.length}. Use arrow keys."><i class="fa-solid fa-grip-vertical"></i></button>
             </div>
           </div>
           <div class="mt-3 flex items-center justify-between gap-3">
             <p class="block-alts"><i class="fa-solid fa-shuffle"></i><span class="truncate">${alts.length ? esc(alts.join(', ')) : 'No alternatives yet'}</span></p>
-            <span class="sets-chip tnum">3 × 8–12</span>
+            <span class="sets-chip tnum">${setsFor(b)} × ${esc(repsFor(b))}</span>
           </div>
         </article>`;
       }).join('');
       staggerNew(container);
     }
 
+    // Shared by "Add exercise" and editing an existing card
     window.handleAddExerciseBlock = function(e) {
       e.preventDefault();
-      const newBlock = {
-        id: 'blk_' + Date.now(),
+      const editId = $('block-edit-id').value;
+      const fields = {
         current: bestExerciseName($('block-primary-input').value, exForm.edited.has('name')),
         target: $('block-target-input').value.trim(),
         split: $('block-split-input').value,
         alternatives: $('block-alternatives-input').value.split(',').map(s => s.trim()).filter(s => s),
-        locked: false
+        sets: Math.min(10, Math.max(1, parseInt($('block-sets-input').value, 10) || 3)),
+        reps: $('block-reps-input').value.trim() || '8–12'
       };
-      
-      window.appState.gymBlocks.push(newBlock);
+      const existing = editId && window.appState.gymBlocks.find(b => b.id === editId);
+
+      if (existing) {
+        const movedSplit = existing.split !== fields.split;
+        const nameChanged = existing.current !== fields.current;
+        Object.assign(existing, fields);
+        if (movedSplit) {
+          // Take it out and drop it into its new day like a new lift
+          window.appState.gymBlocks = window.appState.gymBlocks.filter(b => b.id !== existing.id);
+          if (isAutoOrder(existing.split)) window.appState.gymBlocks.push(existing);
+          else insertBlockAlternating(existing);
+        }
+        window.saveState();
+        if (window.currentGymSplit !== existing.split) window.setGymSplit(existing.split);
+        else renderGymBlocks({ changed: nameChanged ? new Set([existing.id]) : undefined });
+        window.closeModal('addBlockModal');
+        haptic([8, 30, 8]);
+        window.showToast("Exercise updated.", "success");
+        return;
+      }
+
+      const newBlock = { id: 'blk_' + Date.now(), ...fields, locked: false };
+      // Auto-order splits re-alternate on render; custom ones get the new lift
+      // dropped into a gap where it doesn't sit next to the same muscle group
+      if (isAutoOrder(newBlock.split)) window.appState.gymBlocks.push(newBlock);
+      else insertBlockAlternating(newBlock);
       window.saveState();
       
       if (window.currentGymSplit !== newBlock.split) {
@@ -1911,10 +2154,569 @@
       window.showToast("Exercise added.", "success");
     }
 
+    // Open the exercise sheet filled in with an existing lift
+    window.editGymBlock = function(id) {
+      const b = window.appState.gymBlocks.find(x => x.id === id);
+      if (!b || blockDrag) return;
+      window.openModal('addBlockModal');
+      $('block-edit-id').value = b.id;
+      $('block-primary-input').value = b.current || '';
+      $('block-target-input').value = b.target || '';
+      $('block-split-input').value = b.split;
+      $('block-alternatives-input').value = (b.alternatives || []).join(', ');
+      $('block-sets-input').value = setsFor(b);
+      $('block-reps-input').value = repsFor(b);
+      $('block-title').textContent = 'Edit exercise';
+      $('block-submit-btn').textContent = 'Save changes';
+      $('btn-delete-block').classList.remove('hidden');
+      // Everything here was chosen on purpose: auto-fill only runs on the wand button
+      exForm.edited = new Set(['name', 'target', 'split', 'alts']);
+      exForm.lastName = normalizeExerciseName(b.current || '');
+    }
+
+    function setExerciseSheetForNew() {
+      if ($('block-edit-id').value) $('block-edit-id').form.reset();
+      $('block-edit-id').value = '';
+      $('block-title').textContent = 'New exercise';
+      $('block-submit-btn').textContent = 'Save exercise';
+      $('btn-delete-block').classList.add('hidden');
+      $('block-split-input').value = window.currentGymSplit;
+      $('block-sets-input').value = 3;
+      $('block-reps-input').value = '8–12';
+    }
+
+    window.deleteBlockFromSheet = function() {
+      const id = $('block-edit-id').value;
+      if (!id) return;
+      window.closeModal('addBlockModal');
+      window.deleteGymBlock(id);
+    }
+
+    // =====================================================================
+    // --- TRAINING DAYS: "today" / "3d" on each split button ---
+    // Tap "Mark trained today" on a split; splitHistory keeps the last few
+    // dates per split, newest first, so Undo can fall back to the one before.
+    // =====================================================================
+    const SPLIT_LABELS = { chest: 'Chest & shoulders', back: 'Back & biceps', arms: 'Arms', legs: 'Legs & core' };
+
+    function todayISO(d = new Date()) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function setsFor(b) {
+      const n = parseInt(b && b.sets, 10);
+      return Number.isFinite(n) ? Math.min(10, Math.max(1, n)) : 3;
+    }
+    function repsFor(b) { return (b && String(b.reps || '').trim()) || '8–12'; }
+
+    function splitHistoryFor(split) {
+      const hist = window.appState.splitHistory;
+      const v = hist && typeof hist === 'object' ? hist[split] : null;
+      if (Array.isArray(v)) return v.filter(d => typeof d === 'string');
+      return typeof v === 'string' && v ? [v] : []; // older saves stored one date
+    }
+
+    function lastTrained(split) {
+      return splitHistoryFor(split)[0] || null;
+    }
+
+    function daysSinceTrained(split) {
+      const date = lastTrained(split);
+      return date ? Math.max(0, -daysUntil(date)) : null;
+    }
+
+    window.markSplitTrained = function() {
+      const split = window.currentGymSplit;
+      const today = todayISO();
+      if (!window.appState.splitHistory || typeof window.appState.splitHistory !== 'object') window.appState.splitHistory = {};
+      const list = splitHistoryFor(split).filter(d => d !== today);
+      window.appState.splitHistory[split] = [today, ...list].slice(0, 8);
+      window.saveState();
+      renderSplitAges();
+      renderTrainedLine(true);
+      haptic([8, 30, 8]);
+      window.showToast(`${SPLIT_LABELS[split] || 'Split'} marked as trained today.`, 'success');
+    }
+
+    window.unmarkSplitTrained = function() {
+      const split = window.currentGymSplit;
+      const today = todayISO();
+      const list = splitHistoryFor(split).filter(d => d !== today);
+      if (list.length) window.appState.splitHistory[split] = list;
+      else if (window.appState.splitHistory) delete window.appState.splitHistory[split];
+      window.saveState();
+      renderSplitAges();
+      renderTrainedLine();
+      haptic(8);
+    }
+
+    function agoText(days) {
+      if (days <= 0) return 'today';
+      if (days === 1) return 'yesterday';
+      if (days < 14) return `${days} days ago`;
+      const w = Math.round(days / 7);
+      return `${w} week${w === 1 ? '' : 's'} ago`;
+    }
+
+    // One line above the cards: when this split was last trained, and the button to log today
+    function renderTrainedLine(justMarked = false) {
+      const el = $('trained-line');
+      if (!el) return;
+      const days = daysSinceTrained(window.currentGymSplit);
+      if (days === 0) {
+        el.innerHTML = `
+          <p class="tl-text is-today ${justMarked ? 'just-marked' : ''}"><i class="fa-solid fa-circle-check"></i> Trained today</p>
+          <button type="button" class="tl-undo" onclick="window.unmarkSplitTrained()">Undo</button>`;
+        return;
+      }
+      el.innerHTML = `
+        <p class="tl-text">${days === null ? 'Not trained yet' : `Last trained ${agoText(days)}`}</p>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="window.markSplitTrained()"><i class="fa-solid fa-check"></i> Mark trained today</button>`;
+    }
+
+    // "3d" next to each split button: days since you last trained it
+    function renderSplitAges() {
+      GYM_SPLIT_IDS.forEach(split => {
+        const span = document.querySelector(`#split-btn-${split} .split-ago`);
+        if (!span) return;
+        const days = daysSinceTrained(split);
+        if (days === null) { span.textContent = ''; span.parentElement.removeAttribute('title'); return; }
+        span.textContent = days === 0 ? 'today' : days < 14 ? `${days}d` : `${Math.round(days / 7)}w`;
+        span.parentElement.title = days === 0 ? 'Trained today' : `Last trained ${agoText(days)}`;
+      });
+    }
+
     window.deleteGymBlock = function(id) {
       const block = window.appState.gymBlocks.find(b => b.id === id);
       if (!block) return;
       removeWithUndo('gymBlocks', id, block.current, () => renderGymBlocks());
+    }
+
+    // =====================================================================
+    // --- EXERCISE ORDER ---
+    // Each split alternates muscle groups automatically (chest, shoulders,
+    // chest...) until you drag a lift yourself. Then that split keeps your
+    // order, and the "Alternate muscle groups" switch brings auto back.
+    // =====================================================================
+    const MUSCLE_GROUP_RULES = [
+      ['chest', /chest|pec/],
+      ['shoulders', /delt|shoulder/],
+      ['triceps', /tricep/],
+      ['biceps', /bicep|brachialis/],
+      ['forearms', /forearm|wrist|grip/],
+      ['traps', /trap/],
+      ['back', /back|\blats?\b|latissimus|rhomboid|erector|posterior chain/],
+      ['quads', /quad/],
+      ['hamstrings', /hamstring/],
+      ['glutes', /glute/],
+      ['calves', /calf|calves|soleus|gastroc/],
+      ['core', /\babs?\b|core|oblique|abdomin/]
+    ];
+
+    // "Deltoids (lateral head)" -> shoulders. The part before the bracket wins, so
+    // "Back (mid traps and rhomboids)" counts as back, not traps.
+    function muscleGroupOf(block) {
+      const target = String(block.target || '').toLowerCase();
+      const primary = target.split('(')[0].trim();
+      for (const text of [primary, target]) {
+        const hit = MUSCLE_GROUP_RULES.find(([, re]) => re.test(text));
+        if (hit) return hit[0];
+      }
+      const guess = typeof localClassifyExercise === 'function' ? localClassifyExercise(block.current) : null;
+      const fromName = guess && guess.target ? String(guess.target).toLowerCase().split('(')[0].trim() : '';
+      const hit = fromName && MUSCLE_GROUP_RULES.find(([, re]) => re.test(fromName));
+      return hit ? hit[0] : (primary || 'other');
+    }
+
+    // Each muscle keeps the same color on every day (chest is always red, etc.).
+    // If two muscles on one day would share a color, the second takes a spare.
+    const MUSCLE_COLORS = {
+      chest: '#F87171', shoulders: '#60A5FA', triceps: '#C084FC',
+      back: '#FB923C', traps: '#F472B6', biceps: '#4ADE80', forearms: '#FB923C',
+      quads: '#60A5FA', hamstrings: '#F472B6', glutes: '#FB923C', calves: '#4ADE80', core: '#C084FC'
+    };
+    const SPARE_MUSCLE_COLORS = ['#F87171', '#60A5FA', '#4ADE80', '#C084FC', '#FB923C', '#F472B6', '#2DD4BF', '#A3E635', '#E879F9', '#94A3B8'];
+
+    // Map of muscle group -> color, or null when the day only hits one muscle
+    function muscleColorsFor(blocks) {
+      const groups = [...new Set(blocks.map(muscleGroupOf))];
+      if (groups.length < 2) return null;
+      const used = new Set();
+      const colors = new Map();
+      groups.forEach(g => {
+        let color = MUSCLE_COLORS[g];
+        if (!color || used.has(color)) color = SPARE_MUSCLE_COLORS.find(c => !used.has(c)) || '#94A3B8';
+        used.add(color);
+        colors.set(g, color);
+      });
+      return colors;
+    }
+
+    function hexToRgba(hex, alpha) {
+      const n = parseInt(hex.slice(1), 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+    }
+
+    // Can the remaining lifts still be laid out with no muscle group twice in a row,
+    // given the one just placed? (counts already exclude the placed lift)
+    function canStillAlternate(counts, total, last) {
+      for (const [group, count] of counts) {
+        if (!count) continue;
+        const limit = group === last ? total - count : total - count + 1;
+        if (count > limit) return false;
+      }
+      return true;
+    }
+
+    // Stable: an order that already alternates comes back unchanged, so this can
+    // run on every render without shuffling things around.
+    function arrangeAlternating(items) {
+      const remaining = items.map(item => ({ item, group: muscleGroupOf(item) }));
+      const result = [];
+      let prev = null;
+      while (remaining.length) {
+        const counts = new Map();
+        remaining.forEach(r => counts.set(r.group, (counts.get(r.group) || 0) + 1));
+        let pick = -1;
+        for (let i = 0; i < remaining.length; i++) {
+          const g = remaining[i].group;
+          if (g === prev) continue;
+          counts.set(g, counts.get(g) - 1);
+          const ok = canStillAlternate(counts, remaining.length - 1, g);
+          counts.set(g, counts.get(g) + 1);
+          if (ok) { pick = i; break; }
+        }
+        if (pick < 0) {
+          // Too many of one group to fully alternate: spread the biggest group out
+          let best = null;
+          counts.forEach((c, g) => { if (g !== prev && (!best || c > counts.get(best))) best = g; });
+          pick = best ? remaining.findIndex(r => r.group === best) : 0;
+        }
+        const [chosen] = remaining.splice(pick, 1);
+        result.push(chosen.item);
+        prev = chosen.group;
+      }
+      return result;
+    }
+
+    function ensureOrderState() {
+      if (!window.appState.gymCustomOrder || typeof window.appState.gymCustomOrder !== 'object') {
+        window.appState.gymCustomOrder = {};
+      }
+      return window.appState.gymCustomOrder;
+    }
+
+    function isAutoOrder(split) {
+      return !ensureOrderState()[split];
+    }
+
+    // Write a split's new order back into the shared list, reusing the same slots
+    function applySplitOrder(split, orderedIds) {
+      const all = window.appState.gymBlocks;
+      const slots = [];
+      const byId = new Map();
+      all.forEach((b, i) => { if (b.split === split) { slots.push(i); byId.set(b.id, b); } });
+      const ordered = orderedIds.map(id => byId.get(id)).filter(Boolean);
+      byId.forEach(b => { if (!ordered.includes(b)) ordered.push(b); });
+      slots.forEach((slot, k) => { all[slot] = ordered[k]; });
+    }
+
+    function autoOrderSplit(split) {
+      const blocks = window.appState.gymBlocks.filter(b => b.split === split);
+      if (blocks.length < 3) return false;
+      const arranged = arrangeAlternating(blocks);
+      if (arranged.every((b, i) => b === blocks[i])) return false;
+      applySplitOrder(split, arranged.map(b => b.id));
+      return true;
+    }
+
+    // Custom order: put a new lift in the last gap where both neighbors are a
+    // different muscle group, so nothing else moves
+    function insertBlockAlternating(newBlock) {
+      const all = window.appState.gymBlocks;
+      const blocks = all.filter(b => b.split === newBlock.split);
+      const g = muscleGroupOf(newBlock);
+      let at = blocks.length;
+      for (let i = blocks.length; i >= 0; i--) {
+        const before = blocks[i - 1], after = blocks[i];
+        if ((!before || muscleGroupOf(before) !== g) && (!after || muscleGroupOf(after) !== g)) { at = i; break; }
+      }
+      all.push(newBlock);
+      const ids = blocks.map(b => b.id);
+      ids.splice(at, 0, newBlock.id);
+      applySplitOrder(newBlock.split, ids);
+    }
+
+    function syncOrderToggle() {
+      const btn = $('auto-order-btn');
+      if (btn) btn.setAttribute('aria-checked', String(isAutoOrder(window.currentGymSplit)));
+    }
+
+    // Re-render, then slide every card from where it was to where it is now
+    function flipRender(container, render) {
+      const before = new Map();
+      container.querySelectorAll('[data-id]').forEach(el => before.set(el.dataset.id, el.getBoundingClientRect()));
+      render();
+      if (prefersReducedMotion()) return;
+      container.querySelectorAll('[data-id]').forEach(el => {
+        const r0 = before.get(el.dataset.id);
+        if (!r0) return;
+        const r1 = el.getBoundingClientRect();
+        const dx = r0.left - r1.left, dy = r0.top - r1.top;
+        if (!dx && !dy) return;
+        el.style.transition = 'none';
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        el.offsetWidth; // commit the starting position
+        el.style.transition = 'transform 0.42s var(--ease-out)';
+        el.style.transform = '';
+        el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
+      });
+    }
+
+    window.toggleAutoOrder = function() {
+      const split = window.currentGymSplit;
+      const custom = ensureOrderState();
+      if (isAutoOrder(split)) {
+        custom[split] = true;
+        haptic(8);
+        window.saveState();
+        syncOrderToggle();
+        return;
+      }
+      delete custom[split];
+      haptic([8, 30, 8]);
+      const container = $('exercise-blocks-container');
+      flipRender(container, () => renderGymBlocks());
+      window.saveState();
+    }
+
+    // Mark a split as hand-ordered (with a one-time heads-up when auto was on)
+    function markCustomOrder(split) {
+      if (!isAutoOrder(split)) return;
+      ensureOrderState()[split] = true;
+      window.showToast('Order saved. Auto-alternate is off for this split.', 'info');
+    }
+
+    // --- Keyboard: arrow keys on a drag handle move that lift one spot ---
+    function moveBlockBy(id, delta) {
+      const split = window.currentGymSplit;
+      const ids = window.appState.gymBlocks.filter(b => b.split === split).map(b => b.id);
+      const from = ids.indexOf(id);
+      const to = from + delta;
+      if (from < 0 || to < 0 || to >= ids.length) return;
+      ids.splice(to, 0, ids.splice(from, 1)[0]);
+      applySplitOrder(split, ids);
+      markCustomOrder(split);
+      window.saveState();
+      haptic(8);
+      const container = $('exercise-blocks-container');
+      flipRender(container, () => renderGymBlocks());
+      container.querySelector(`[data-id="${id}"] .drag-handle`)?.focus();
+      const live = $('order-live');
+      if (live) live.textContent = `Moved to position ${to + 1} of ${ids.length}.`;
+    }
+
+    // --- Pointer drag (mouse, touch and pen) from the grip handle ---
+
+    function gymCards(container) {
+      return [...container.querySelectorAll('.block-card')];
+    }
+
+    function renumberCards(container) {
+      const cards = gymCards(container);
+      cards.forEach((el, i) => {
+        const num = el.querySelector('.block-num');
+        if (num) num.textContent = i + 1;
+      });
+    }
+
+    // Keep the held card glued under the finger, wherever its slot is now
+    // (kept within the list's bounds so it can't stretch the page)
+    function placeDraggedCard() {
+      const d = blockDrag;
+      const c = d.container.getBoundingClientRect();
+      const w = d.card.offsetWidth, h = d.card.offsetHeight, slack = 24;
+      const left = Math.min(Math.max(d.x - d.grabX, c.left - slack), c.right - w + slack);
+      const top = Math.min(Math.max(d.y - d.grabY, c.top - slack), c.bottom - h + slack);
+      const x = left - (c.left + d.card.offsetLeft);
+      const y = top - (c.top + d.card.offsetTop);
+      d.card.style.transform = `translate(${x}px, ${y}px) scale(1.02)`;
+    }
+
+    // Move the cards between the held card's slot and the target slot. The held
+    // card itself never leaves the DOM, so pointer capture stays intact.
+    function moveCardTo(cards, from, to) {
+      const { container, card } = blockDrag;
+      const others = cards.filter(el => el !== card);
+      const firsts = new Map(others.map(el => [el, el.getBoundingClientRect()]));
+      if (to > from) {
+        for (let k = from + 1; k <= to; k++) container.insertBefore(cards[k], card);
+      } else {
+        const ref = card.nextSibling;
+        for (let k = to; k < from; k++) container.insertBefore(cards[k], ref);
+      }
+      renumberCards(container);
+      if (prefersReducedMotion()) return;
+      others.forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = '';
+      });
+      others.forEach(el => {
+        const r0 = firsts.get(el), r1 = el.getBoundingClientRect();
+        const dx = r0.left - r1.left, dy = r0.top - r1.top;
+        if (dx || dy) el.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+      container.offsetWidth;
+      others.forEach(el => {
+        el.style.transition = 'transform 0.24s var(--ease-out)';
+        el.style.transform = '';
+      });
+    }
+
+    function dragHitTest() {
+      const d = blockDrag;
+      const c = d.container.getBoundingClientRect();
+      const cards = gymCards(d.container);
+      const over = cards.find(el => {
+        if (el === d.card) return false;
+        const l = c.left + el.offsetLeft, t = c.top + el.offsetTop;
+        return d.x >= l && d.x <= l + el.offsetWidth && d.y >= t && d.y <= t + el.offsetHeight;
+      });
+      // Only swap again after the finger leaves the card it just swapped with,
+      // so cards of different heights can't flip back and forth
+      if (!over) { d.lastOver = null; return; }
+      if (over === d.lastOver) return;
+      d.lastOver = over;
+      moveCardTo(cards, cards.indexOf(d.card), cards.indexOf(over));
+      haptic(5);
+    }
+
+    // Scroll the page when the held card nears the top bar or bottom nav
+    function dragAutoScroll() {
+      const d = blockDrag;
+      const header = [$('appbar'), document.querySelector('.desk-header')].find(el => el && el.offsetParent !== null);
+      const nav = document.querySelector('.bottom-nav .nav-pill');
+      const top = header ? header.getBoundingClientRect().bottom : 0;
+      const bottom = nav && nav.offsetParent !== null ? nav.getBoundingClientRect().top : window.innerHeight;
+      const zone = 72;
+      const list = d.container.getBoundingClientRect();
+      let dy = 0;
+      // Only scroll while there's more of the list hidden in that direction
+      if (d.y < top + zone && list.top < top) dy = -((top + zone - d.y) / zone) * 16;
+      else if (d.y > bottom - zone && list.bottom > bottom) dy = ((d.y - (bottom - zone)) / zone) * 16;
+      if (!dy) return false;
+      const was = window.scrollY;
+      window.scrollBy(0, Math.max(-18, Math.min(18, dy)));
+      return window.scrollY !== was;
+    }
+
+    function dragFrame() {
+      if (!blockDrag) return;
+      dragAutoScroll();
+      dragHitTest();
+      placeDraggedCard();
+      blockDrag.raf = requestAnimationFrame(dragFrame);
+    }
+
+    function onBlockDragMove(e) {
+      if (!blockDrag || e.pointerId !== blockDrag.pointerId) return;
+      blockDrag.x = e.clientX;
+      blockDrag.y = e.clientY;
+    }
+
+    function onBlockDragKey(e) {
+      if (blockDrag && e.key === 'Escape') { blockDrag.cancelled = true; endBlockDrag(); }
+    }
+
+    function onBlockDragEnd(e) {
+      if (!blockDrag || (e && e.pointerId !== blockDrag.pointerId)) return;
+      endBlockDrag();
+    }
+
+    function endBlockDrag() {
+      const d = blockDrag;
+      if (!d || d.ending) return;
+      d.ending = true;
+      cancelAnimationFrame(d.raf);
+      window.removeEventListener('pointermove', onBlockDragMove);
+      window.removeEventListener('pointerup', onBlockDragEnd);
+      window.removeEventListener('pointercancel', onBlockDragEnd);
+      window.removeEventListener('keydown', onBlockDragKey);
+      try { d.handle.releasePointerCapture?.(d.pointerId); } catch (_) {}
+
+      const finish = () => {
+        d.card.classList.remove('is-dragging');
+        d.card.style.transition = '';
+        d.card.style.transform = '';
+        document.body.classList.remove('is-reordering');
+        blockDrag = null;
+
+        const split = window.currentGymSplit;
+        const ids = gymCards(d.container).map(el => el.dataset.id);
+        const moved = !d.cancelled && ids.join() !== d.startOrder.join();
+        if (moved) {
+          applySplitOrder(split, ids);
+          markCustomOrder(split);
+          window.saveState();
+          haptic([8, 30, 8]);
+        }
+        if (moved || d.cancelled || d.pendingRender) renderGymBlocks();
+      };
+
+      // Settle the card into its slot, then commit
+      if (prefersReducedMotion() || d.cancelled) { finish(); return; }
+      d.card.style.transition = 'transform 0.26s var(--ease-out), box-shadow 0.26s, background-color 0.26s';
+      d.card.style.transform = '';
+      setTimeout(finish, 270);
+    }
+
+    function startBlockDrag(e) {
+      const handle = e.target.closest && e.target.closest('.drag-handle');
+      if (!handle || blockDrag) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const container = $('exercise-blocks-container');
+      const card = handle.closest('.block-card');
+      if (!card || !container.contains(card)) return;
+      e.preventDefault();
+
+      const cards = gymCards(container);
+      // Finish any entrance animation so it can't fight the drag transforms
+      cards.forEach(el => { el.removeAttribute('data-new'); el.style.animationDelay = ''; el.style.transition = ''; el.style.transform = ''; });
+
+      const rect = card.getBoundingClientRect();
+      blockDrag = {
+        card, handle, container,
+        pointerId: e.pointerId,
+        grabX: e.clientX - rect.left,
+        grabY: e.clientY - rect.top,
+        x: e.clientX, y: e.clientY,
+        startOrder: cards.map(el => el.dataset.id),
+        lastOver: null, raf: 0
+      };
+      try { handle.setPointerCapture?.(e.pointerId); } catch (_) {}
+      card.classList.add('is-dragging');
+      document.body.classList.add('is-reordering');
+      window.addEventListener('pointermove', onBlockDragMove, { passive: true });
+      window.addEventListener('pointerup', onBlockDragEnd);
+      window.addEventListener('pointercancel', onBlockDragEnd);
+      window.addEventListener('keydown', onBlockDragKey);
+      haptic(12);
+      placeDraggedCard();
+      blockDrag.raf = requestAnimationFrame(dragFrame);
+    }
+
+    function bindBlockReorder() {
+      const container = $('exercise-blocks-container');
+      if (!container) return;
+      container.addEventListener('pointerdown', startBlockDrag);
+      container.addEventListener('keydown', (e) => {
+        const handle = e.target.closest && e.target.closest('.drag-handle');
+        if (!handle || blockDrag) return;
+        const delta = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key];
+        if (!delta) return;
+        e.preventDefault();
+        moveBlockBy(handle.closest('.block-card').dataset.id, delta);
+      });
     }
 
     // =====================================================================
@@ -2445,21 +3247,126 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
 
     window.handleAddAssignment = function(e) {
       e.preventDefault();
-      const newTask = {
-        id: 't_' + Date.now(),
+      const editId = $('asgn-edit-id').value;
+      const fields = {
         title: $('asgn-title-input').value.trim(),
         course: $('asgn-course-input').value,
         type: $('asgn-type-input').value,
-        dueDate: $('asgn-date-input').value,
-        completed: false
+        dueDate: $('asgn-date-input').value
       };
-      window.appState.tasks.push(newTask);
+      const existing = editId && window.appState.tasks.find(t => t.id === editId);
+      if (existing) {
+        Object.assign(existing, fields);
+        renderedIds.delete(existing.id);
+      } else {
+        window.appState.tasks.push({ id: 't_' + Date.now(), ...fields, completed: false });
+      }
       window.saveState();
       renderTasks();
       window.closeModal('addAssignmentModal');
       e.target.reset();
       haptic([8, 30, 8]);
-      window.showToast("Assignment saved.", "success");
+      window.showToast(existing ? "Assignment updated." : "Assignment saved.", "success");
+    }
+
+    function setAssignmentSheetForNew() {
+      // Coming straight from editing another one: start from a blank form
+      if ($('asgn-edit-id').value) { $('asgn-edit-id').form.reset(); $('asgn-date-input').value = ''; }
+      $('asgn-edit-id').value = '';
+      $('asgn-title').textContent = 'New assignment';
+      $('asgn-submit-btn').textContent = 'Save assignment';
+      $('btn-delete-task').classList.add('hidden');
+      if (!$('asgn-date-input').value) $('asgn-date-input').value = todayISO();
+      renderQuickDates();
+    }
+
+    window.editTask = function(id) {
+      const t = window.appState.tasks.find(x => x.id === id);
+      if (!t) return;
+      window.openModal('addAssignmentModal');
+      $('asgn-edit-id').value = t.id;
+      $('asgn-title-input').value = t.title || '';
+      $('asgn-course-input').value = t.course;
+      $('asgn-type-input').value = t.type;
+      $('asgn-date-input').value = t.dueDate || todayISO();
+      $('asgn-title').textContent = 'Edit assignment';
+      $('asgn-submit-btn').textContent = 'Save changes';
+      $('btn-delete-task').classList.remove('hidden');
+      renderQuickDates();
+    }
+
+    window.deleteTaskFromSheet = function() {
+      const id = $('asgn-edit-id').value;
+      if (!id) return;
+      window.closeModal('addAssignmentModal');
+      window.deleteTask(id);
+    }
+
+    // Today, Tomorrow, then the next three school days by name
+    function quickDateOptions() {
+      const out = [];
+      const d = new Date();
+      d.setHours(12, 0, 0, 0);
+      out.push({ label: 'Today', value: todayISO(d) });
+      d.setDate(d.getDate() + 1);
+      out.push({ label: 'Tomorrow', value: todayISO(d) });
+      while (out.length < 5) {
+        d.setDate(d.getDate() + 1);
+        if (d.getDay() === 0 || d.getDay() === 6) continue;
+        out.push({ label: d.toLocaleDateString('en-US', { weekday: 'short' }), value: todayISO(d) });
+      }
+      return out;
+    }
+
+    function renderQuickDates() {
+      const row = $('asgn-quick-dates');
+      if (!row) return;
+      row.innerHTML = quickDateOptions().map(o =>
+        `<button type="button" class="chip" data-date="${o.value}" onclick="window.pickQuickDate('${o.value}')">${o.label}</button>`
+      ).join('');
+      window.syncQuickDates();
+    }
+
+    window.pickQuickDate = function(value) {
+      $('asgn-date-input').value = value;
+      haptic(6);
+      window.syncQuickDates();
+    }
+
+    window.syncQuickDates = function() {
+      const value = $('asgn-date-input')?.value;
+      document.querySelectorAll('#asgn-quick-dates .chip').forEach(btn => {
+        const on = btn.dataset.date === value;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on);
+      });
+    }
+
+    function syncClearDoneButton() {
+      const btn = $('clear-done-btn');
+      if (!btn) return;
+      const n = window.appState.tasks.filter(t => t.completed).length;
+      btn.classList.toggle('hidden', !n);
+      const label = btn.querySelector('span');
+      if (label) label.textContent = `Clear ${n} completed`;
+    }
+
+    window.clearCompletedTasks = function() {
+      const removed = window.appState.tasks.filter(t => t.completed);
+      if (!removed.length) return;
+      window.appState.tasks = window.appState.tasks.filter(t => !t.completed);
+      window.saveState();
+      renderTasks();
+      haptic(12);
+      window.showToast(`Cleared ${removed.length} completed.`, 'info', {
+        label: 'Undo',
+        onClick: () => {
+          const have = new Set(window.appState.tasks.map(t => t.id));
+          removed.forEach(t => { if (!have.has(t.id)) { window.appState.tasks.push(t); renderedIds.delete(t.id); } });
+          window.saveState();
+          renderTasks();
+        }
+      });
     }
 
     // Toggle in place so the check + strike-through animate
@@ -2475,6 +3382,7 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
       haptic(task.completed ? [8, 35, 16] : 8);
       window.saveState();
       updateTaskSummary();
+      syncClearDoneButton();
       if (!card) renderTasks();
     }
 
@@ -2528,6 +3436,7 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
 
       if (sortedTasks.length === 0) {
         container.innerHTML = emptyState('fa-book-open', 'No assignments yet. Add one to start planning your week.', 'Add assignment', "window.openModal('addAssignmentModal')");
+        syncClearDoneButton();
         return;
       }
 
@@ -2556,18 +3465,17 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
       for (const [groupName, tasks] of Object.entries(groups)) {
         html += `
           <section>
-            <h3 class="group-head ${groupName === 'Overdue' ? 'is-overdue' : ''}">${esc(groupName)} <span class="count">${tasks.length}</span></h3>
+            <h3 class="group-head ${groupName === 'Overdue' ? 'is-overdue' : ''}">${window.taskGroupBy === 'course' ? `<span class="course-dot" style="${courseVars(groupName)}"></span>` : ''}${esc(groupName)} <span class="count">${tasks.length}</span></h3>
             <div class="space-y-2">
               ${tasks.map(t => {
-                const color = CLASS_COLORS[t.course] || '#9B9B9B';
                 const due = dueInfo(t.dueDate);
                 const showDue = window.taskGroupBy !== 'date' || due.tone === 'is-overdue';
                 return `
-                <div id="task-card-${t.id}" data-id="${t.id}" ${fresh(t.id)} class="task-card group ${t.completed ? 'completed' : ''}" style="--course:${color}">
+                <div id="task-card-${t.id}" data-id="${t.id}" ${fresh(t.id)} class="task-card group ${t.completed ? 'completed' : ''}" style="${courseVars(t.course)}">
                   <button onclick="window.toggleTaskCompletion('${t.id}')" class="check-btn" aria-pressed="${!!t.completed}" aria-label="Mark ${esc(t.title)} done">
                     <span class="check-ring"><i class="fa-solid fa-check"></i></span>
                   </button>
-                  <div class="min-w-0 flex-1 py-0.5">
+                  <div class="task-main min-w-0 flex-1 py-0.5" role="button" tabindex="0" onclick="window.editTask('${t.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.editTask('${t.id}')}" aria-label="Edit ${esc(t.title)}">
                     <h4 class="task-title">${esc(t.title)}</h4>
                     <div class="task-meta">
                       <span class="course-tag">${esc(t.course)}</span>
@@ -2585,6 +3493,7 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
       }
       container.innerHTML = html;
       staggerNew(container);
+      syncClearDoneButton();
     }
 
     // =====================================================================
@@ -3164,7 +4073,9 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
                 tasks: data.tasks || [],
                 pbLogs: data.pbLogs || [],
                 ytChannels: data.ytChannels || [],
-                scratchpadText: data.scratchpadText || ""
+                scratchpadText: data.scratchpadText || "",
+                gymCustomOrder: data.gymCustomOrder || {},
+                splitHistory: data.splitHistory || {}
               };
               // Skip the re-render when nothing actually changed (keeps animations smooth)
               if (typeof window.stableStringify === 'function' &&
