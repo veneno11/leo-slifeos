@@ -2042,20 +2042,28 @@
       ['api-indicator', 'mob-api-indicator'].forEach(id => $(id)?.classList.toggle('hidden', !hasKey));
     }
 
-    // Called by the Firebase module once cloud sync connects
+   // Sync status: "Local", "Syncing" (photos still uploading) or "Synced"
+    let syncConnected = false;
     window.setSyncUI = function(state) {
-      const synced = state === 'synced';
+      syncConnected = state === 'synced';
+      updateSyncLabel();
+    };
+
+    function updateSyncLabel() {
+      const pending = photoSync.count();
+      const synced = syncConnected && !pending;
       ['sync-status-dot', 'mob-sync-dot', 'settings-sync-dot'].forEach(id => $(id)?.classList.toggle('is-synced', synced));
       ['sync-badge-text', 'mob-sync-label'].forEach(id => {
         const el = $(id);
         if (!el) return;
-        el.textContent = synced ? 'Synced' : 'Local';
+        el.textContent = !syncConnected ? 'Local' : pending ? 'Syncing' : 'Synced';
         el.classList.toggle('is-synced', synced);
       });
       const label = $('settings-sync-label');
-      if (label) label.textContent = synced ? 'Synced to the cloud' : 'Saved on this device only';
-    };
-
+      if (label) label.textContent = !syncConnected ? 'Saved on this device only'
+        : pending ? Synced, ${pending} book photo${pending === 1 ? '' : 's'} waiting to upload
+        : 'Synced to the cloud';
+    }
     // --- Tab Navigation ---
     const TAB_ORDER = ['gym', 'student', 'info'];
 
@@ -4159,7 +4167,7 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
       const resorted = opts.resorted || new Set();
       const all = window.appState.ytChannels;
 
-      const counts = {};
+            const counts = {};
       all.forEach(c => { counts[c.category] = (counts[c.category] || 0) + 1; });
       const categories = ['All', ...YT_CATEGORIES.filter(c => counts[c]), ...Object.keys(counts).filter(c => !YT_CATEGORIES.includes(c))];
       if (window.currentYtFilter !== 'all' && !counts[window.currentYtFilter]) window.currentYtFilter = 'all';
@@ -4208,8 +4216,8 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
     // =====================================================================
     // --- BOOKSHELF ---
     // Book details live in appState.books and sync like everything else.
-    // Cover and spine photos are kept separately (on this device, plus one small
-    // cloud document per book) so the main sync document stays light.
+    // Cover and spine photos are kept separately: on this device, plus one small
+    // cloud document per book stored next to the main state, so the main sync stays light.
     // =====================================================================
     const BOOK_STATUSES = { reading: 'Reading', finished: 'Finished', want: 'Want to read' };
     const BOOK_STATUS_ORDER = ['reading', 'finished', 'want'];
@@ -4253,9 +4261,80 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
       return { h, w: Math.round(Math.max(18, Math.min(hasSpinePhoto ? 64 : 54, w))) };
     }
 
-    // --- Photo storage (this device + cloud) ---
     const isImageData = (v) => typeof v === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
 
+    // --- Photo sync queue ---
+    // Every photo change waits here (saved on the device) until the cloud confirms it.
+    // Photos added offline, or before sync connects, upload as soon as they can,
+    // even after the app is closed and reopened.
+    const photoSync = {
+      KEY: 'lifeOsBookPhotoQueue',
+      items: null,
+      flushing: false,
+      again: false,
+      load() {
+        if (!this.items) {
+          let saved = {};
+          try { saved = JSON.parse(localStorage.getItem(this.KEY) || '{}') || {}; } catch (_) {}
+          this.items = {};
+          Object.entries(saved).forEach(([id, e]) => {
+            if (e && (e.op === 'save' || e.op === 'delete')) this.items[id] = { op: e.op };
+          });
+        }
+        return this.items;
+      },
+      persist() { try { localStorage.setItem(this.KEY, JSON.stringify(this.load())); } catch (_) {} },
+      has(id) { return Object.prototype.hasOwnProperty.call(this.load(), id); },
+      count() { return Object.keys(this.load()).length; },
+      add(id, op) { this.load()[id] = { op }; this.persist(); },
+      mark(id, op) { this.add(id, op); this.flush(); },
+      async flush() {
+        const cloud = window.cloudBookPhotos;
+        if (!cloud) return; // not connected yet; runs again once sync connects
+        if (this.flushing) { this.again = true; return; }
+        this.flushing = true;
+        let failed = false;
+        try {
+          do {
+            this.again = false;
+            for (const [id, entry] of Object.entries(this.load())) {
+              try {
+                const imgs = entry.op === 'save' ? bookImages.get(id) : null;
+                if (imgs) await cloud.save(id, imgs);
+                else await cloud.remove(id);
+                // Only clear it if nothing new was queued for this book meanwhile
+                if (this.items[id] === entry) delete this.items[id];
+                this.persist();
+              } catch (err) {
+                failed = true;
+                reportPhotoSyncError(err);
+                break; // the rest stay queued and retry later
+              }
+            }
+          } while (this.again && !failed);
+        } finally {
+          this.flushing = false;
+          updateSyncLabel();
+        }
+      }
+    };
+
+    let photoSyncWarned = false;
+    function reportPhotoSyncError(err) {
+      console.error('Book photo sync error:', err);
+      updateSyncLabel();
+      if (photoSyncWarned) return;
+      photoSyncWarned = true;
+      window.showToast(err?.code === 'permission-denied'
+        ? "Book photos couldn't sync because the cloud database blocked them. They're safe on this device."
+        : "Book photos couldn't sync yet. They're safe on this device and will upload later.", 'error');
+    }
+    window.reportPhotoSyncError = reportPhotoSyncError;
+    // Retry anything still waiting when the connection or the app comes back
+    window.addEventListener('online', () => photoSync.flush());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) photoSync.flush(); });
+
+    // --- Photo storage (this device) ---
     const bookImages = {
       KEY: 'lifeOsBookImages',
       data: null,
@@ -4279,23 +4358,48 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         if (d[id] && d[id].cover === clean.cover && d[id].spine === clean.spine) return false;
         d[id] = clean;
         if (!this.persist()) window.showToast("This device's storage is full, so these photos may not stay on it.", 'error');
-        if (!fromCloud) window.saveBookImagesToCloud?.(id, clean);
+        if (!fromCloud) photoSync.mark(id, 'save');
         return true;
       },
       remove(id, fromCloud = false) {
         const d = this.load();
-        if (!(id in d)) return false;
-        delete d[id];
-        this.persist();
-        if (!fromCloud) window.deleteBookImagesFromCloud?.(id);
-        return true;
+        const had = id in d;
+        if (had) { delete d[id]; this.persist(); }
+        if (!fromCloud) photoSync.mark(id, 'delete');
+        return had;
       }
     };
 
-    // Hooks for the Firebase module
-    window.applyCloudBookImages = (id, imgs) => imgs ? bookImages.set(id, imgs, true) : bookImages.remove(id, true);
-    window.localBookImageIds = () => Object.keys(bookImages.load()).filter(id => booksOf().some(b => b.id === id));
+    // --- Hooks for the Firebase module ---
+    window.applyCloudBookImages = (id, imgs) => {
+      if (photoSync.has(id)) return false; // this device has a newer change still uploading
+      const changed = imgs ? bookImages.set(id, imgs, true) : bookImages.remove(id, true);
+      if (changed) refreshOpenBookPhotos(id);
+      return changed;
+    };
     window.getBookImages = (id) => bookImages.get(id);
+
+    // First cloud photo list after connecting: upload anything the cloud is missing
+    window.onBookPhotoCloudReady = function(cloudIds) {
+      const inCloud = new Set(cloudIds);
+      const shelved = new Set(booksOf().map(b => b.id));
+      Object.keys(bookImages.load()).forEach(id => {
+        if (shelved.has(id) && !inCloud.has(id) && !photoSync.has(id)) photoSync.add(id, 'save');
+      });
+      photoSync.flush();
+    };
+
+    // Photos arriving from another device while this book's sheet is open
+    function refreshOpenBookPhotos(id) {
+      const modal = $('bookModal');
+      if (!modal || modal.classList.contains('hidden') || bookForm.id !== id || bookForm.imagesDirty) return;
+      const imgs = bookImages.get(id);
+      bookForm.out = { cover: imgs?.cover || null, spine: imgs?.spine || null };
+      bookForm.src = {};
+      bookForm.last = {};
+      bookForm.spineAspect = null; // re-measured from the new photo
+      renderBookPhotos(['cover', 'spine'].filter(k => bookForm.out[k]));
+    }
 
     // --- Image helpers ---
     function loadImageSource(src) {
@@ -4490,9 +4594,23 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         } else if (img) img.remove();
         slot.classList.toggle('has-photo', !!src);
         slot.setAttribute('aria-label', `${src ? 'Retake' : 'Add'} ${kind} photo`);
+        if (kind === 'spine') fitSpineSlot(slot, src ? img : null);
         if (flash.includes(kind)) { slot.classList.remove('is-filled'); void slot.offsetWidth; slot.classList.add('is-filled'); }
       });
       $('spine-rotate-btn')?.classList.toggle('hidden', !bookForm.out.spine);
+    }
+
+    // The spine frame takes the photo's own width-to-height shape, so the
+    // border wraps the whole spine instead of cropping into it
+    function fitSpineSlot(slot, img) {
+      const setRatio = (r) => {
+        if (r > 0 && Number.isFinite(r)) slot.style.setProperty('--spine-ar', String(Math.round(r * 1000) / 1000));
+      };
+      if (!img) { slot.style.removeProperty('--spine-ar'); return; }
+      setRatio(bookForm.spineAspect);
+      const fromPhoto = () => { if (img.naturalWidth && img.naturalHeight) setRatio(img.naturalWidth / img.naturalHeight); };
+      img.onload = fromPhoto;
+      if (img.complete) fromPhoto();
     }
 
     // Shrink and compress a photo for saving (covers ~20 KB, spines ~10 KB)
@@ -5154,10 +5272,25 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { initializeFirestore, doc, collection, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeFirestore, doc, collection, getDocs, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = 'leo-lifeos-local';
     const ACCOUNT = 'leo-main-sync-account';
+    // Book photos are stored as their own small documents right next to the main
+    // state document, so they go everywhere the rest of your data already syncs
+    const PHOTO_PREFIX = 'bookPhotos_';
+
+    // A write that can't reach the server never settles; give up after a while
+    // so the queue can retry later instead of waiting forever
+    function withTimeout(promise, ms = 25000) {
+      let timer;
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(Object.assign(new Error('Upload timed out'), { code: 'timeout' })), ms);
+        })
+      ]).finally(() => clearTimeout(timer));
+    }
 
     async function initFirebase() {
       try {
@@ -5180,21 +5313,23 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
         if (!auth.currentUser?.uid) return;
         if (typeof window.setSyncUI === 'function') window.setSyncUI('synced');
 
-        const stateRef = doc(db, 'artifacts', appId, 'users', ACCOUNT, 'appData', 'state');
-        // One small document per book's photos keeps the main state far under Firestore's 1 MB limit
-        const photosRef = collection(db, 'artifacts', appId, 'users', ACCOUNT, 'bookImages');
+        const appDataRef = collection(db, 'artifacts', appId, 'users', ACCOUNT, 'appData');
+        const stateRef = doc(appDataRef, 'state');
+        const photoRef = (id) => doc(appDataRef, PHOTO_PREFIX + id);
 
         window.saveToCloud = async function() {
           try { await setDoc(stateRef, window.appState); }
           catch (e) { console.error("Cloud sync save error:", e); }
         };
-        window.saveBookImagesToCloud = async function(id, imgs) {
-          try { await setDoc(doc(photosRef, id), imgs); }
-          catch (e) { console.error("Book photo sync error:", e); }
-        };
-        window.deleteBookImagesFromCloud = async function(id) {
-          try { await deleteDoc(doc(photosRef, id)); }
-          catch (e) { console.error("Book photo delete error:", e); }
+
+        // Used by the photo queue in the main script; errors are handled there
+        window.cloudBookPhotos = {
+          save: (id, imgs) => withTimeout(setDoc(photoRef(id), {
+            cover: imgs.cover || null,
+            spine: imgs.spine || null,
+            updatedAt: Date.now()
+          })),
+          remove: (id) => withTimeout(deleteDoc(photoRef(id)))
         };
 
         onSnapshot(stateRef, (docSnap) => {
@@ -5223,24 +5358,51 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
           }
         }, (error) => console.error("Snapshot error:", error));
 
+        // The previous version kept photos in a separate "bookImages" folder.
+        // Pull over any that made it there, once. If that folder was never
+        // reachable, this quietly does nothing.
+        async function importLegacyPhotos(cloudIds) {
+          const FLAG = 'lifeOsLegacyPhotosChecked';
+          try { if (localStorage.getItem(FLAG)) return; } catch (_) { return; }
+          try {
+            const old = await getDocs(collection(db, 'artifacts', appId, 'users', ACCOUNT, 'bookImages'));
+            let changed = false;
+            old.forEach(d => {
+              if (cloudIds.has(d.id) || window.getBookImages?.(d.id)) return;
+              if (window.applyCloudBookImages?.(d.id, d.data())) changed = true;
+            });
+            if (changed) window.renderBooks?.();
+          } catch (err) {
+            if (err?.code !== 'permission-denied') return; // network trouble: try again next launch
+          }
+          try { localStorage.setItem(FLAG, '1'); } catch (_) {}
+        }
+
+        // Book photos: listen to the same folder as the state, but only act on photo documents
         let firstPhotoSnapshot = true;
-        onSnapshot(photosRef, (snap) => {
+        onSnapshot(appDataRef, async (snap) => {
           let changed = false;
           snap.docChanges().forEach(change => {
-            if (change.doc.metadata.hasPendingWrites) return;
+            const docId = change.doc.id;
+            if (!docId.startsWith(PHOTO_PREFIX) || change.doc.metadata.hasPendingWrites) return;
             const data = change.type === 'removed' ? null : change.doc.data();
-            if (window.applyCloudBookImages?.(change.doc.id, data)) changed = true;
+            if (window.applyCloudBookImages?.(docId.slice(PHOTO_PREFIX.length), data)) changed = true;
           });
-          // Photos taken before sync connected: upload any the cloud doesn't have yet
+          if (changed) window.renderBooks?.();
+
           if (firstPhotoSnapshot) {
             firstPhotoSnapshot = false;
-            const inCloud = new Set(snap.docs.map(d => d.id));
-            (window.localBookImageIds?.() || []).forEach(id => {
-              if (!inCloud.has(id)) window.saveBookImagesToCloud(id, window.getBookImages(id));
-            });
+            const cloudIds = snap.docs
+              .filter(d => d.id.startsWith(PHOTO_PREFIX))
+              .map(d => d.id.slice(PHOTO_PREFIX.length));
+            await importLegacyPhotos(new Set(cloudIds));
+            // Upload photos this device has that the cloud doesn't, plus anything still queued
+            window.onBookPhotoCloudReady?.(cloudIds);
           }
-          if (changed) window.renderBooks?.();
-        }, (error) => console.error("Book photo snapshot error:", error));
+        }, (error) => {
+          console.error("Book photo snapshot error:", error);
+          window.reportPhotoSyncError?.(error);
+        });
       } catch (err) {
         console.warn("Cloud sync uninitialized. Operating local mode.", err);
       }
