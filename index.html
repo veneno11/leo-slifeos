@@ -680,6 +680,137 @@
     @keyframes toastIn { from { opacity: 0; transform: translateY(-14px) scale(0.95); } }
     @keyframes toastOut { to { opacity: 0; transform: translateY(-10px) scale(0.97); } }
 
+    /* ---------- Machine weight stacks: 8 plates per column, extra columns to the right ---------- */
+    .stack-group { display: flex; align-items: flex-end; justify-content: center; gap: 16px; margin: 10px 0 8px; }
+    .stack-group .stack { margin: 0; flex: 0 0 72px; }
+    .plate-preview .stack-group { margin: 8px 0; }
+
+    /* ---------- Bookshelf ---------- */
+    .bookcase {
+      --row: 196px; --plank: 14px;
+      display: flex; flex-wrap: wrap; align-items: flex-end; column-gap: 3px;
+      padding: 0 14px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
+      background:
+        repeating-linear-gradient(180deg,
+          rgba(0, 0, 0, 0) 0,
+          rgba(0, 0, 0, 0.32) calc(var(--row) - var(--plank)),
+          #414144 calc(var(--row) - var(--plank)),
+          #2F2F32 calc(var(--row) - var(--plank) + 2px),
+          #252527 calc(var(--row) - 4px),
+          #101011 calc(var(--row) - 4px),
+          #101011 var(--row)),
+        linear-gradient(90deg, #0F0F10, #1A1A1C 12%, #1A1A1C 88%, #0F0F10);
+    }
+    .book-slot { height: var(--row); padding-bottom: var(--plank); display: flex; align-items: flex-end; }
+    .book {
+      position: relative; display: block; flex-shrink: 0; width: var(--w); height: var(--h);
+      border-radius: 3px 3px 2px 2px; color: var(--ink); transform-origin: 50% 100%;
+      box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.8), 0 2px 2px rgba(0, 0, 0, 0.5);
+      transition: transform 0.45s var(--ease-spring), filter 0.3s, box-shadow 0.3s, opacity 0.2s;
+    }
+    .book-face { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: var(--spine); }
+    .book-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .book-face::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.14) 20%, rgba(255, 255, 255, 0.03) 48%, rgba(0, 0, 0, 0.08) 72%, rgba(0, 0, 0, 0.45));
+    }
+    .book-face.is-plain::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 10px; bottom: 10px; opacity: 0.3;
+      border-top: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    }
+    .book-text { position: absolute; inset: 20px 0 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .book-text span { writing-mode: vertical-rl; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 0; }
+    .bt-title { flex: 1 1 auto; font-size: clamp(9px, calc(var(--w) * 0.34), 13.5px); font-weight: 700; letter-spacing: 0.02em; }
+    .bt-author { flex: 0 1 auto; max-height: 40%; font-size: clamp(8px, calc(var(--w) * 0.26), 10.5px); font-weight: 600; opacity: 0.72; }
+    .book-ribbon {
+      position: absolute; top: -5px; right: 22%; width: 6px; height: 17px; z-index: 1;
+      background: var(--red); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+    }
+    .book-progress { position: absolute; left: 3px; top: 10px; bottom: 10px; width: 3px; z-index: 1; border-radius: 3px; overflow: hidden; background: rgba(0, 0, 0, 0.45); }
+    .book-progress > span { position: absolute; left: 0; right: 0; bottom: 0; height: var(--p); background: var(--green); }
+    @media (hover: hover) {
+      .book:hover {
+        transform: translateY(-10px) rotate(var(--tilt)); filter: brightness(1.12); z-index: 2;
+        box-shadow: 4px 14px 16px -8px rgba(0, 0, 0, 0.9), 0 2px 2px rgba(0, 0, 0, 0.5);
+      }
+      /* The book to the right leans into the gap */
+      .book-slot:has(> .book:hover) + .book-slot > .book { transform: rotate(-2deg); }
+    }
+    .book:focus-visible { transform: translateY(-10px) rotate(var(--tilt)); z-index: 2; }
+    .book:active { transform: translateY(-5px) scale(0.97); transition-duration: 0.12s; }
+    .book.just-updated { animation: bookBump 0.7s var(--ease-spring); }
+    @keyframes bookBump { from { transform: translateY(-16px); } }
+    .book.is-removing { opacity: 0; transform: translateY(-24px); }
+
+    /* Reading-now cards */
+    .reading-card { display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; cursor: pointer; }
+    .reading-card:active { transform: scale(0.985); }
+    .reading-thumb {
+      width: 42px; height: 62px; flex-shrink: 0; display: grid; place-items: center; overflow: hidden;
+      border-radius: 3px 6px 6px 3px; background: var(--spine); color: var(--ink);
+      font-size: 13px; font-weight: 700; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.9);
+    }
+    .reading-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .reading-title { font-size: 15px; font-weight: 600; color: var(--chalk); }
+    .reading-meta { font-size: 12.5px; color: var(--dust); margin-top: 2px; }
+    .reading-pct { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; color: #F4F4F5; }
+    .read-progress { height: 6px; margin-top: 8px; border-radius: 6px; overflow: hidden; background: var(--raised); }
+    .read-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--green); }
+
+    /* Book sheet */
+    @media (min-width: 768px) { .sheet-wide { max-width: 540px; } }
+    .book-photos { display: grid; grid-template-columns: 92px 46px minmax(0, 1fr); gap: 10px; }
+    .spine-wrap { position: relative; }
+    .photo-slot {
+      position: relative; width: 100%; height: 138px; border-radius: 10px; overflow: hidden;
+      display: grid; place-items: center; color: var(--dim);
+      background: var(--iron); border: 1px dashed var(--line-strong);
+      transition: border-color 0.2s, color 0.2s, transform 0.15s var(--ease-out);
+    }
+    .photo-slot:hover { border-color: #71717A; color: var(--chalk); }
+    .photo-slot:active { transform: scale(0.97); }
+    .photo-slot.has-photo { border-style: solid; border-color: var(--line); }
+    .photo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .photo-slot.has-photo .photo-empty { display: none; }
+    .photo-slot.is-filled { animation: fieldFill 0.9s var(--ease-out); }
+    .photo-slot.is-thinking::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.14) 50%, transparent 75%);
+      background-size: 250% 100%; animation: shimmer 1.1s linear infinite;
+    }
+    .photo-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; }
+    .photo-empty i { font-size: 16px; }
+    .spine-rotate {
+      position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 2;
+      width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+      font-size: 12px; color: var(--chalk); background: rgba(20, 20, 20, 0.88); border: 1px solid var(--line-strong);
+    }
+    .photo-help { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; font-size: 12.5px; line-height: 1.4; color: var(--dust); }
+    .photo-help .detect-btn { margin-top: 0; }
+    .book-percent { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #F4F4F5; }
+    .book-range { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 28px; background: transparent; }
+    .book-range:disabled { opacity: 0.4; }
+    .book-range::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--green) var(--fill, 0%), var(--line-strong) var(--fill, 0%)); }
+    .book-range::-moz-range-track { height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--green) var(--fill, 0%), var(--line-strong) var(--fill, 0%)); }
+    .book-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: var(--chalk); border: 3px solid var(--green); }
+    .book-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--chalk); border: 3px solid var(--green); }
+    .stars { display: flex; gap: 2px; }
+    .star-btn { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; font-size: 21px; color: var(--line-strong); transition: color 0.2s, transform 0.35s var(--ease-spring); }
+    .star-btn.is-on { color: var(--yellow); }
+    .star-btn:active { transform: scale(0.8); }
+    .book-quote-item {
+      display: flex; align-items: flex-start; gap: 6px; padding: 10px 4px 10px 12px; border-radius: 12px;
+      background: var(--iron); border: 1px solid var(--line); font-size: 14px; font-style: italic; line-height: 1.45; color: var(--chalk);
+    }
+
+    /* Saved quotes */
+    .quote-card { padding: 14px 8px 8px 16px; cursor: pointer; }
+    .quote-card:active { transform: scale(0.99); }
+    .quote-card blockquote { font-size: 14.5px; font-style: italic; font-weight: 500; line-height: 1.5; color: var(--chalk); padding-right: 8px; }
+    .quote-src { font-size: 12.5px; font-weight: 600; color: var(--dust); min-width: 0; }
+    .quote-src .from-book { font-weight: 500; font-style: italic; color: var(--dim); }
+    #quote-save-btn.is-saved { color: var(--yellow); }
+
     /* ---------- Respect reduced-motion settings ---------- */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -833,9 +964,22 @@
     <!-- MINDSET TAB -->
     <div id="tab-info" class="tab-content">
       <h2 class="hub-title"><i class="fa-solid fa-lightbulb"></i> Mindset</h2>
-      <p class="hub-sub">Creators worth your time, a quote to sit with, and a place for notes.</p>
+      <p class="hub-sub">Your bookshelf, creators worth your time, quotes to keep and a place for notes.</p>
 
+      <!-- BOOKSHELF -->
       <section class="mt-6">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="section-title"><i class="fa-solid fa-book-open text-[15px] muted"></i> Bookshelf</h3>
+          <button onclick="window.openBookSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add book</button>
+        </div>
+        <p id="books-summary" class="hub-sub" style="margin-top:4px"></p>
+        <div id="book-filter-container" class="chip-row scrollbar-none mt-3 empty:hidden"></div>
+        <div id="reading-now-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-3 empty:hidden"></div>
+        <div id="bookshelf" class="mt-3"></div>
+        <p class="hint-line mt-3"><i class="fa-solid fa-hand-pointer" style="color:#A1A1AA"></i> Tap a book to update pages, rating and notes.</p>
+      </section>
+
+      <section class="mt-10">
         <div class="flex items-center justify-between gap-2">
           <h3 class="section-title"><i class="fa-brands fa-youtube text-[16px]" style="color: var(--red)"></i> Creators</h3>
           <div class="flex gap-2">
@@ -852,7 +996,10 @@
         <section class="panel p-4 flex flex-col">
           <div class="flex items-center justify-between gap-2">
             <h3 class="section-title">Quote</h3>
-            <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
+            <div class="flex items-center gap-1.5">
+              <button id="quote-save-btn" onclick="window.saveCurrentQuote()" class="icon-btn icon-btn-sm" title="Save this quote" aria-label="Save this quote" aria-pressed="false"><i class="fa-regular fa-bookmark"></i></button>
+              <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
+            </div>
           </div>
           <figure id="quote-card-display" class="quote-figure">
             <blockquote id="quote-display-text">"There is no shame in falling down. True shame is in not standing back up."</blockquote>
@@ -869,6 +1016,18 @@
           <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Formulas, reminders, anything you want close at hand." class="field font-mono-data mt-3 flex-grow min-h-[190px] resize-none" style="font-size:13px"></textarea>
         </section>
       </div>
+
+      <!-- SAVED QUOTES -->
+      <section class="mt-8">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="section-title"><i class="fa-solid fa-bookmark text-[14px] muted"></i> Saved quotes <span id="quotes-count" class="chip-count"></span></h3>
+          <button onclick="window.openQuoteSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add quote</button>
+        </div>
+        <div id="saved-quotes-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-3"></div>
+        <div class="flex justify-center mt-3">
+          <button id="quotes-more-btn" onclick="window.toggleQuotesExpanded()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -913,7 +1072,7 @@
           <label for="gemini-key-input" class="text-[15px] font-semibold flex items-center gap-2"><i class="fa-solid fa-key text-[13px] text-notion-textMuted"></i> Gemini API key</label>
           <span id="api-key-status-badge" class="status-badge">Not set</span>
         </div>
-        <p class="text-[13px] text-notion-textMuted leading-snug mt-2">Powers exercise auto-fill, creator sorting and quotes. The key is stored on this device and isn't synced.</p>
+        <p class="text-[13px] text-notion-textMuted leading-snug mt-2">Powers exercise auto-fill, book scanning, creator sorting and quotes. The key is stored on this device and isn't synced.</p>
         <div class="flex gap-2 mt-3">
           <div class="relative flex-1">
             <input type="password" id="gemini-key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" class="field" style="padding-right:48px;font-family:ui-monospace,monospace;font-size:14px" />
@@ -926,7 +1085,7 @@
 
       <div class="settings-block mt-3">
         <div class="text-[15px] font-semibold flex items-center gap-2"><i class="fa-solid fa-box-archive text-[13px] text-notion-textMuted"></i> Backup</div>
-        <p class="text-[13px] text-notion-textMuted leading-snug mt-2">Save a copy of your lifts, PRs, assignments, creators and notes as a file, or restore from one. Your API key isn't included.</p>
+        <p class="text-[13px] text-notion-textMuted leading-snug mt-2">Save a copy of your lifts, PRs, assignments, books (with photos), quotes, creators and notes as a file, or restore from one. Your API key isn't included.</p>
         <div class="grid grid-cols-2 gap-2 mt-3">
           <button type="button" onclick="window.exportBackup()" class="btn btn-ghost"><i class="fa-solid fa-download"></i> Download</button>
           <button type="button" onclick="document.getElementById('backup-file-input').click()" class="btn btn-ghost"><i class="fa-solid fa-upload"></i> Restore</button>
@@ -1156,6 +1315,150 @@
     </div>
   </div>
 
+  <!-- BOOK (ADD / EDIT) -->
+  <div id="bookModal" class="modal-backdrop hidden" onclick="if (event.target === this) window.closeModal('bookModal')">
+    <div class="sheet sheet-wide" role="dialog" aria-modal="true" aria-labelledby="book-sheet-title">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3 id="book-sheet-title" class="sheet-title">New book</h3>
+        <button onclick="window.closeModal('bookModal')" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="book-form" onsubmit="window.handleSaveBook(event)" class="space-y-4">
+        <input type="hidden" id="book-edit-id" value="" />
+
+        <div class="book-photos">
+          <button type="button" id="cover-slot" class="photo-slot" onclick="document.getElementById('book-cover-file').click()" aria-label="Add cover photo">
+            <span class="photo-empty"><i class="fa-solid fa-camera"></i>Cover</span>
+          </button>
+          <div class="spine-wrap">
+            <button type="button" id="spine-slot" class="photo-slot" onclick="document.getElementById('book-spine-file').click()" aria-label="Add spine photo">
+              <span class="photo-empty"><i class="fa-solid fa-camera"></i>Spine</span>
+            </button>
+            <button type="button" id="spine-rotate-btn" class="spine-rotate hidden" onclick="window.rotateSpine()" title="Rotate" aria-label="Rotate spine photo"><i class="fa-solid fa-rotate-right"></i></button>
+          </div>
+          <div class="photo-help">
+            <p>Snap the cover and the spine. Gemini reads the title and author and trims the photos.</p>
+            <button type="button" id="btn-scan-book" onclick="window.scanBookPhotos(true)" class="detect-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> <span>Read photos</span></button>
+          </div>
+        </div>
+        <input type="file" id="book-cover-file" accept="image/*" class="hidden" onchange="window.handleBookPhoto(this, 'cover')" />
+        <input type="file" id="book-spine-file" accept="image/*" class="hidden" onchange="window.handleBookPhoto(this, 'spine')" />
+        <p id="book-scan-status" class="detect-status" aria-live="polite"></p>
+
+        <div>
+          <label class="field-label" for="book-title-input">Title</label>
+          <div class="shimmer-wrap"><input type="text" id="book-title-input" required placeholder="Meditations" autocomplete="off" class="field" oninput="window.bookFieldEdited('title')" /></div>
+        </div>
+        <div>
+          <label class="field-label" for="book-author-input">Author</label>
+          <div class="shimmer-wrap"><input type="text" id="book-author-input" placeholder="Marcus Aurelius" autocomplete="off" class="field" oninput="window.bookFieldEdited('author')" /></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="field-label" for="book-pages-input">Pages</label>
+            <div class="shimmer-wrap"><input type="number" inputmode="numeric" id="book-pages-input" min="1" max="9999" step="1" placeholder="304" class="field tnum" oninput="window.bookFieldEdited('pages'); window.syncBookProgress()" /></div>
+          </div>
+          <div>
+            <label class="field-label" for="book-status-input">Status</label>
+            <select id="book-status-input" class="field" onchange="window.onBookStatusChange()">
+              <option value="reading">Reading</option>
+              <option value="want">Want to read</option>
+              <option value="finished">Finished</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="book-progress-block" class="settings-block">
+          <div class="flex items-center justify-between gap-3">
+            <label class="text-[15px] font-semibold" for="book-read-input">Progress</label>
+            <span id="book-percent" class="book-percent tnum">0%</span>
+          </div>
+          <div class="flex items-center gap-3 mt-2">
+            <input type="number" inputmode="numeric" id="book-read-input" min="0" step="1" value="0" class="field tnum" style="width:112px" oninput="window.syncBookProgress('number')" />
+            <span class="text-[14px] text-notion-textMuted">of <span id="book-total-label" class="tnum">?</span> pages read</span>
+          </div>
+          <input type="range" id="book-read-range" min="0" max="1" value="0" step="1" class="book-range mt-3" oninput="window.syncBookProgress('range')" aria-label="Pages read" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="field-label" style="margin-bottom:0">Rating</span>
+            <span id="book-rating-label" class="text-[12.5px] text-notion-textMuted">Tap a star</span>
+          </div>
+          <div id="book-stars" class="stars mt-1" role="group" aria-label="Rating">
+            <button type="button" class="star-btn" data-v="1" onclick="window.setBookRating(1)" aria-label="1 star"><i class="fa-regular fa-star"></i></button>
+            <button type="button" class="star-btn" data-v="2" onclick="window.setBookRating(2)" aria-label="2 stars"><i class="fa-regular fa-star"></i></button>
+            <button type="button" class="star-btn" data-v="3" onclick="window.setBookRating(3)" aria-label="3 stars"><i class="fa-regular fa-star"></i></button>
+            <button type="button" class="star-btn" data-v="4" onclick="window.setBookRating(4)" aria-label="4 stars"><i class="fa-regular fa-star"></i></button>
+            <button type="button" class="star-btn" data-v="5" onclick="window.setBookRating(5)" aria-label="5 stars"><i class="fa-regular fa-star"></i></button>
+          </div>
+        </div>
+
+        <div id="book-dates" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="field-label" for="book-start-input">Started</label>
+            <input type="date" id="book-start-input" class="field" />
+          </div>
+          <div id="book-finish-wrap">
+            <label class="field-label" for="book-finish-input">Finished</label>
+            <input type="date" id="book-finish-input" class="field" />
+          </div>
+        </div>
+
+        <div>
+          <label class="field-label" for="book-notes-input">Notes</label>
+          <textarea id="book-notes-input" rows="4" placeholder="What stuck with you, what you'd tell a friend about it." class="field"></textarea>
+        </div>
+
+        <div>
+          <label class="field-label" for="book-quote-input">Quotes from this book</label>
+          <div id="book-quotes-list" class="space-y-2 mb-2 empty:hidden"></div>
+          <div class="flex gap-2 items-stretch">
+            <textarea id="book-quote-input" rows="2" placeholder="A line worth keeping" class="field"></textarea>
+            <button type="button" onclick="window.addBookFormQuote()" class="btn btn-ghost" style="height:auto">Add</button>
+          </div>
+        </div>
+
+        <div class="sheet-actions">
+          <button type="button" onclick="window.closeModal('bookModal')" class="btn btn-ghost">Cancel</button>
+          <button type="submit" id="book-submit-btn" class="btn btn-primary">Add to shelf</button>
+        </div>
+        <button type="button" id="btn-delete-book" onclick="window.deleteBookFromSheet()" class="hidden btn btn-danger w-full"><i class="fa-solid fa-trash-can"></i> Remove from shelf</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- QUOTE (ADD / EDIT) -->
+  <div id="quoteModal" class="modal-backdrop hidden" onclick="if (event.target === this) window.closeModal('quoteModal')">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="quote-sheet-title">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3 id="quote-sheet-title" class="sheet-title">New quote</h3>
+        <button onclick="window.closeModal('quoteModal')" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="quote-form" onsubmit="window.handleSaveQuote(event)" class="space-y-4">
+        <input type="hidden" id="quote-edit-id" value="" />
+        <div>
+          <label class="field-label" for="quote-text-input">Quote</label>
+          <textarea id="quote-text-input" rows="4" required placeholder="Waste no more time arguing about what a good man should be. Be one." class="field"></textarea>
+        </div>
+        <div>
+          <label class="field-label" for="quote-author-input">Who said it</label>
+          <input type="text" id="quote-author-input" placeholder="Marcus Aurelius" autocomplete="off" class="field" />
+        </div>
+        <div id="quote-book-wrap">
+          <label class="field-label" for="quote-book-input">From a book on your shelf <span class="font-medium text-notion-textMuted">(optional)</span></label>
+          <select id="quote-book-input" class="field" onchange="window.onQuoteBookChange()"></select>
+        </div>
+        <div class="sheet-actions">
+          <button type="button" onclick="window.closeModal('quoteModal')" class="btn btn-ghost">Cancel</button>
+          <button type="submit" id="quote-submit-btn" class="btn btn-primary">Save quote</button>
+        </div>
+        <button type="button" id="btn-delete-quote" onclick="window.deleteQuoteFromSheet()" class="hidden btn btn-danger w-full"><i class="fa-solid fa-trash-can"></i> Delete this quote</button>
+      </form>
+    </div>
+  </div>
+
   <!-- TOASTS -->
   <div id="toast-container" aria-live="polite"></div>
 
@@ -1183,6 +1486,8 @@
         { id: 'y2', handle: '@Fireship', category: 'Tech' },
         { id: 'y3', handle: '@AliAbdaal', category: 'Academics' }
       ],
+      books: [],
+      quotes: [],
       scratchpadText: "",
       // Splits the user has put in their own order (no auto-alternating there)
       gymCustomOrder: {},
@@ -1466,7 +1771,7 @@
 
     /**
      * Core function to execute AI queries with model fallback.
-     * options: temperature, maxOutputTokens, responseSchema, timeoutMs,
+     * options: temperature, maxOutputTokens, responseSchema, timeoutMs, images,
      *          parse(text) -> value  (throwing inside parse moves on to the fallback model)
      */
     async function askGemini(prompt, apiKey, options = {}) {
@@ -1492,7 +1797,11 @@
       for (let i = 0; i < models.length; i++) {
         const model = models[i];
         const payload = {
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          // Photos (if any) go first, then the instructions
+          contents: [{ role: 'user', parts: [
+            ...(options.images || []).map(img => ({ inline_data: { mime_type: img.mimeType, data: img.data } })),
+            { text: prompt }
+          ] }],
           generationConfig: { ...generationConfig, ...(AI_CONFIG.MODEL_OVERRIDES[model] || {}) }
         };
 
@@ -1648,7 +1957,7 @@
     // --- Backup: download everything as a file, or restore from one ---
     window.exportBackup = function() {
       try {
-        const payload = { app: "Leo's LifeOS", version: 1, exportedAt: new Date().toISOString(), state: window.appState };
+        const payload = { app: "Leo's LifeOS", version: 2, exportedAt: new Date().toISOString(), state: window.appState, bookImages: bookImages.load() };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1683,7 +1992,9 @@
           return;
         }
         const pbLogs = Array.isArray(st.pbLogs) ? st.pbLogs : [];
-        const summary = `${st.gymBlocks.length} exercises, ${pbLogs.length} PRs, ${st.tasks.length} assignments`;
+        const books = Array.isArray(st.books) ? st.books : [];
+        const quotes = Array.isArray(st.quotes) ? st.quotes : [];
+        const summary = `${st.gymBlocks.length} exercises, ${pbLogs.length} PRs, ${st.tasks.length} assignments, ${books.length} books, ${quotes.length} quotes`;
         if (!window.confirm(`Replace everything with this backup?\n\n${summary}\n\nThis also updates your other synced devices.`)) return;
 
         const previous = window.appState;
@@ -1692,10 +2003,14 @@
           tasks: st.tasks,
           pbLogs,
           ytChannels: Array.isArray(st.ytChannels) ? st.ytChannels : [],
+          books,
+          quotes,
           scratchpadText: typeof st.scratchpadText === 'string' ? st.scratchpadText : '',
           gymCustomOrder: asObject(st.gymCustomOrder, {}),
           splitHistory: asObject(st.splitHistory, {})
         };
+        // Book photos travel in the backup file next to the state
+        Object.entries(asObject(parsed && parsed.bookImages, {})).forEach(([id, imgs]) => bookImages.set(id, imgs));
         renderedIds.clear();
         window.saveState();
         window.renderAll();
@@ -1973,6 +2288,9 @@
       renderPbLogs();
       renderTasks();
       renderYtChannels();
+      renderBooks();
+      renderSavedQuotes();
+      syncQuoteSaveButton();
       const scratch = $('scratchpad-textarea');
       if (scratch && document.activeElement !== scratch) scratch.value = window.appState.scratchpadText || "";
     }
@@ -3075,7 +3393,9 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
       const anim = animate ? 'is-loading-plates' : '';
       if (isBarbell) {
         const plates = platesFor((lb - 45) / 2);
-        const plate = (p, i, side) => `<span class="plate plate-${side}" style="--c:${p.color};width:${p.thick}px;height:${p.h}px;animation-delay:${i * 45}ms"></span>`;
+        // Very heavy bars: slim the plates so both sleeves still fit the card
+        const squeeze = plates.length > 7 ? 7 / plates.length : 1;
+        const plate = (p, i, side) => `<span class="plate plate-${side}" style="--c:${p.color};width:${Math.max(3, Math.round(p.thick * squeeze))}px;height:${p.h}px;animation-delay:${i * 45}ms"></span>`;
         const left = plates.map((p, i) => plate(p, i, 'l')).reverse().join('');
         const right = plates.map((p, i) => plate(p, i, 'r')).join('');
         return `<div class="barbell ${anim}" role="img" aria-label="Barbell: ${describePlates(plates)} per side">
@@ -3084,10 +3404,15 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
             <span class="bb-sleeve bb-right"><span class="bb-collar"></span>${right}</span>
           </div>`;
       }
-      const plates = platesFor(lb, 8);
-      return `<div class="stack ${anim}" role="img" aria-label="Weight stack: ${describePlates(plates)}">
-          <span class="stack-rod"></span>
-          ${plates.map((p, i) => `<span class="stack-plate" style="--c:${p.color};width:${20 + p.thick * 4}px;animation-delay:${i * 40}ms"></span>`).join('')}
+      // Machines: 8 plates fill a stack, the 9th starts a new stack to the right
+      const PER_STACK = 8;
+      const plates = platesFor(lb, PER_STACK * 4);
+      const columns = [];
+      for (let i = 0; i < plates.length; i += PER_STACK) columns.push(plates.slice(i, i + PER_STACK));
+      if (!columns.length) columns.push([]);
+      return `<div class="stack-group ${anim}" role="img" aria-label="Weight stack: ${describePlates(plates)}">
+          ${columns.map((col, c) => `<div class="stack"><span class="stack-rod"></span>${col.map((p, i) =>
+            `<span class="stack-plate" style="--c:${p.color};width:${20 + p.thick * 4}px;animation-delay:${(c * PER_STACK + i) * 40}ms"></span>`).join('')}</div>`).join('')}
         </div>`;
     }
 
@@ -3881,6 +4206,781 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
     }
 
     // =====================================================================
+    // --- BOOKSHELF ---
+    // Book details live in appState.books and sync like everything else.
+    // Cover and spine photos are kept separately (on this device, plus one small
+    // cloud document per book) so the main sync document stays light.
+    // =====================================================================
+    const BOOK_STATUSES = { reading: 'Reading', finished: 'Finished', want: 'Want to read' };
+    const BOOK_STATUS_ORDER = ['reading', 'finished', 'want'];
+    const SPINE_PALETTE = ['#7F1D1D', '#1E3A5F', '#1F4D3A', '#92400E', '#5B2A4E', '#334155', '#D6C9A8', '#115E59', '#9A3412', '#3F3F46'];
+    window.currentBookFilter = 'all';
+
+    function booksOf() {
+      if (!Array.isArray(window.appState.books)) window.appState.books = [];
+      return window.appState.books;
+    }
+    function quotesOf() {
+      if (!Array.isArray(window.appState.quotes)) window.appState.quotes = [];
+      return window.appState.quotes;
+    }
+
+    function hashOf(text) {
+      let h = 2166136261;
+      const s = String(text || '');
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return h >>> 0;
+    }
+    function inkFor(hex) {
+      const n = parseInt(String(hex).slice(1), 16);
+      const lum = (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+      return lum > 0.55 ? '#18181B' : '#F4F4F5';
+    }
+    const spineColor = (b) => /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : SPINE_PALETTE[hashOf(b.id) % SPINE_PALETTE.length];
+    const initials = (t) => String(t || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    const lastName = (a) => String(a || '').split(/,|&| and /)[0].trim().split(/\s+/).pop();
+
+    function bookPercent(b) {
+      if (b.status === 'finished') return 100;
+      const total = Number(b.totalPages) || 0;
+      return total ? Math.max(0, Math.min(100, Math.round((Number(b.pagesRead) || 0) / total * 100))) : 0;
+    }
+
+    // Height stays the same for a book; thickness comes from the spine photo or the page count
+    function bookDims(b, hasSpinePhoto) {
+      const h = 140 + (hashOf(b.id) % 29);
+      const w = hasSpinePhoto && b.spineAspect ? h * b.spineAspect : (Number(b.totalPages) ? 16 + b.totalPages / 24 : 28);
+      return { h, w: Math.round(Math.max(18, Math.min(hasSpinePhoto ? 64 : 54, w))) };
+    }
+
+    // --- Photo storage (this device + cloud) ---
+    const isImageData = (v) => typeof v === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+
+    const bookImages = {
+      KEY: 'lifeOsBookImages',
+      data: null,
+      load() {
+        if (!this.data) {
+          try { this.data = JSON.parse(localStorage.getItem(this.KEY) || '{}') || {}; } catch (_) { this.data = {}; }
+        }
+        return this.data;
+      },
+      get(id) { return this.load()[id] || null; },
+      persist() {
+        try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); return true; } catch (_) { return false; }
+      },
+      // Returns true when something actually changed
+      set(id, imgs, fromCloud = false) {
+        const clean = {};
+        if (imgs && isImageData(imgs.cover)) clean.cover = imgs.cover;
+        if (imgs && isImageData(imgs.spine)) clean.spine = imgs.spine;
+        if (!clean.cover && !clean.spine) return this.remove(id, fromCloud);
+        const d = this.load();
+        if (d[id] && d[id].cover === clean.cover && d[id].spine === clean.spine) return false;
+        d[id] = clean;
+        if (!this.persist()) window.showToast("This device's storage is full, so these photos may not stay on it.", 'error');
+        if (!fromCloud) window.saveBookImagesToCloud?.(id, clean);
+        return true;
+      },
+      remove(id, fromCloud = false) {
+        const d = this.load();
+        if (!(id in d)) return false;
+        delete d[id];
+        this.persist();
+        if (!fromCloud) window.deleteBookImagesFromCloud?.(id);
+        return true;
+      }
+    };
+
+    // Hooks for the Firebase module
+    window.applyCloudBookImages = (id, imgs) => imgs ? bookImages.set(id, imgs, true) : bookImages.remove(id, true);
+    window.localBookImageIds = () => Object.keys(bookImages.load()).filter(id => booksOf().some(b => b.id === id));
+    window.getBookImages = (id) => bookImages.get(id);
+
+    // --- Image helpers ---
+    function loadImageSource(src) {
+      return new Promise((resolve, reject) => {
+        const isBlob = src instanceof Blob;
+        const url = isBlob ? URL.createObjectURL(src) : src;
+        const img = new Image();
+        img.onload = () => { if (isBlob) URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { if (isBlob) URL.revokeObjectURL(url); reject(new Error('Unreadable image')); };
+        img.src = url;
+      });
+    }
+
+    function drawToCanvas(source, { crop = null, maxW = 1600, maxH = 1600 } = {}) {
+      const fullW = source.naturalWidth || source.width, fullH = source.naturalHeight || source.height;
+      const [sx, sy, sw, sh] = crop || [0, 0, fullW, fullH];
+      const scale = Math.min(1, maxW / sw, maxH / sh);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(sw * scale));
+      c.height = Math.max(1, Math.round(sh * scale));
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(source, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      return c;
+    }
+
+    // 90° clockwise: a spine shot lying down ends up standing, text top to bottom
+    function rotateCanvas(src) {
+      const c = document.createElement('canvas');
+      c.width = src.height;
+      c.height = src.width;
+      const ctx = c.getContext('2d');
+      ctx.translate(c.width, 0);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(src, 0, 0);
+      return c;
+    }
+
+    // Gemini boxes are [ymin, xmin, ymax, xmax] on a 0-1000 scale
+    function boxToCrop(box, w, h, pad = 6) {
+      if (!Array.isArray(box) || box.length !== 4) return null;
+      const n = box.map(Number);
+      if (!n.every(Number.isFinite)) return null;
+      let [y0, x0, y1, x1] = n;
+      if (y1 - y0 < 20 || x1 - x0 < 10) return null;
+      y0 = Math.max(0, y0 - pad); x0 = Math.max(0, x0 - pad);
+      y1 = Math.min(1000, y1 + pad); x1 = Math.min(1000, x1 + pad);
+      if ((y1 - y0) * (x1 - x0) / 1e6 > 0.94) return null; // already fills the frame
+      return [x0 / 1000 * w, y0 / 1000 * h, (x1 - x0) / 1000 * w, (y1 - y0) / 1000 * h];
+    }
+
+    // Most common strong color in a photo, used for plain spines and thumbnails
+    function dominantColor(canvas) {
+      try {
+        const small = drawToCanvas(canvas, { maxW: 32, maxH: 32 });
+        const px = small.getContext('2d').getImageData(0, 0, small.width, small.height).data;
+        const buckets = new Map();
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i], g = px[i + 1], b = px[i + 2];
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          const sat = max ? (max - min) / max : 0;
+          const key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+          const e = buckets.get(key) || { score: 0, n: 0, r: 0, g: 0, b: 0 };
+          e.score += 1 + sat * 2; e.n++; e.r += r; e.g += g; e.b += b;
+          buckets.set(key, e);
+        }
+        let best = null;
+        buckets.forEach(e => { if (!best || e.score > best.score) best = e; });
+        if (!best) return null;
+        const hex = (v) => Math.round(v / best.n).toString(16).padStart(2, '0');
+        return '#' + hex(best.r) + hex(best.g) + hex(best.b);
+      } catch (_) { return null; }
+    }
+
+    // --- Book sheet ---
+    const bookForm = {
+      id: null, scanToken: 0, edited: new Set(), rating: 0, quotes: [],
+      src: {}, last: {}, out: {}, spineAspect: null, color: null, imagesDirty: false
+    };
+
+    window.openBookSheet = function(id) {
+      const b = id ? booksOf().find(x => x.id === id) : null;
+      if (id && !b) return;
+      $('book-form').reset();
+      const imgs = b ? bookImages.get(b.id) : null;
+      Object.assign(bookForm, {
+        id: b ? b.id : 'bk_' + Date.now(),
+        scanToken: bookForm.scanToken + 1,
+        edited: new Set(b ? ['title', 'author', 'pages'] : []),
+        rating: Number(b?.rating) || 0,
+        src: {}, last: {},
+        out: { cover: imgs?.cover || null, spine: imgs?.spine || null },
+        spineAspect: b?.spineAspect || null,
+        color: b?.color || null,
+        imagesDirty: false
+      });
+      bookForm.quotes = quotesOf().filter(q => q.bookId === bookForm.id).map(q => ({ ...q }));
+
+      $('book-edit-id').value = b ? b.id : '';
+      $('book-title-input').value = b?.title || '';
+      $('book-author-input').value = b?.author || '';
+      $('book-pages-input').value = b?.totalPages || '';
+      $('book-status-input').value = b?.status || 'reading';
+      $('book-read-input').value = Number(b?.pagesRead) || 0;
+      $('book-start-input').value = b ? (b.startedAt || '') : todayISO();
+      $('book-finish-input').value = b?.finishedAt || '';
+      $('book-notes-input').value = b?.notes || '';
+      $('book-sheet-title').textContent = b ? 'Edit book' : 'New book';
+      $('book-submit-btn').textContent = b ? 'Save changes' : 'Add to shelf';
+      $('btn-delete-book').classList.toggle('hidden', !b);
+      setDetectStatus('', '', 'book-scan-status');
+      setBookScanLoading(false);
+      renderBookPhotos();
+      renderStars();
+      renderBookFormQuotes();
+      applyBookStatusUI();
+      window.syncBookProgress();
+      window.openModal('bookModal');
+      warmUpAI();
+    };
+
+    window.bookFieldEdited = function(key) {
+      bookForm.edited.add(key);
+      $(`book-${key}-input`)?.closest('.shimmer-wrap')?.classList.remove('is-thinking');
+    };
+
+    function applyBookStatusUI() {
+      const status = $('book-status-input').value;
+      $('book-progress-block')?.classList.toggle('hidden', status === 'want');
+      $('book-dates')?.classList.toggle('hidden', status === 'want');
+      $('book-finish-wrap')?.classList.toggle('hidden', status !== 'finished');
+    }
+
+    window.onBookStatusChange = function() {
+      const status = $('book-status-input').value;
+      if (status === 'reading' && !$('book-start-input').value) $('book-start-input').value = todayISO();
+      if (status === 'finished') {
+        if (!$('book-finish-input').value) $('book-finish-input').value = todayISO();
+        const total = parseInt($('book-pages-input').value, 10) || 0;
+        if (total) $('book-read-input').value = total;
+      }
+      applyBookStatusUI();
+      window.syncBookProgress();
+      haptic(6);
+    };
+
+    // Keeps the page number, slider and percentage in step
+    window.syncBookProgress = function(source) {
+      const total = Math.max(0, parseInt($('book-pages-input').value, 10) || 0);
+      const num = $('book-read-input');
+      const range = $('book-read-range');
+      let read = Math.max(0, parseInt(source === 'range' ? range.value : num.value, 10) || 0);
+      if (total && read > total) read = total;
+      if (source === 'range' || (source === 'number' && total && parseInt(num.value, 10) > total)) num.value = read;
+      range.max = String(total || 1);
+      range.value = String(total ? read : 0);
+      range.disabled = !total;
+      const pct = total ? Math.round(read / total * 100) : 0;
+      range.style.setProperty('--fill', pct + '%');
+      $('book-percent').textContent = total ? pct + '%' : '–';
+      $('book-total-label').textContent = total ? total.toLocaleString('en-US') : '?';
+    };
+
+    function renderStars() {
+      document.querySelectorAll('#book-stars .star-btn').forEach(btn => {
+        const on = Number(btn.dataset.v) <= bookForm.rating;
+        btn.classList.toggle('is-on', on);
+        btn.setAttribute('aria-pressed', String(on));
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = `fa-${on ? 'solid' : 'regular'} fa-star`;
+      });
+      const label = $('book-rating-label');
+      if (label) label.textContent = bookForm.rating ? `${bookForm.rating} of 5` : 'Tap a star';
+    }
+
+    // Tapping the current rating again clears it
+    window.setBookRating = function(v) {
+      bookForm.rating = bookForm.rating === v ? 0 : v;
+      haptic(6);
+      renderStars();
+    };
+
+    function renderBookPhotos(flash = []) {
+      ['cover', 'spine'].forEach(kind => {
+        const slot = $(kind + '-slot');
+        if (!slot) return;
+        const src = bookForm.out[kind];
+        let img = slot.querySelector('img');
+        if (src) {
+          if (!img) { img = document.createElement('img'); img.alt = ''; slot.prepend(img); }
+          if (img.src !== src) img.src = src;
+        } else if (img) img.remove();
+        slot.classList.toggle('has-photo', !!src);
+        slot.setAttribute('aria-label', `${src ? 'Retake' : 'Add'} ${kind} photo`);
+        if (flash.includes(kind)) { slot.classList.remove('is-filled'); void slot.offsetWidth; slot.classList.add('is-filled'); }
+      });
+      $('spine-rotate-btn')?.classList.toggle('hidden', !bookForm.out.spine);
+    }
+
+    // Shrink and compress a photo for saving (covers ~20 KB, spines ~10 KB)
+    function finalizePhoto(kind, canvas) {
+      const out = kind === 'cover' ? drawToCanvas(canvas, { maxW: 300, maxH: 450 }) : drawToCanvas(canvas, { maxW: 480, maxH: 480 });
+      bookForm.last[kind] = canvas;
+      bookForm.out[kind] = out.toDataURL('image/jpeg', kind === 'cover' ? 0.74 : 0.8);
+      if (kind === 'spine') bookForm.spineAspect = Math.round(out.width / out.height * 1000) / 1000;
+      bookForm.imagesDirty = true;
+    }
+
+    window.handleBookPhoto = async function(input, kind) {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      try {
+        const work = drawToCanvas(await loadImageSource(file), { maxW: 1600, maxH: 1600 });
+        bookForm.src[kind] = work;
+        finalizePhoto(kind, work);
+        if (kind === 'cover' || !bookForm.out.cover) bookForm.color = dominantColor(work) || bookForm.color;
+        renderBookPhotos([kind]);
+        haptic(8);
+        window.scanBookPhotos();
+      } catch (err) {
+        console.error('Book photo failed:', err);
+        window.showToast("Couldn't open that photo. Try a JPG or PNG.", 'error');
+      }
+    };
+
+    window.rotateSpine = async function() {
+      if (!bookForm.out.spine) return;
+      try {
+        const base = bookForm.last.spine || drawToCanvas(await loadImageSource(bookForm.out.spine));
+        finalizePhoto('spine', rotateCanvas(base));
+        renderBookPhotos(['spine']);
+        haptic(6);
+      } catch (_) {
+        window.showToast("Couldn't rotate that photo.", 'error');
+      }
+    };
+
+    function setBookScanLoading(on) {
+      const btn = $('btn-scan-book');
+      if (btn) {
+        btn.classList.toggle('is-loading', on);
+        btn.disabled = on;
+        const label = btn.querySelector('span');
+        if (label) label.textContent = on ? 'Reading...' : 'Read photos';
+      }
+      ['cover', 'spine'].forEach(kind => {
+        const slot = $(kind + '-slot');
+        slot?.classList.toggle('is-thinking', on && slot.classList.contains('has-photo'));
+      });
+      ['title', 'author', 'pages'].forEach(key => {
+        $(`book-${key}-input`)?.closest('.shimmer-wrap')?.classList.toggle('is-thinking', on && !bookForm.edited.has(key));
+      });
+    }
+
+    const bookScanSchema = {
+      type: 'OBJECT',
+      properties: {
+        title: { type: 'STRING' },
+        author: { type: 'STRING' },
+        pages: { type: 'INTEGER' },
+        cover_box: { type: 'ARRAY', items: { type: 'INTEGER' } },
+        spine_box: { type: 'ARRAY', items: { type: 'INTEGER' } }
+      },
+      required: ['title', 'author', 'pages'],
+      propertyOrdering: ['title', 'author', 'pages', 'cover_box', 'spine_box']
+    };
+
+    // One Gemini call reads the title/author/pages and finds the cover + spine to crop
+    window.scanBookPhotos = async function(force = false) {
+      if (force) {
+        haptic(8);
+        for (const kind of ['cover', 'spine']) {
+          if (!bookForm.src[kind] && bookForm.out[kind]) {
+            try { bookForm.src[kind] = drawToCanvas(await loadImageSource(bookForm.out[kind])); } catch (_) {}
+          }
+        }
+      }
+      const kinds = ['cover', 'spine'].filter(k => bookForm.src[k]);
+      if (!kinds.length) {
+        if (force) window.showToast('Add a cover or spine photo first.', 'error');
+        return;
+      }
+      const apiKey = getCleanApiKey();
+      if (!apiKey) {
+        setDetectStatus('Photo added. Add a Gemini key in Settings and it will read the title and author for you.', '', 'book-scan-status');
+        return;
+      }
+      if (force) ['title', 'author', 'pages'].forEach(k => bookForm.edited.delete(k));
+
+      const token = ++bookForm.scanToken;
+      setDetectStatus('', '', 'book-scan-status');
+      setBookScanLoading(true);
+
+      const images = kinds.map(k => ({
+        mimeType: 'image/jpeg',
+        data: drawToCanvas(bookForm.src[k], { maxW: 1024, maxH: 1024 }).toDataURL('image/jpeg', 0.82).split(',')[1]
+      }));
+      const prompt = `${kinds.map((k, i) => `Image ${i + 1} is a photo of a book's ${k === 'cover' ? 'front cover' : 'spine'}.`).join(' ')}
+title: the title exactly as printed, in Title Case, without series numbers or taglines.
+author: the author's full name (separate several authors with commas).
+pages: the page count of the common paperback edition if you know this book, otherwise 0.
+cover_box: ${bookForm.src.cover ? 'the bounding box of just the front cover in its photo' : 'an empty array'}.
+spine_box: ${bookForm.src.spine ? 'the bounding box of just the spine in its photo' : 'an empty array'}.
+Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
+
+      let error = null;
+      const data = await askGeminiJSON(prompt, apiKey, bookScanSchema, (err) => { error = err; return null; }, {
+        images, timeoutMs: 20000, maxOutputTokens: 400, temperature: 0.1,
+        validate: d => d && typeof d.title === 'string' && d.title.trim() !== ''
+      });
+      if (token !== bookForm.scanToken) return; // sheet was reset or a newer photo came in
+      setBookScanLoading(false);
+      if (!data) {
+        setDetectStatus(`${describeAIError(error)}. Type the details in below.`, 'warn', 'book-scan-status');
+        return;
+      }
+
+      const fill = (key, value) => {
+        if (value && !bookForm.edited.has(key)) setFieldValue($(`book-${key}-input`), String(value));
+      };
+      fill('title', data.title.trim());
+      fill('author', String(data.author || '').trim());
+      const pages = parseInt(data.pages, 10);
+      if (pages > 0 && pages < 10000) fill('pages', pages);
+      window.syncBookProgress();
+
+      // Trim each photo down to just the cover / just the spine
+      const crops = {};
+      kinds.forEach(kind => {
+        const src = bookForm.src[kind];
+        const crop = boxToCrop(data[kind + '_box'], src.width, src.height, kind === 'spine' ? 4 : 8);
+        if (!crop) return;
+        let c = drawToCanvas(src, { crop });
+        if (kind === 'spine' && c.width > c.height * 1.4) c = rotateCanvas(c); // shot lying down
+        finalizePhoto(kind, c);
+        crops[kind] = c;
+      });
+      const colorSource = crops.cover || (!bookForm.out.cover && crops.spine);
+      if (colorSource) bookForm.color = dominantColor(colorSource) || bookForm.color;
+      const trimmed = Object.keys(crops);
+      renderBookPhotos(trimmed);
+      setDetectStatus(`Found "${data.title.trim()}"${trimmed.length ? ` and trimmed the ${trimmed.join(' and ')} photo${trimmed.length > 1 ? 's' : ''}` : ''}. Edit anything that looks off.`, 'ai', 'book-scan-status');
+    };
+
+    // Quotes inside the book sheet are only committed when the book is saved
+    function renderBookFormQuotes() {
+      const list = $('book-quotes-list');
+      if (!list) return;
+      list.innerHTML = bookForm.quotes.map(q => `
+        <div class="book-quote-item">
+          <span class="flex-1 min-w-0">“${esc(q.text)}”</span>
+          <button type="button" class="icon-btn icon-btn-sm" onclick="window.removeBookFormQuote('${q.id}')" aria-label="Remove quote"><i class="fa-solid fa-xmark"></i></button>
+        </div>`).join('');
+    }
+
+    window.addBookFormQuote = function() {
+      const input = $('book-quote-input');
+      const text = cleanQuoteText(input.value);
+      if (!text) { input.focus(); return; }
+      bookForm.quotes.push({ id: 'q_' + Date.now() + bookForm.quotes.length, text, author: '', bookId: bookForm.id, source: '', addedAt: new Date().toISOString() });
+      input.value = '';
+      renderBookFormQuotes();
+      haptic(8);
+    };
+
+    window.removeBookFormQuote = function(id) {
+      bookForm.quotes = bookForm.quotes.filter(q => q.id !== id);
+      renderBookFormQuotes();
+      haptic(6);
+    };
+
+    window.handleSaveBook = function(e) {
+      e.preventDefault();
+      if ($('book-quote-input').value.trim()) window.addBookFormQuote(); // keep a typed-but-not-added quote
+      const editId = $('book-edit-id').value;
+      const existing = editId ? booksOf().find(b => b.id === editId) : null;
+      const total = Math.max(0, parseInt($('book-pages-input').value, 10) || 0);
+      let status = $('book-status-input').value;
+      let read = Math.max(0, parseInt($('book-read-input').value, 10) || 0);
+      if (total) read = Math.min(read, total);
+      const autoFinished = status === 'reading' && total > 0 && read >= total;
+      if (autoFinished) status = 'finished';
+      if (status === 'finished' && total) read = total;
+
+      let startedAt = $('book-start-input').value;
+      if (status === 'reading' && !startedAt) startedAt = todayISO();
+      const finishedAt = status === 'finished' ? ($('book-finish-input').value || todayISO()) : '';
+
+      const id = existing ? existing.id : bookForm.id;
+      const fields = {
+        title: $('book-title-input').value.trim(),
+        author: $('book-author-input').value.trim(),
+        totalPages: total,
+        pagesRead: read,
+        status,
+        rating: bookForm.rating,
+        startedAt: startedAt || '',
+        finishedAt,
+        notes: $('book-notes-input').value.trim(),
+        color: bookForm.color || null,
+        spineAspect: bookForm.imagesDirty ? (bookForm.out.spine ? bookForm.spineAspect : null) : (existing?.spineAspect ?? null),
+        updatedAt: new Date().toISOString()
+      };
+      if (!fields.title) { $('book-title-input').focus(); return; }
+
+      if (existing) Object.assign(existing, fields);
+      else booksOf().push({ id, addedAt: new Date().toISOString(), ...fields });
+      if (bookForm.imagesDirty) bookImages.set(id, bookForm.out);
+
+      const bookQuotes = bookForm.quotes.map(q => ({ ...q, bookId: id, author: fields.author || q.author || '', source: fields.title }));
+      window.appState.quotes = [...quotesOf().filter(q => q.bookId !== id), ...bookQuotes];
+
+      if (window.currentBookFilter !== 'all' && window.currentBookFilter !== status) window.currentBookFilter = 'all';
+      window.saveState();
+      renderBooks({ updated: id });
+      renderSavedQuotes();
+      syncQuoteSaveButton();
+      window.closeModal('bookModal');
+      haptic([8, 30, 8]);
+      window.showToast(autoFinished ? `Finished ${fields.title}. Nice work.` : existing ? 'Book updated.' : `${fields.title} is on the shelf.`, 'success');
+    };
+
+    window.deleteBookFromSheet = function() {
+      const id = $('book-edit-id').value;
+      const book = id && booksOf().find(b => b.id === id);
+      if (!book) return;
+      window.closeModal('bookModal');
+      removeWithUndo('books', id, book.title, () => renderBooks());
+      // Photos are deleted once the Undo window has passed
+      setTimeout(() => { if (!booksOf().some(b => b.id === id)) bookImages.remove(id); }, 7000);
+    };
+
+    // --- Shelf rendering ---
+    window.setBookFilter = function(filter) {
+      window.currentBookFilter = filter;
+      haptic(6);
+      renderBooks({ animateAll: true });
+    };
+
+    function sortedBooks() {
+      const rank = (s) => { const i = BOOK_STATUS_ORDER.indexOf(s); return i < 0 ? 9 : i; };
+      return [...booksOf()].sort((a, b) =>
+        rank(a.status) - rank(b.status) ||
+        String(b.finishedAt || b.updatedAt || '').localeCompare(String(a.finishedAt || a.updatedAt || '')));
+    }
+
+    function readingCardHtml(b) {
+      const imgs = bookImages.get(b.id);
+      const pct = bookPercent(b);
+      const color = spineColor(b);
+      const total = Number(b.totalPages) || 0;
+      const meta = [b.author, total ? `page ${Number(b.pagesRead) || 0} of ${total}` : ''].filter(Boolean).map(esc).join(', ');
+      return `
+        <article class="card reading-card" data-id="now-${b.id}" role="button" tabindex="0"
+          onclick="window.openBookSheet('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openBookSheet('${b.id}')}"
+          aria-label="${esc(b.title)}, ${pct}% read">
+          <span class="reading-thumb" style="--spine:${color};--ink:${inkFor(color)}">${imgs && imgs.cover ? `<img src="${imgs.cover}" alt="">` : esc(initials(b.title))}</span>
+          <div class="min-w-0 flex-1">
+            <h4 class="reading-title truncate">${esc(b.title)}</h4>
+            <p class="reading-meta truncate">${meta || 'Add the page count to track progress'}</p>
+            <div class="read-progress"><span style="width:${pct}%"></span></div>
+          </div>
+          <span class="reading-pct tnum">${pct}%</span>
+        </article>`;
+    }
+
+    function bookSpineHtml(b, fresh, updatedId) {
+      const imgs = bookImages.get(b.id);
+      const spinePhoto = imgs && imgs.spine;
+      const { w, h } = bookDims(b, !!spinePhoto);
+      const color = spineColor(b);
+      const pct = bookPercent(b);
+      const tilt = hashOf(b.id + 'tilt') % 2 ? -2.5 : 2;
+      const label = `${b.title}${b.author ? ' by ' + b.author : ''}. ${BOOK_STATUSES[b.status] || ''}${b.status === 'reading' ? `, ${pct}%` : ''}`;
+      const face = spinePhoto
+        ? `<img src="${spinePhoto}" alt="">`
+        : `<span class="book-text"><span class="bt-title">${esc(b.title)}</span>${b.author ? `<span class="bt-author">${esc(lastName(b.author))}</span>` : ''}</span>`;
+      return `
+        <div class="book-slot" role="listitem" ${fresh(b.id)}>
+          <button type="button" class="book ${updatedId === b.id ? 'just-updated' : ''}" data-id="${b.id}"
+            style="--w:${w}px;--h:${h}px;--spine:${color};--ink:${inkFor(color)};--tilt:${tilt}deg"
+            onclick="window.openBookSheet('${b.id}')" title="${esc(b.title)}" aria-label="${esc(label)}">
+            <span class="book-face ${spinePhoto ? '' : 'is-plain'}">${face}</span>
+            ${b.status === 'reading' ? `<span class="book-progress" style="--p:${pct}%"><span></span></span><span class="book-ribbon"></span>` : ''}
+          </button>
+        </div>`;
+    }
+
+    function renderBooks(opts = {}) {
+      const shelfEl = $('bookshelf');
+      if (!shelfEl) return;
+      const all = booksOf();
+      const counts = { reading: 0, finished: 0, want: 0 };
+      all.forEach(b => { if (b.status in counts) counts[b.status]++; });
+      if (window.currentBookFilter !== 'all' && !counts[window.currentBookFilter]) window.currentBookFilter = 'all';
+      const filter = window.currentBookFilter;
+
+      const summary = $('books-summary');
+      if (summary) {
+        const pagesRead = all.reduce((sum, b) => {
+          const total = Number(b.totalPages) || 0;
+          return sum + (b.status === 'finished' ? total : Math.min(Number(b.pagesRead) || 0, total || Infinity));
+        }, 0);
+        const parts = [
+          counts.reading && `${counts.reading} reading`,
+          counts.finished && `${counts.finished} finished`,
+          counts.want && `${counts.want} to read`,
+          pagesRead && `${pagesRead.toLocaleString('en-US')} pages read`
+        ].filter(Boolean);
+        summary.textContent = all.length ? parts.join(', ') + '.' : 'Snap a cover and spine to put your first book on the shelf.';
+      }
+
+      const filterEl = $('book-filter-container');
+      if (filterEl) {
+        const chips = [['all', 'All', all.length], ...BOOK_STATUS_ORDER.filter(s => counts[s]).map(s => [s, BOOK_STATUSES[s], counts[s]])];
+        filterEl.innerHTML = all.length ? chips.map(([v, label, n]) =>
+          `<button onclick="window.setBookFilter('${v}')" class="chip ${filter === v ? 'is-active' : ''}">${label} <span class="chip-count">${n}</span></button>`).join('') : '';
+      }
+
+      const nowEl = $('reading-now-container');
+      if (nowEl) {
+        const reading = ['all', 'reading'].includes(filter) ? sortedBooks().filter(b => b.status === 'reading') : [];
+        nowEl.innerHTML = reading.map(readingCardHtml).join('');
+      }
+
+      if (!all.length) {
+        shelfEl.innerHTML = emptyState('fa-book', 'No books yet. Add one and it will stand here, spine out.', 'Add book', 'window.openBookSheet()');
+        return;
+      }
+      const fresh = makeFresh(!!opts.animateAll);
+      const list = sortedBooks().filter(b => filter === 'all' || b.status === filter);
+      shelfEl.innerHTML = `<div class="bookcase" role="list" aria-label="Bookshelf">${list.map(b => bookSpineHtml(b, fresh, opts.updated)).join('')}</div>`;
+      staggerNew(shelfEl);
+    }
+    window.renderBooks = renderBooks;
+
+    // =====================================================================
+    // --- SAVED QUOTES ---
+    // Your own quotes, ones you bookmark from the rotation, and lines from books.
+    // All of them join the quote rotation.
+    // =====================================================================
+    let currentQuote = { text: 'There is no shame in falling down. True shame is in not standing back up.', author: 'Miyamoto Musashi' };
+    let quotesExpanded = false;
+
+    function cleanQuoteText(raw) {
+      return String(raw || '').trim().replace(/^["“”]+|["“”]+$/g, '').trim();
+    }
+
+    function findSavedQuote(text) {
+      const k = String(text || '').toLowerCase();
+      return quotesOf().find(q => q.text.toLowerCase() === k);
+    }
+
+    function syncQuoteSaveButton() {
+      const btn = $('quote-save-btn');
+      if (!btn) return;
+      const saved = !!findSavedQuote(currentQuote.text);
+      btn.classList.toggle('is-saved', saved);
+      btn.setAttribute('aria-pressed', String(saved));
+      btn.title = saved ? 'Saved to your quotes' : 'Save this quote';
+      const icon = btn.querySelector('i');
+      if (icon) icon.className = `fa-${saved ? 'solid' : 'regular'} fa-bookmark`;
+    }
+
+    // Bookmark the quote that's showing (tap again to un-save)
+    window.saveCurrentQuote = function() {
+      const existing = findSavedQuote(currentQuote.text);
+      if (existing) {
+        removeWithUndo('quotes', existing.id, 'Quote', () => { renderSavedQuotes(); syncQuoteSaveButton(); });
+        return;
+      }
+      quotesOf().push({
+        id: 'q_' + Date.now(), text: currentQuote.text, author: currentQuote.author || '',
+        bookId: currentQuote.bookId || null, source: currentQuote.source || '', addedAt: new Date().toISOString()
+      });
+      window.saveState();
+      renderSavedQuotes();
+      syncQuoteSaveButton();
+      haptic([8, 30, 8]);
+      window.showToast('Saved to your quotes.', 'success');
+    };
+
+    function renderSavedQuotes(opts = {}) {
+      const container = $('saved-quotes-container');
+      if (!container) return;
+      const list = [...quotesOf()].sort((a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || '')));
+      const count = $('quotes-count');
+      if (count) count.textContent = list.length || '';
+      const more = $('quotes-more-btn');
+      if (!list.length) {
+        container.innerHTML = emptyState('fa-bookmark', 'No saved quotes yet. Add your own, bookmark one from above, or save lines from a book.', 'Add quote', 'window.openQuoteSheet()');
+        more?.classList.add('hidden');
+        return;
+      }
+      const shown = quotesExpanded ? list : list.slice(0, 6);
+      const fresh = makeFresh(!!opts.animateAll);
+      container.innerHTML = shown.map(q => {
+        const book = q.bookId && booksOf().find(b => b.id === q.bookId);
+        const source = book ? book.title : (q.source || '');
+        return `
+        <article class="card quote-card group" data-id="${q.id}" ${fresh(q.id)} role="button" tabindex="0"
+          onclick="window.openQuoteSheet('${q.id}')" onkeydown="if(event.key==='Enter'){window.openQuoteSheet('${q.id}')}">
+          <blockquote>“${esc(q.text)}”</blockquote>
+          <div class="flex items-center justify-between gap-2 mt-2">
+            <p class="quote-src truncate">${q.author ? '— ' + esc(q.author) : ''}${source ? `<span class="from-book">${q.author ? ', ' : ''}${esc(source)}</span>` : ''}</p>
+            <button onclick="event.stopPropagation(); window.deleteQuote('${q.id}')" class="icon-btn icon-btn-sm reveal-on-hover" aria-label="Remove quote"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        </article>`;
+      }).join('');
+      staggerNew(container);
+      if (more) {
+        more.classList.toggle('hidden', list.length <= 6);
+        const label = more.querySelector('span');
+        if (label) label.textContent = quotesExpanded ? 'Show fewer' : `Show all ${list.length}`;
+      }
+    }
+
+    window.toggleQuotesExpanded = function() {
+      quotesExpanded = !quotesExpanded;
+      haptic(6);
+      renderSavedQuotes();
+    };
+
+    window.openQuoteSheet = function(id) {
+      const q = id ? quotesOf().find(x => x.id === id) : null;
+      if (id && !q) return;
+      $('quote-form').reset();
+      $('quote-edit-id').value = q ? q.id : '';
+      $('quote-text-input').value = q?.text || '';
+      $('quote-author-input').value = q?.author || '';
+      const select = $('quote-book-input');
+      select.innerHTML = `<option value="">Not from a book</option>` +
+        sortedBooks().map(b => `<option value="${b.id}">${esc(b.title)}</option>`).join('');
+      select.value = q?.bookId && booksOf().some(b => b.id === q.bookId) ? q.bookId : '';
+      $('quote-book-wrap').classList.toggle('hidden', !booksOf().length);
+      $('quote-sheet-title').textContent = q ? 'Edit quote' : 'New quote';
+      $('quote-submit-btn').textContent = q ? 'Save changes' : 'Save quote';
+      $('btn-delete-quote').classList.toggle('hidden', !q);
+      window.openModal('quoteModal');
+    };
+
+    // Picking a book fills in its author if you haven't typed one
+    window.onQuoteBookChange = function() {
+      const book = booksOf().find(b => b.id === $('quote-book-input').value);
+      const author = $('quote-author-input');
+      if (book && book.author && !author.value.trim()) setFieldValue(author, book.author);
+    };
+
+    window.handleSaveQuote = function(e) {
+      e.preventDefault();
+      const text = cleanQuoteText($('quote-text-input').value);
+      if (!text) { window.showToast('Type the quote first.', 'error'); return; }
+      const editId = $('quote-edit-id').value;
+      const existing = editId ? quotesOf().find(q => q.id === editId) : null;
+      const bookId = $('quote-book-input').value || null;
+      const book = bookId ? booksOf().find(b => b.id === bookId) : null;
+      const fields = {
+        text,
+        author: $('quote-author-input').value.trim().replace(/^[—–-]\s*/, ''),
+        bookId,
+        source: book ? book.title : ''
+      };
+      if (existing) { Object.assign(existing, fields); renderedIds.delete(existing.id); }
+      else quotesOf().push({ id: 'q_' + Date.now(), addedAt: new Date().toISOString(), ...fields });
+      window.saveState();
+      renderSavedQuotes();
+      syncQuoteSaveButton();
+      window.closeModal('quoteModal');
+      haptic([8, 30, 8]);
+      window.showToast(existing ? 'Quote updated.' : 'Quote saved. It will show up in your rotation.', 'success');
+    };
+
+    window.deleteQuote = function(id) {
+      removeWithUndo('quotes', id, 'Quote', () => { renderSavedQuotes(); syncQuoteSaveButton(); });
+    };
+
+    window.deleteQuoteFromSheet = function() {
+      const id = $('quote-edit-id').value;
+      if (!id) return;
+      window.closeModal('quoteModal');
+      window.deleteQuote(id);
+    };
+
+    // =====================================================================
     // --- NOTES (auto-save) ---
     // =====================================================================
     let scratchTimeout;
@@ -3969,6 +5069,29 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
       }, 170);
     }
 
+    let quoteClicks = 0;
+
+    // Your saved quotes come first, then the built-in favorites
+    function myQuotePool() {
+      const seen = new Set();
+      const saved = [...quotesOf()]
+        .sort((a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || '')))
+        .map(q => ({
+          text: q.text,
+          author: q.author || 'Unknown',
+          bookId: q.bookId || null,
+          source: (q.bookId && booksOf().find(b => b.id === q.bookId)?.title) || q.source || '',
+          label: 'From your saved quotes'
+        }));
+      const builtIn = FALLBACK_QUOTES.map(q => ({ text: q.t, author: q.a, label: 'From your list' }));
+      return [...saved, ...builtIn].filter(q => {
+        const k = q.text.toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+
     window.cycleInfiniteQuote = async function() {
       if (quoteBusy) return;
       const bText = $('banner-quote-text');
@@ -3977,18 +5100,24 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
       const dAuth = $('quote-display-author');
       const counter = $('quote-counter');
       const spinners = [$('banner-refresh-icon'), $('main-quote-btn')?.querySelector('i')].filter(Boolean);
-      
       const apiKey = getCleanApiKey();
 
-      const applyQuote = (text, author) => {
-        swapText(bText, `"${text}"`);
-        swapText(bAuth, `— ${author}`);
-        swapText(dText, `"${text}"`);
-        swapText(dAuth, `— ${author}`);
+      const applyQuote = (q) => {
+        currentQuote = q;
+        const byline = `— ${q.author}${q.source ? ', ' + q.source : ''}`;
+        swapText(bText, `"${q.text}"`);
+        swapText(bAuth, byline);
+        swapText(dText, `"${q.text}"`);
+        swapText(dAuth, byline);
+        if (counter) counter.textContent = q.label;
+        syncQuoteSaveButton();
       };
       haptic(6);
+      quoteClicks++;
 
-      if (apiKey) {
+      // With a key, Gemini and your saved quotes take turns
+      const useGemini = apiKey && !(quotesOf().length && quoteClicks % 2 === 0);
+      if (useGemini) {
         try {
           // Only the first click (or an empty queue) waits on the network
           if (aiRuntime.quoteQueue.length === 0) {
@@ -3997,7 +5126,7 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
             await refillQuoteQueue(apiKey);
           }
         } catch (err) {
-          console.warn("Quote AI generation failed, using fallback list:", err?.message);
+          console.warn("Quote AI generation failed, using your list:", err?.message);
         } finally {
           quoteBusy = false;
           spinners.forEach(i => i.classList.remove('fa-spin'));
@@ -4006,8 +5135,7 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         const next = aiRuntime.quoteQueue.shift();
         if (next) {
           seenQuotes.add(next.text.toLowerCase());
-          applyQuote(next.text, next.author);
-          if (counter) counter.textContent = "Generated by Gemini";
+          applyQuote({ text: next.text, author: next.author, label: 'Generated by Gemini' });
           if (aiRuntime.quoteQueue.length <= 1) {
             refillQuoteQueue(apiKey).catch(err => console.warn("Quote prefetch failed:", err?.message));
           }
@@ -4015,10 +5143,10 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         }
       }
 
-      const q = FALLBACK_QUOTES[quoteIndex % FALLBACK_QUOTES.length];
+      const pool = myQuotePool();
+      const q = pool[quoteIndex % pool.length];
       quoteIndex++;
-      applyQuote(q.t, q.a);
-      if (counter) counter.textContent = "From your list";
+      applyQuote(q);
     };
   </script>
 
@@ -4026,10 +5154,10 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeFirestore, doc, collection, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = 'leo-lifeos-local';
-    let db, auth, userId, unsubscribeState;
+    const ACCOUNT = 'leo-main-sync-account';
 
     async function initFirebase() {
       try {
@@ -4044,49 +5172,75 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         };
 
         const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        
+        const auth = getAuth(app);
+        // Skip undefined fields instead of rejecting the whole save
+        const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+
         await signInAnonymously(auth);
-        userId = auth.currentUser?.uid;
+        if (!auth.currentUser?.uid) return;
+        if (typeof window.setSyncUI === 'function') window.setSyncUI('synced');
 
-        if (userId) {
-          if (typeof window.setSyncUI === 'function') window.setSyncUI('synced');
+        const stateRef = doc(db, 'artifacts', appId, 'users', ACCOUNT, 'appData', 'state');
+        // One small document per book's photos keeps the main state far under Firestore's 1 MB limit
+        const photosRef = collection(db, 'artifacts', appId, 'users', ACCOUNT, 'bookImages');
 
-          window.saveToCloud = async function() {
-            if (!userId || !db) return;
-            try {
-              await setDoc(doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state'), window.appState);
-            } catch (e) {
-              console.error("Cloud sync save error:", e);
-            }
-          };
+        window.saveToCloud = async function() {
+          try { await setDoc(stateRef, window.appState); }
+          catch (e) { console.error("Cloud sync save error:", e); }
+        };
+        window.saveBookImagesToCloud = async function(id, imgs) {
+          try { await setDoc(doc(photosRef, id), imgs); }
+          catch (e) { console.error("Book photo sync error:", e); }
+        };
+        window.deleteBookImagesFromCloud = async function(id) {
+          try { await deleteDoc(doc(photosRef, id)); }
+          catch (e) { console.error("Book photo delete error:", e); }
+        };
 
-          const docRef = doc(db, 'artifacts', appId, 'users', 'leo-main-sync-account', 'appData', 'state');
-          unsubscribeState = onSnapshot(docRef, (docSnap) => {
-            // Our own write echoing back: the screen already shows it
-            if (docSnap.metadata.hasPendingWrites) return;
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              const incoming = {
-                gymBlocks: data.gymBlocks || [],
-                tasks: data.tasks || [],
-                pbLogs: data.pbLogs || [],
-                ytChannels: data.ytChannels || [],
-                scratchpadText: data.scratchpadText || "",
-                gymCustomOrder: data.gymCustomOrder || {},
-                splitHistory: data.splitHistory || {}
-              };
-              // Skip the re-render when nothing actually changed (keeps animations smooth)
-              if (typeof window.stableStringify === 'function' &&
-                  window.stableStringify(incoming) === window.stableStringify(window.appState)) return;
-              window.appState = incoming;
-              if (typeof window.renderAll === 'function') window.renderAll();
-            } else {
-              if (typeof window.saveToCloud === 'function') window.saveToCloud();
-            }
-          }, (error) => console.error("Snapshot error:", error));
-        }
+        onSnapshot(stateRef, (docSnap) => {
+          // Our own write echoing back: the screen already shows it
+          if (docSnap.metadata.hasPendingWrites) return;
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const incoming = {
+              gymBlocks: data.gymBlocks || [],
+              tasks: data.tasks || [],
+              pbLogs: data.pbLogs || [],
+              ytChannels: data.ytChannels || [],
+              books: data.books || [],
+              quotes: data.quotes || [],
+              scratchpadText: data.scratchpadText || "",
+              gymCustomOrder: data.gymCustomOrder || {},
+              splitHistory: data.splitHistory || {}
+            };
+            // Skip the re-render when nothing actually changed (keeps animations smooth)
+            if (typeof window.stableStringify === 'function' &&
+                window.stableStringify(incoming) === window.stableStringify(window.appState)) return;
+            window.appState = incoming;
+            if (typeof window.renderAll === 'function') window.renderAll();
+          } else {
+            window.saveToCloud();
+          }
+        }, (error) => console.error("Snapshot error:", error));
+
+        let firstPhotoSnapshot = true;
+        onSnapshot(photosRef, (snap) => {
+          let changed = false;
+          snap.docChanges().forEach(change => {
+            if (change.doc.metadata.hasPendingWrites) return;
+            const data = change.type === 'removed' ? null : change.doc.data();
+            if (window.applyCloudBookImages?.(change.doc.id, data)) changed = true;
+          });
+          // Photos taken before sync connected: upload any the cloud doesn't have yet
+          if (firstPhotoSnapshot) {
+            firstPhotoSnapshot = false;
+            const inCloud = new Set(snap.docs.map(d => d.id));
+            (window.localBookImageIds?.() || []).forEach(id => {
+              if (!inCloud.has(id)) window.saveBookImagesToCloud(id, window.getBookImages(id));
+            });
+          }
+          if (changed) window.renderBooks?.();
+        }, (error) => console.error("Book photo snapshot error:", error));
       } catch (err) {
         console.warn("Cloud sync uninitialized. Operating local mode.", err);
       }
@@ -4097,7 +5251,7 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
       window.appState = { ...window.appState, ...JSON.parse(localState) };
     }
     if (typeof window.renderAll === 'function') window.renderAll();
-    
+
     initFirebase();
   </script>
 </body>
