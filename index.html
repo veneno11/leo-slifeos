@@ -2404,7 +2404,6 @@
            const choices = options.filter(opt => opt !== block.current);
           if (!choices.length) return; // nothing different to swap to
           const pick = choices[Math.floor(Math.random() * choices.length)];
-          const pick = choices[Math.floor(Math.random() * choices.length)];
           block.alternatives = options.filter(opt => opt !== pick);
           block.current = pick;
           changed.add(block.id);
@@ -4221,6 +4220,7 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         const isActive = value === window.currentYtFilter;
         const n = cat === 'All' ? all.length : counts[cat];
         return `<button data-cat="${esc(value)}" onclick="window.setYtFilter(this.dataset.cat)" class="chip ${isActive ? 'is-active' : ''}">${esc(cat)} <span class="chip-count">${n}</span></button>`;
+      }).join('');
 
       let channels = all;
       if (window.currentYtFilter !== 'all') {
