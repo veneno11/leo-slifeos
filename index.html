@@ -729,7 +729,7 @@
     }
     .book-progress { position: absolute; left: 3px; top: 10px; bottom: 10px; width: 3px; z-index: 1; border-radius: 3px; overflow: hidden; background: rgba(0, 0, 0, 0.45); }
     .book-progress > span { position: absolute; left: 0; right: 0; bottom: 0; height: var(--p); background: var(--green); }
-    @media (hover: hover) {
+    @media (any-hover: hover) {
       .book:hover {
         transform: translateY(-10px) rotate(var(--tilt)); filter: brightness(1.12); z-index: 2;
         box-shadow: 4px 14px 16px -8px rgba(0, 0, 0, 0.9), 0 2px 2px rgba(0, 0, 0, 0.5);
@@ -1000,51 +1000,26 @@
       <h2 class="hub-title"><i class="fa-solid fa-lightbulb"></i> Mindset</h2>
       <p class="hub-sub">Your bookshelf, creators worth your time, quotes to keep and a place for notes.</p>
 
-<!-- BOOKSHELF + QUOTE: half and half on desktop, stacked on phones -->
+  <!-- BOOKSHELF (left) + DAILY READING (right) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mt-6 items-start">
-
-        <!-- BOOKSHELF -->
         <section class="min-w-0">
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center justify-between gap-2 min-h-[36px]">
             <h3 class="section-title"><i class="fa-solid fa-book-open text-[15px] muted"></i> Bookshelf</h3>
             <button onclick="window.openBookSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add book</button>
           </div>
           <p id="books-summary" class="hub-sub" style="margin-top:4px"></p>
-          <div id="reading-streak" class="mt-3"></div>
           <div id="book-filter-container" class="chip-row scrollbar-none mt-3 empty:hidden"></div>
           <div id="reading-now-container" class="grid grid-cols-1 gap-2.5 mt-3 empty:hidden"></div>
           <div id="bookshelf" class="mt-3"></div>
           <p class="hint-line mt-3"><i class="fa-solid fa-hand-pointer" style="color:#A1A1AA"></i> Tap a book to update pages, rating and notes.</p>
         </section>
 
-        <!-- QUOTE + SAVED QUOTES -->
-        <div class="min-w-0 flex flex-col gap-8">
-          <section class="panel p-4 flex flex-col">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="section-title">Quote</h3>
-              <div class="flex items-center gap-1.5">
-                <button id="quote-save-btn" onclick="window.saveCurrentQuote()" class="icon-btn icon-btn-sm" title="Save this quote" aria-label="Save this quote" aria-pressed="false"><i class="fa-regular fa-bookmark"></i></button>
-                <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
-              </div>
-            </div>
-            <figure id="quote-card-display" class="quote-figure">
-              <blockquote id="quote-display-text">"There is no shame in falling down. True shame is in not standing back up."</blockquote>
-              <figcaption id="quote-display-author">— Miyamoto Musashi</figcaption>
-            </figure>
-            <span id="quote-counter" class="text-[12.5px] text-notion-textMuted">From your list</span>
-          </section>
-
-          <section>
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="section-title"><i class="fa-solid fa-bookmark text-[14px] muted"></i> Saved quotes <span id="quotes-count" class="chip-count"></span></h3>
-              <button onclick="window.openQuoteSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add quote</button>
-            </div>
-            <div id="saved-quotes-container" class="grid grid-cols-1 gap-2.5 mt-3"></div>
-            <div class="flex justify-center mt-3">
-              <button id="quotes-more-btn" onclick="window.toggleQuotesExpanded()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
-            </div>
-          </section>
-        </div>
+        <section class="min-w-0">
+          <div class="flex items-center justify-between gap-2 min-h-[36px]">
+            <h3 class="section-title"><i class="fa-solid fa-fire text-[14px] muted"></i> Daily reading</h3>
+          </div>
+          <div id="reading-streak" class="mt-3"></div>
+        </section>
       </div>
 
       <!-- CREATORS -->
@@ -1060,6 +1035,36 @@
         <div id="yt-channels-container" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 mt-3"></div>
         <p class="hint-line mt-3"><i class="fa-solid fa-thumbtack" style="color:#A1A1AA"></i> Tap a category to change it. Auto-sort won't move the ones you pick.</p>
       </section>
+ <!-- QUOTE (left) + SAVED QUOTES (right) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mt-10 items-start">
+        <section class="min-w-0">
+          <div class="flex items-center justify-between gap-2 min-h-[36px]">
+            <h3 class="section-title"><i class="fa-solid fa-quote-left text-[14px] muted"></i> Quote</h3>
+            <div class="flex items-center gap-1.5">
+              <button id="quote-save-btn" onclick="window.saveCurrentQuote()" class="icon-btn icon-btn-sm" title="Save this quote" aria-label="Save this quote" aria-pressed="false"><i class="fa-regular fa-bookmark"></i></button>
+              <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
+            </div>
+          </div>
+          <div class="panel p-4 mt-3 flex flex-col">
+            <figure id="quote-card-display" class="quote-figure">
+              <blockquote id="quote-display-text">"There is no shame in falling down. True shame is in not standing back up."</blockquote>
+              <figcaption id="quote-display-author">— Miyamoto Musashi</figcaption>
+            </figure>
+            <span id="quote-counter" class="text-[12.5px] text-notion-textMuted">From your list</span>
+          </div>
+        </section>
+
+        <section class="min-w-0">
+          <div class="flex items-center justify-between gap-2 min-h-[36px]">
+            <h3 class="section-title"><i class="fa-solid fa-bookmark text-[14px] muted"></i> Saved quotes <span id="quotes-count" class="chip-count"></span></h3>
+            <button onclick="window.openQuoteSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add quote</button>
+          </div>
+          <div id="saved-quotes-container" class="grid grid-cols-1 gap-2.5 mt-3"></div>
+          <div class="flex justify-center mt-3">
+            <button id="quotes-more-btn" onclick="window.toggleQuotesExpanded()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
+          </div>
+        </section>
+      </div>
 
       <!-- NOTES -->
       <section class="panel p-4 flex flex-col mt-8">
@@ -4961,7 +4966,7 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
             style="--w:${w}px;--h:${h}px;--spine:${color};--ink:${inkFor(color)};--tilt:${tilt}deg"
             onclick="window.openBookSheet('${b.id}')" title="${esc(b.title)}" aria-label="${esc(label)}">
             <span class="book-face ${spinePhoto ? '' : 'is-plain'}">${face}</span>
-            ${b.status === 'reading' ? `<span class="book-progress" style="--p:${pct}%"><span></span></span><span class="book-ribbon"></span>` : ''}
+            ${b.status === 'reading' ? `<span class="book-progress" style="--p:${pct}%"><span></span></span>` : ''}
           </button>
         </div>`;
     }
