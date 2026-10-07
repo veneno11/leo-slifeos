@@ -1018,7 +1018,7 @@
       <h2 class="hub-title"><i class="fa-solid fa-lightbulb"></i> Mindset</h2>
       <p class="hub-sub">Your bookshelf, creators worth your time, quotes to keep and a place for notes.</p>
 
-  <!-- BOOKSHELF (left) + DAILY READING (right) -->
+      <!-- ROW 1: BOOKSHELF (left) + DAILY READING (right) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mt-6 items-stretch">
         <section class="min-w-0">
           <div class="flex items-center justify-between gap-2 min-h-[36px]">
@@ -1032,16 +1032,17 @@
           <p class="hint-line mt-3"><i class="fa-solid fa-hand-pointer" style="color:#A1A1AA"></i> Tap a book to update pages, rating and notes.</p>
         </section>
 
-       <section class="min-w-0 flex flex-col">
+        <section class="min-w-0 flex flex-col">
           <div class="flex items-center justify-between gap-2 min-h-[36px]">
             <h3 class="section-title"><i class="fa-solid fa-fire text-[14px] muted"></i> Daily reading</h3>
           </div>
           <div id="reading-streak" class="mt-3 flex-1 flex flex-col"></div>
         </section>
-        
-      <!-- CREATORS -->
+      </div>
+
+      <!-- ROW 2: CREATORS (full width) -->
       <section class="mt-10">
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center justify-between gap-2 min-h-[36px]">
           <h3 class="section-title"><i class="fa-brands fa-youtube text-[16px]" style="color: var(--red)"></i> Creators</h3>
           <div class="flex gap-2">
             <button id="btn-yt-autosort" onclick="window.aiAutoSortYouTubeChannels()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-wand-magic-sparkles text-zinc-400"></i> <span>Auto-sort</span></button>
@@ -1052,9 +1053,10 @@
         <div id="yt-channels-container" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 mt-3"></div>
         <p class="hint-line mt-3"><i class="fa-solid fa-thumbtack" style="color:#A1A1AA"></i> Tap a category to change it. Auto-sort won't move the ones you pick.</p>
       </section>
- <!-- QUOTE (left) + SAVED QUOTES (right) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mt-10 items-start">
-        <section class="min-w-0">
+
+      <!-- ROW 3: QUOTE (left) + SAVED QUOTES (right) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mt-10 items-stretch">
+        <section class="min-w-0 flex flex-col">
           <div class="flex items-center justify-between gap-2 min-h-[36px]">
             <h3 class="section-title"><i class="fa-solid fa-quote-left text-[14px] muted"></i> Quote</h3>
             <div class="flex items-center gap-1.5">
@@ -1062,7 +1064,7 @@
               <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
             </div>
           </div>
-          <div class="panel p-4 mt-3 flex flex-col">
+          <div class="panel p-4 mt-3 flex flex-col flex-1">
             <figure id="quote-card-display" class="quote-figure">
               <blockquote id="quote-display-text">"There is no shame in falling down. True shame is in not standing back up."</blockquote>
               <figcaption id="quote-display-author">— Miyamoto Musashi</figcaption>
@@ -1078,13 +1080,13 @@
           </div>
           <div id="saved-quotes-container" class="grid grid-cols-1 gap-2.5 mt-3"></div>
           <div class="flex justify-center mt-3">
-            <button id="quotes-more-btn" onclick="window.toggleQuotesExpanded()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
+            <button id="quotes-more-btn" onclick="window.openQuoteBank()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
           </div>
         </section>
       </div>
 
-      <!-- NOTES -->
-      <section class="panel p-4 flex flex-col mt-8">
+      <!-- ROW 4: NOTES -->
+      <section class="panel p-4 flex flex-col mt-10">
         <div class="flex items-center justify-between gap-2">
           <h3 class="section-title">Notes</h3>
           <span id="scratch-save-status" class="save-status">Saved</span>
@@ -1092,7 +1094,6 @@
         <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Formulas, reminders, anything you want close at hand." class="field font-mono-data mt-3 flex-grow min-h-[190px] resize-none" style="font-size:13px"></textarea>
       </section>
     </div>
-  </main>
 
   <!-- BOTTOM NAVIGATION (PHONES) -->
   <nav class="bottom-nav" aria-label="Sections">
