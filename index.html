@@ -727,8 +727,6 @@
       position: absolute; top: -7px; right: 24%; width: 6px; height: 8px; z-index: 1;
       background: var(--red); border-radius: 2px 2px 0 0;
     }
-    .book-progress { position: absolute; left: 3px; top: 10px; bottom: 10px; width: 3px; z-index: 1; border-radius: 3px; overflow: hidden; background: rgba(0, 0, 0, 0.45); }
-    .book-progress > span { position: absolute; left: 0; right: 0; bottom: 0; height: var(--p); background: var(--green); }
     @media (any-hover: hover) {
       .book:hover {
         transform: translateY(-10px) rotate(var(--tilt)); filter: brightness(1.12); z-index: 2;
@@ -5002,7 +5000,6 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
             style="--w:${w}px;--h:${h}px;--spine:${color};--ink:${inkFor(color)};--tilt:${tilt}deg"
             onclick="window.openBookSheet('${b.id}')" title="${esc(b.title)}" aria-label="${esc(label)}">
             <span class="book-face ${spinePhoto ? '' : 'is-plain'}">${face}</span>
-            ${b.status === 'reading' ? `<span class="book-progress" style="--p:${pct}%"><span></span></span>` : ''}
           </button>
         </div>`;
     }
