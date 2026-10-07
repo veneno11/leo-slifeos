@@ -687,7 +687,7 @@
 
     /* ---------- Bookshelf ---------- */
     .bookcase {
-      --row: 196px; --plank: 14px;
+      --row: 214px; --plank: 14px;
       display: flex; flex-wrap: wrap; align-items: flex-end; column-gap: 3px;
       padding: 0 14px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
       background:
@@ -709,7 +709,7 @@
       transition: transform 0.45s var(--ease-spring), filter 0.3s, box-shadow 0.3s, opacity 0.2s;
     }
     .book-face { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: var(--spine); }
-    .book-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .book-face img { display: block; width: 100%; height: 100%; object-fit: contain; }
     .book-face::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
       background: linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.14) 20%, rgba(255, 255, 255, 0.03) 48%, rgba(0, 0, 0, 0.08) 72%, rgba(0, 0, 0, 0.45));
@@ -722,9 +722,10 @@
     .book-text span { writing-mode: vertical-rl; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 0; }
     .bt-title { flex: 1 1 auto; font-size: clamp(9px, calc(var(--w) * 0.34), 13.5px); font-weight: 700; letter-spacing: 0.02em; }
     .bt-author { flex: 0 1 auto; max-height: 40%; font-size: clamp(8px, calc(var(--w) * 0.26), 10.5px); font-weight: 600; opacity: 0.72; }
+     /* Bookmark pokes out above the book instead of covering the top of the spine */
     .book-ribbon {
-      position: absolute; top: -5px; right: 22%; width: 6px; height: 17px; z-index: 1;
-      background: var(--red); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+      position: absolute; top: -7px; right: 24%; width: 6px; height: 8px; z-index: 1;
+      background: var(--red); border-radius: 2px 2px 0 0;
     }
     .book-progress { position: absolute; left: 3px; top: 10px; bottom: 10px; width: 3px; z-index: 1; border-radius: 3px; overflow: hidden; background: rgba(0, 0, 0, 0.45); }
     .book-progress > span { position: absolute; left: 0; right: 0; bottom: 0; height: var(--p); background: var(--green); }
@@ -771,6 +772,10 @@
     .photo-slot:active { transform: scale(0.97); }
     .photo-slot.has-photo { border-style: solid; border-color: var(--line); }
     .photo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+     /* Spine preview in the book sheet: the frame takes the photo's shape and the whole
+       photo shows, so the top and bottom of the spine are never cut off */
+    #spine-slot img { object-fit: contain; }
+    #spine-slot.has-photo { width: min(100%, max(14px, calc(138px * var(--spine-ar, 0.33)))); margin: 0 auto; }
     .photo-slot.has-photo .photo-empty { display: none; }
     .photo-slot.is-filled { animation: fieldFill 0.9s var(--ease-out); }
     .photo-slot.is-thinking::after {
@@ -810,6 +815,35 @@
     .quote-src { font-size: 12.5px; font-weight: 600; color: var(--dust); min-width: 0; }
     .quote-src .from-book { font-weight: 500; font-style: italic; color: var(--dim); }
     #quote-save-btn.is-saved { color: var(--yellow); }
+
+     /* ---------- Reading streak ---------- */
+    .streak-card { display: flex; flex-direction: column; gap: 14px; padding: 14px; }
+    .streak-top { display: flex; align-items: center; gap: 12px; }
+    .streak-flame {
+      width: 46px; height: 46px; flex-shrink: 0; border-radius: 14px; display: grid; place-items: center;
+      font-size: 19px; color: var(--dim); background: var(--raised); border: 1px solid var(--line);
+      transition: color 0.3s, background-color 0.3s, border-color 0.3s;
+    }
+    .streak-flame.is-warm { color: var(--yellow); border-color: rgba(245, 158, 11, 0.35); }
+    .streak-flame.is-lit { color: #FB923C; background: rgba(251, 146, 60, 0.12); border-color: rgba(251, 146, 60, 0.4); }
+    .streak-flame.is-lit i { animation: flameFlicker 2.6s ease-in-out infinite; transform-origin: 50% 90%; }
+    .streak-flame.just-lit { animation: pillPop 0.6s var(--ease-spring) both; }
+    @keyframes flameFlicker { 0%, 100% { transform: scale(1) rotate(0); } 35% { transform: scale(1.07) rotate(-3deg); } 65% { transform: scale(0.97) rotate(2deg); } }
+    .streak-count { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: #F4F4F5; }
+    .streak-sub { font-size: 12.5px; line-height: 1.35; color: var(--dust); margin-top: 3px; }
+    .streak-sub.is-warn { color: var(--yellow); }
+    .streak-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .streak-day { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--dim); }
+    .streak-day.is-today { color: var(--chalk); }
+    .streak-dot {
+      width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 10px; color: #04150C; background: var(--iron); border: 2px solid var(--line);
+    }
+    .streak-day.is-today .streak-dot:not(.is-done):not(.is-partial) { border-color: #71717A; }
+    .streak-dot.is-partial { border-color: rgba(16, 185, 129, 0.5); background: conic-gradient(rgba(16, 185, 129, 0.45) var(--p), var(--iron) 0); }
+    .streak-dot.is-done { background: var(--green); border-color: var(--green); }
+    .streak-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .btn.is-running { background: rgba(16, 185, 129, 0.12); color: var(--green); border-color: rgba(16, 185, 129, 0.35); }
 
     /* ---------- Respect reduced-motion settings ---------- */
     @media (prefers-reduced-motion: reduce) {
@@ -966,19 +1000,54 @@
       <h2 class="hub-title"><i class="fa-solid fa-lightbulb"></i> Mindset</h2>
       <p class="hub-sub">Your bookshelf, creators worth your time, quotes to keep and a place for notes.</p>
 
-      <!-- BOOKSHELF -->
-      <section class="mt-6">
-        <div class="flex items-center justify-between gap-2">
-          <h3 class="section-title"><i class="fa-solid fa-book-open text-[15px] muted"></i> Bookshelf</h3>
-          <button onclick="window.openBookSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add book</button>
-        </div>
-        <p id="books-summary" class="hub-sub" style="margin-top:4px"></p>
-        <div id="book-filter-container" class="chip-row scrollbar-none mt-3 empty:hidden"></div>
-        <div id="reading-now-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-3 empty:hidden"></div>
-        <div id="bookshelf" class="mt-3"></div>
-        <p class="hint-line mt-3"><i class="fa-solid fa-hand-pointer" style="color:#A1A1AA"></i> Tap a book to update pages, rating and notes.</p>
-      </section>
+<!-- BOOKSHELF + QUOTE: half and half on desktop, stacked on phones -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mt-6 items-start">
 
+        <!-- BOOKSHELF -->
+        <section class="min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="section-title"><i class="fa-solid fa-book-open text-[15px] muted"></i> Bookshelf</h3>
+            <button onclick="window.openBookSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add book</button>
+          </div>
+          <p id="books-summary" class="hub-sub" style="margin-top:4px"></p>
+          <div id="reading-streak" class="mt-3"></div>
+          <div id="book-filter-container" class="chip-row scrollbar-none mt-3 empty:hidden"></div>
+          <div id="reading-now-container" class="grid grid-cols-1 gap-2.5 mt-3 empty:hidden"></div>
+          <div id="bookshelf" class="mt-3"></div>
+          <p class="hint-line mt-3"><i class="fa-solid fa-hand-pointer" style="color:#A1A1AA"></i> Tap a book to update pages, rating and notes.</p>
+        </section>
+
+        <!-- QUOTE + SAVED QUOTES -->
+        <div class="min-w-0 flex flex-col gap-8">
+          <section class="panel p-4 flex flex-col">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="section-title">Quote</h3>
+              <div class="flex items-center gap-1.5">
+                <button id="quote-save-btn" onclick="window.saveCurrentQuote()" class="icon-btn icon-btn-sm" title="Save this quote" aria-label="Save this quote" aria-pressed="false"><i class="fa-regular fa-bookmark"></i></button>
+                <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
+              </div>
+            </div>
+            <figure id="quote-card-display" class="quote-figure">
+              <blockquote id="quote-display-text">"There is no shame in falling down. True shame is in not standing back up."</blockquote>
+              <figcaption id="quote-display-author">— Miyamoto Musashi</figcaption>
+            </figure>
+            <span id="quote-counter" class="text-[12.5px] text-notion-textMuted">From your list</span>
+          </section>
+
+          <section>
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="section-title"><i class="fa-solid fa-bookmark text-[14px] muted"></i> Saved quotes <span id="quotes-count" class="chip-count"></span></h3>
+              <button onclick="window.openQuoteSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add quote</button>
+            </div>
+            <div id="saved-quotes-container" class="grid grid-cols-1 gap-2.5 mt-3"></div>
+            <div class="flex justify-center mt-3">
+              <button id="quotes-more-btn" onclick="window.toggleQuotesExpanded()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- CREATORS -->
       <section class="mt-10">
         <div class="flex items-center justify-between gap-2">
           <h3 class="section-title"><i class="fa-brands fa-youtube text-[16px]" style="color: var(--red)"></i> Creators</h3>
@@ -992,41 +1061,13 @@
         <p class="hint-line mt-3"><i class="fa-solid fa-thumbtack" style="color:#A1A1AA"></i> Tap a category to change it. Auto-sort won't move the ones you pick.</p>
       </section>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8">
-        <section class="panel p-4 flex flex-col">
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="section-title">Quote</h3>
-            <div class="flex items-center gap-1.5">
-              <button id="quote-save-btn" onclick="window.saveCurrentQuote()" class="icon-btn icon-btn-sm" title="Save this quote" aria-label="Save this quote" aria-pressed="false"><i class="fa-regular fa-bookmark"></i></button>
-              <button id="main-quote-btn" onclick="window.cycleInfiniteQuote()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-right"></i> Next</button>
-            </div>
-          </div>
-          <figure id="quote-card-display" class="quote-figure">
-            <blockquote id="quote-display-text">"There is no shame in falling down. True shame is in not standing back up."</blockquote>
-            <figcaption id="quote-display-author">— Miyamoto Musashi</figcaption>
-          </figure>
-          <span id="quote-counter" class="text-[12.5px] text-notion-textMuted">From your list</span>
-        </section>
-
-        <section class="panel p-4 flex flex-col">
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="section-title">Notes</h3>
-            <span id="scratch-save-status" class="save-status">Saved</span>
-          </div>
-          <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Formulas, reminders, anything you want close at hand." class="field font-mono-data mt-3 flex-grow min-h-[190px] resize-none" style="font-size:13px"></textarea>
-        </section>
-      </div>
-
-      <!-- SAVED QUOTES -->
-      <section class="mt-8">
+      <!-- NOTES -->
+      <section class="panel p-4 flex flex-col mt-8">
         <div class="flex items-center justify-between gap-2">
-          <h3 class="section-title"><i class="fa-solid fa-bookmark text-[14px] muted"></i> Saved quotes <span id="quotes-count" class="chip-count"></span></h3>
-          <button onclick="window.openQuoteSheet()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add quote</button>
+          <h3 class="section-title">Notes</h3>
+          <span id="scratch-save-status" class="save-status">Saved</span>
         </div>
-        <div id="saved-quotes-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-3"></div>
-        <div class="flex justify-center mt-3">
-          <button id="quotes-more-btn" onclick="window.toggleQuotesExpanded()" class="btn btn-ghost btn-sm hidden"><span>Show all</span></button>
-        </div>
+        <textarea id="scratchpad-textarea" oninput="window.saveScratchpad()" placeholder="Formulas, reminders, anything you want close at hand." class="field font-mono-data mt-3 flex-grow min-h-[190px] resize-none" style="font-size:13px"></textarea>
       </section>
     </div>
   </main>
@@ -2007,8 +2048,8 @@
           quotes,
           scratchpadText: typeof st.scratchpadText === 'string' ? st.scratchpadText : '',
           gymCustomOrder: asObject(st.gymCustomOrder, {}),
-          splitHistory: asObject(st.splitHistory, {})
-        };
+          splitHistory: asObject(st.splitHistory, {}),
+          readingLog: asObject(st.readingLog, {})        };
         // Book photos travel in the backup file next to the state
         Object.entries(asObject(parsed && parsed.bookImages, {})).forEach(([id, imgs]) => bookImages.set(id, imgs));
         renderedIds.clear();
@@ -2297,6 +2338,7 @@
       renderTasks();
       renderYtChannels();
       renderBooks();
+      renderReadingStreak();
       renderSavedQuotes();
       syncQuoteSaveButton();
       const scratch = $('scratchpad-textarea');
@@ -4255,10 +4297,50 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
     }
 
     // Height stays the same for a book; thickness comes from the spine photo or the page count
+    // Every spine starts out the same width. With a spine photo, the height comes from the
+    // photo's own proportions, so the whole spine shows and the top is never cut off.
+    // A long, thin spine that would stand taller than the shelf gets narrower instead, and a
+    // short, thick one gets a little wider, so every shape still fits without cropping.
+    const SPINE_SIZE = { w: 24, minW: 12, maxW: 48, minH: 96, maxH: 180 };
     function bookDims(b, hasSpinePhoto) {
-      const h = 140 + (hashOf(b.id) % 29);
-      const w = hasSpinePhoto && b.spineAspect ? h * b.spineAspect : (Number(b.totalPages) ? 16 + b.totalPages / 24 : 28);
-      return { h, w: Math.round(Math.max(18, Math.min(hasSpinePhoto ? 64 : 54, w))) };
+      const S = SPINE_SIZE;
+      const ar = Number(b.spineAspect); // width / height of the trimmed spine photo
+      if (hasSpinePhoto && ar > 0 && Number.isFinite(ar)) {
+        let w = S.w, h = S.w / ar;
+        if (h > S.maxH) { h = S.maxH; w = h * ar; }
+        else if (h < S.minH) { h = S.minH; w = h * ar; }
+        return { w: Math.round(Math.max(S.minW, Math.min(S.maxW, w))), h: Math.round(h) };
+      }
+      // No spine photo: same width, and the height varies a bit per book so the row looks natural
+      return { w: S.w, h: 150 + (hashOf(b.id) % 31) };
+    }
+
+
+*10. Crop with extra room at the ends of the spine*
+
+Find this comment and the whole function under it:
+js
+    // Gemini boxes are [ymin, xmin, ymax, xmax] on a 0-1000 scale
+    function boxToCrop(box, w, h, pad = 6) {
+
+Replace through that function's closing } with:
+js
+    // Gemini boxes are [ymin, xmin, ymax, xmax] on a 0-1000 scale.
+    // endPad adds extra room at both ends of the long side (the top and bottom of a spine),
+    // because a box that's a little too tight cuts off the publisher logo or the title.
+    function boxToCrop(box, w, h, pad = 6, endPad = pad) {
+      if (!Array.isArray(box) || box.length !== 4) return null;
+      const n = box.map(Number);
+      if (!n.every(Number.isFinite)) return null;
+      let y0 = Math.min(n[0], n[2]), y1 = Math.max(n[0], n[2]);
+      let x0 = Math.min(n[1], n[3]), x1 = Math.max(n[1], n[3]);
+      if (y1 - y0 < 8 || x1 - x0 < 8) return null;
+      const tall = (y1 - y0) * h >= (x1 - x0) * w; // which way the long side runs, in pixels
+      const py = tall ? endPad : pad, px = tall ? pad : endPad;
+      y0 = Math.max(0, y0 - py); x0 = Math.max(0, x0 - px);
+      y1 = Math.min(1000, y1 + py); x1 = Math.min(1000, x1 + px);
+      if ((y1 - y0) * (x1 - x0) / 1e6 > 0.94) return null; // already fills the frame
+      return [x0 / 1000 * w, y0 / 1000 * h, (x1 - x0) / 1000 * w, (y1 - y0) / 1000 * h];
     }
 
     const isImageData = (v) => typeof v === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
@@ -4717,7 +4799,7 @@ title: the title exactly as printed, in Title Case, without series numbers or ta
 author: the author's full name (separate several authors with commas).
 pages: the page count of the common paperback edition if you know this book, otherwise 0.
 cover_box: ${bookForm.src.cover ? 'the bounding box of just the front cover in its photo' : 'an empty array'}.
-spine_box: ${bookForm.src.spine ? 'the bounding box of just the spine in its photo' : 'an empty array'}.
+spine_box: ${bookForm.src.spine ? 'the bounding box of the entire spine in its photo, from its very top edge to its very bottom edge, including any publisher logo at the ends. Never cut the ends off' : 'an empty array'}.
 Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
 
       let error = null;
@@ -4745,7 +4827,10 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
       const crops = {};
       kinds.forEach(kind => {
         const src = bookForm.src[kind];
-        const crop = boxToCrop(data[kind + '_box'], src.width, src.height, kind === 'spine' ? 4 : 8);
+  // Spines get extra room at both ends so a slightly tight box can't cut off the top
+        const crop = kind === 'spine'
+          ? boxToCrop(data.spine_box, src.width, src.height, 6, 22)
+          : boxToCrop(data.cover_box, src.width, src.height, 8);
         if (!crop) return;
         let c = drawToCanvas(src, { crop });
         if (kind === 'spine' && c.width > c.height * 1.4) c = rotateCanvas(c); // shot lying down
@@ -4950,6 +5035,195 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
       staggerNew(shelfEl);
     }
     window.renderBooks = renderBooks;
+  // =====================================================================
+    // --- READING STREAK ---
+    // Read 15 minutes a day to keep the streak going. Minutes per day are saved in
+    // appState.readingLog as { 'YYYY-MM-DD': minutes } and sync like everything else.
+    // A running timer is remembered on this device, so locking the phone or closing
+    // the app doesn't lose it: it logs as soon as you come back.
+    // =====================================================================
+    const READ_GOAL_MIN = 15;
+    const READ_TIMER_KEY = 'lifeOsReadTimer';
+    const APP_OPENED_AT = Date.now();
+    let readTick = null;
+
+    const daysWord = (n) => `${n} day${n === 1 ? '' : 's'}`;
+
+    function readingLogOf() {
+      const log = window.appState.readingLog;
+      if (!log || typeof log !== 'object' || Array.isArray(log)) window.appState.readingLog = {};
+      return window.appState.readingLog;
+    }
+
+    const minutesOn = (iso) => Math.max(0, Number(readingLogOf()[iso]) || 0);
+
+    function shiftDay(iso, delta) {
+      const d = new Date(iso + 'T12:00:00');
+      d.setDate(d.getDate() + delta);
+      return todayISO(d);
+    }
+
+    // Counts back from today, or from yesterday while today isn't done yet
+    function readingStreak() {
+      const today = todayISO();
+      let day = minutesOn(today) >= READ_GOAL_MIN ? today : shiftDay(today, -1);
+      let n = 0;
+      while (minutesOn(day) >= READ_GOAL_MIN) { n++; day = shiftDay(day, -1); }
+      return n;
+    }
+
+    function bestReadingStreak() {
+      let best = 0, run = 0, prev = null;
+      Object.keys(readingLogOf()).filter(d => minutesOn(d) >= READ_GOAL_MIN).sort().forEach(d => {
+        run = prev && shiftDay(prev, 1) === d ? run + 1 : 1;
+        best = Math.max(best, run);
+        prev = d;
+      });
+      return best;
+    }
+
+    function readTimerStart() {
+      let v = 0;
+      try { v = Number(localStorage.getItem(READ_TIMER_KEY)) || 0; } catch (_) {}
+      return v > 0 ? v : 0;
+    }
+
+    function addReadingMinutes(date, min) {
+      const log = readingLogOf();
+      log[date] = Math.min(1440, minutesOn(date) + min);
+      const days = Object.keys(log).sort();
+      if (days.length > 400) days.slice(0, days.length - 400).forEach(d => delete log[d]); // about a year is plenty
+      window.saveState();
+    }
+
+    function afterReadingLogged(date, before, min) {
+      const after = minutesOn(date);
+      const hitGoal = before < READ_GOAL_MIN && after >= READ_GOAL_MIN;
+      renderReadingStreak(hitGoal);
+      const undo = {
+        label: 'Undo',
+        onClick: () => {
+          const log = readingLogOf();
+          if (before) log[date] = before; else delete log[date];
+          window.saveState();
+          renderReadingStreak();
+        }
+      };
+      if (hitGoal) {
+        haptic([20, 60, 20, 60, 40]);
+        const n = readingStreak();
+        window.showToast(n > 1 ? `${READ_GOAL_MIN} minutes done. ${n}-day streak.` : `${READ_GOAL_MIN} minutes done. Streak started.`, 'success', undo);
+      } else {
+        haptic(8);
+        window.showToast(after < READ_GOAL_MIN
+          ? `Logged ${min} min. ${READ_GOAL_MIN - after} more today keeps the streak.`
+          : `Logged ${min} more min today.`, after < READ_GOAL_MIN ? 'info' : 'success', undo);
+      }
+    }
+
+    // The "+15 min" button, for reading you did without the timer
+    window.logReadingMinutes = function(min) {
+      const date = todayISO();
+      const before = minutesOn(date);
+      addReadingMinutes(date, min);
+      afterReadingLogged(date, before, min);
+    };
+
+    window.toggleReadTimer = function() {
+      if (readTimerStart()) { finishReadTimer(false); return; }
+      try { localStorage.setItem(READ_TIMER_KEY, String(Date.now())); } catch (_) {}
+      haptic([8, 30, 8]);
+      renderReadingStreak();
+    };
+
+    // finished = the full 15 minutes ran out. Otherwise it was stopped early and the whole minutes so far count.
+    function finishReadTimer(finished) {
+      const start = readTimerStart();
+      try { localStorage.removeItem(READ_TIMER_KEY); } catch (_) {}
+      clearInterval(readTick);
+      readTick = null;
+      if (!start) { renderReadingStreak(); return; }
+      const min = finished ? READ_GOAL_MIN : Math.min(READ_GOAL_MIN, Math.floor((Date.now() - start) / 60000));
+      if (min < 1) {
+        renderReadingStreak();
+        window.showToast('Timer stopped. Less than a minute, so nothing was logged.', 'info');
+        return;
+      }
+      const date = todayISO(new Date(start)); // counts for the day you started reading
+      const before = minutesOn(date);
+      addReadingMinutes(date, min);
+      afterReadingLogged(date, before, min);
+    }
+
+    // Updates the countdown every second and logs at 0:00. Right after the app opens, it first
+    // waits for the cloud copy to load (up to 8 s) so that copy can't overwrite the new minutes.
+    function syncReadTimer() {
+      const start = readTimerStart();
+      if (!start) { clearInterval(readTick); readTick = null; return; }
+      const left = READ_GOAL_MIN * 60000 - (Date.now() - start);
+      if (left <= 0 && (window.lifeOsSyncSettled || Date.now() - APP_OPENED_AT > 8000)) { finishReadTimer(true); return; }
+      const label = $('read-timer-label');
+      if (label) {
+        const s = Math.max(0, Math.ceil(left / 1000));
+        label.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      }
+      if (!readTick) readTick = setInterval(syncReadTimer, 1000);
+    }
+
+    function renderReadingStreak(celebrate = false) {
+      const el = $('reading-streak');
+      if (!el) return;
+      const today = todayISO();
+      const todayMin = minutesOn(today);
+      const streak = readingStreak();
+      const best = bestReadingStreak();
+      const running = !!readTimerStart();
+      const doneToday = todayMin >= READ_GOAL_MIN;
+
+      let sub, warn = false;
+      if (doneToday) {
+        sub = `${todayMin} min read today.` + (streak > 1 && streak >= best ? ' Your best streak yet.' : best > streak ? ` Best: ${daysWord(best)}.` : '');
+      } else if (streak) {
+        sub = `${todayMin} of ${READ_GOAL_MIN} min today. Read today to keep it going.`;
+        warn = true;
+      } else {
+        sub = todayMin ? `${todayMin} of ${READ_GOAL_MIN} min today.` : `Read ${READ_GOAL_MIN} minutes a day to build a streak.`;
+        if (best) sub += ` Best: ${daysWord(best)}.`;
+      }
+
+      const week = Array.from({ length: 7 }, (_, i) => shiftDay(today, i - 6)).map(d => {
+        const m = minutesOn(d);
+        const done = m >= READ_GOAL_MIN;
+        const when = new Date(d + 'T12:00:00');
+        const pct = Math.round(Math.min(1, m / READ_GOAL_MIN) * 100);
+        return `<div class="streak-day ${d === today ? 'is-today' : ''}" title="${when.toLocaleDateString('en-US', { weekday: 'long' })}: ${m} min">
+            <span class="streak-dot ${done ? 'is-done' : m ? 'is-partial' : ''}" style="--p:${pct}%">${done ? '<i class="fa-solid fa-check"></i>' : ''}</span>
+            <span>${when.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
+          </div>`;
+      }).join('');
+
+      const actions = running
+        ? `<button type="button" class="btn is-running col-span-2" onclick="window.toggleReadTimer()"><i class="fa-solid fa-stop"></i> Stop <span id="read-timer-label" class="tnum">${READ_GOAL_MIN}:00</span></button>`
+        : `<button type="button" class="btn btn-primary" onclick="window.toggleReadTimer()"><i class="fa-solid fa-play"></i> Start ${READ_GOAL_MIN}-min timer</button>
+           <button type="button" class="btn btn-ghost" onclick="window.logReadingMinutes(${READ_GOAL_MIN})" title="Already read today? Log it">+${READ_GOAL_MIN} min</button>`;
+
+      el.innerHTML = `
+        <div class="card streak-card">
+          <div class="streak-top">
+            <span class="streak-flame ${doneToday ? 'is-lit' : streak ? 'is-warm' : ''} ${celebrate ? 'just-lit' : ''}"><i class="fa-solid fa-fire"></i></span>
+            <div class="min-w-0">
+              <p class="streak-count tnum">${streak ? `${streak}-day streak` : 'No streak yet'}</p>
+              <p class="streak-sub ${warn ? 'is-warn' : ''}">${sub}</p>
+            </div>
+          </div>
+          <div class="streak-week" aria-label="Last 7 days">${week}</div>
+          <div class="streak-actions">${actions}</div>
+        </div>`;
+      syncReadTimer();
+    }
+
+    // Coming back to the app: finish a timer that ran out, and roll the week over to a new day
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) renderReadingStreak(); });
 
     // =====================================================================
     // --- SAVED QUOTES ---
@@ -5335,6 +5609,7 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
         onSnapshot(stateRef, (docSnap) => {
           // Our own write echoing back: the screen already shows it
           if (docSnap.metadata.hasPendingWrites) return;
+          window.lifeOsSyncSettled = true; // a reading timer that ran out can now log safely
           if (docSnap.exists()) {
             const data = docSnap.data();
             const incoming = {
@@ -5346,7 +5621,8 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
               quotes: data.quotes || [],
               scratchpadText: data.scratchpadText || "",
               gymCustomOrder: data.gymCustomOrder || {},
-              splitHistory: data.splitHistory || {}
+              splitHistory: data.splitHistory || {},
+              readingLog: data.readingLog || {}
             };
             // Skip the re-render when nothing actually changed (keeps animations smooth)
             if (typeof window.stableStringify === 'function' &&
