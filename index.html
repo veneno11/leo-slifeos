@@ -2401,7 +2401,9 @@
         if (block.alternatives && block.alternatives.length > 0) {
           const options = [block.current, ...block.alternatives];
           // Always land on a different exercise so every shuffle visibly changes something
-          const choices = options.filter(opt => opt !== block.current);
+           const choices = options.filter(opt => opt !== block.current);
+          if (!choices.length) return; // nothing different to swap to
+          const pick = choices[Math.floor(Math.random() * choices.length)];
           const pick = choices[Math.floor(Math.random() * choices.length)];
           block.alternatives = options.filter(opt => opt !== pick);
           block.current = pick;
@@ -4218,8 +4220,7 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
         const value = cat === 'All' ? 'all' : cat;
         const isActive = value === window.currentYtFilter;
         const n = cat === 'All' ? all.length : counts[cat];
-        return `<button onclick="window.setYtFilter('${esc(value)}')" class="chip ${isActive ? 'is-active' : ''}">${esc(cat)} <span class="chip-count">${n}</span></button>`;
-      }).join('');
+        return `<button data-cat="${esc(value)}" onclick="window.setYtFilter(this.dataset.cat)" class="chip ${isActive ? 'is-active' : ''}">${esc(cat)} <span class="chip-count">${n}</span></button>`;
 
       let channels = all;
       if (window.currentYtFilter !== 'all') {
@@ -4315,16 +4316,6 @@ ${batch.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
       return { w: S.w, h: 150 + (hashOf(b.id) % 31) };
     }
 
-
-*10. Crop with extra room at the ends of the spine*
-
-Find this comment and the whole function under it:
-js
-    // Gemini boxes are [ymin, xmin, ymax, xmax] on a 0-1000 scale
-    function boxToCrop(box, w, h, pad = 6) {
-
-Replace through that function's closing } with:
-js
     // Gemini boxes are [ymin, xmin, ymax, xmax] on a 0-1000 scale.
     // endPad adds extra room at both ends of the long side (the top and bottom of a spine),
     // because a box that's a little too tight cuts off the publisher logo or the title.
@@ -4518,19 +4509,6 @@ js
       ctx.rotate(Math.PI / 2);
       ctx.drawImage(src, 0, 0);
       return c;
-    }
-
-    // Gemini boxes are [ymin, xmin, ymax, xmax] on a 0-1000 scale
-    function boxToCrop(box, w, h, pad = 6) {
-      if (!Array.isArray(box) || box.length !== 4) return null;
-      const n = box.map(Number);
-      if (!n.every(Number.isFinite)) return null;
-      let [y0, x0, y1, x1] = n;
-      if (y1 - y0 < 20 || x1 - x0 < 10) return null;
-      y0 = Math.max(0, y0 - pad); x0 = Math.max(0, x0 - pad);
-      y1 = Math.min(1000, y1 + pad); x1 = Math.min(1000, x1 + pad);
-      if ((y1 - y0) * (x1 - x0) / 1e6 > 0.94) return null; // already fills the frame
-      return [x0 / 1000 * w, y0 / 1000 * h, (x1 - x0) / 1000 * w, (y1 - y0) / 1000 * h];
     }
 
     // Most common strong color in a photo, used for plain spines and thumbnails
@@ -5684,11 +5662,14 @@ Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000.`;
       }
     }
 
-    const localState = localStorage.getItem('lifeOsState');
+      const localState = localStorage.getItem('lifeOsState');
     if (localState) {
-      window.appState = { ...window.appState, ...JSON.parse(localState) };
+      try {
+        window.appState = { ...window.appState, ...JSON.parse(localState) };
+      } catch (err) {
+        console.warn('Saved state is unreadable, using defaults.', err);
+      }
     }
-    if (typeof window.renderAll === 'function') window.renderAll();
 
     initFirebase();
   </script>
