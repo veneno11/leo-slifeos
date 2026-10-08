@@ -1256,7 +1256,6 @@
     </div>
   </div>
 
-  <!-- CORE LOGIC & AI INTEG
   <!-- TOASTS -->
   <div id="toast-container" aria-live="polite"></div>
     
@@ -3373,14 +3372,12 @@ alternatives: 2 common substitutes that emphasize that SAME head with a similar 
       haptic(6);
       renderTasks({ animateAll: true });
     }
-
-    window.handleAddAssignment = function(e) {
+window.handleAddAssignment = function(e) {
       e.preventDefault();
       const editId = $('asgn-edit-id').value;
       const fields = {
         title: $('asgn-title-input').value.trim(),
         course: $('asgn-course-input').value,
-      $('asgn-course-input').value = t.course || '';
         dueDate: $('asgn-date-input').value
       };
       const existing = editId && window.appState.tasks.find(t => t.id === editId);
