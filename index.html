@@ -947,7 +947,14 @@
         </div>
         <p class="text-[12px] text-notion-textMuted mt-3">Model: Gemini 3.5 Flash-Lite, with 3.6 Flash as backup.</p>
       </div>
-
+<div class="settings-block mt-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-[15px] font-semibold flex items-center gap-2"><i class="fa-solid fa-bell text-[13px] text-notion-textMuted"></i> Assignment alerts</div>
+          <span id="push-status-badge" class="status-badge">Off</span>
+        </div>
+        <p id="push-status-text" class="text-[13px] text-notion-textMuted leading-snug mt-2">Get a notification on this device when a teacher posts something new in PlusPortals.</p>
+        <button type="button" id="push-toggle-btn" onclick="window.togglePushAlerts && window.togglePushAlerts()" class="btn btn-ghost w-full mt-3"><i class="fa-solid fa-bell"></i> <span>Turn on</span></button>
+      </div>
       <div class="settings-block mt-3">
         <div class="text-[15px] font-semibold flex items-center gap-2"><i class="fa-solid fa-box-archive text-[13px] text-notion-textMuted"></i> Backup</div>
         <p class="text-[13px] text-notion-textMuted leading-snug mt-2">Save a copy of your lifts, PRs, assignments, quotes, creators and notes as a file, or restore from one. Your API key isn't included.</p>
@@ -2229,6 +2236,7 @@
       e.preventDefault();
       const editId = $('block-edit-id').value;
       const fields = {
+        type: $('asgn-type-input').value,
         current: bestExerciseName($('block-primary-input').value, exForm.edited.has('name')),
         target: $('block-target-input').value.trim(),
         split: $('block-split-input').value,
@@ -4570,7 +4578,8 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { initializeFirestore, doc, collection, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    import { deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
     const appId = 'leo-lifeos-local';
     const ACCOUNT = 'leo-main-sync-account';
 
@@ -4597,6 +4606,103 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
 
         const stateRef = doc(collection(db, 'artifacts', appId, 'users', ACCOUNT, 'appData'), 'state');
 
+        // ---- PlusPortals assignment alerts (push notifications) ----
+        const VAPID_KEY = "PASTE_LIFEOS_WEB_PUSH_KEY"; // leo-slifeos: Project settings → Cloud Messaging → Web Push certificates
+        const devicesRef = doc(collection(db, 'artifacts', appId, 'users', ACCOUNT, 'appData'), 'pushDevices');
+        const PUSH_DEVICE_KEY = 'lifeOsPushDevice';
+        let pushStatus = 'off';
+
+        const setPush = (state) => {
+          pushStatus = state;
+          const texts = {
+            unsupported: "This browser can't show notifications.",
+            'needs-key': 'Add the Web Push key (VAPID_KEY) in index.html to turn this on.',
+            blocked: 'Notifications are blocked. Allow them for this site in Chrome settings.',
+            off: 'Get a notification on this device when a teacher posts something new in PlusPortals.',
+            on: 'On for this device.',
+            busy: 'Working…'
+          };
+          const badge = document.getElementById('push-status-badge');
+          const text = document.getElementById('push-status-text');
+          const btn = document.getElementById('push-toggle-btn');
+          if (badge) { badge.textContent = state === 'on' ? 'On' : 'Off'; badge.classList.toggle('is-on', state === 'on'); }
+          if (text) text.textContent = texts[state] || '';
+          if (btn) {
+            btn.disabled = state === 'busy';
+            btn.classList.toggle('hidden', ['unsupported', 'needs-key', 'blocked'].includes(state));
+            const label = btn.querySelector('span');
+            if (label) label.textContent = state === 'on' ? 'Turn off' : 'Turn on';
+          }
+        };
+
+        async function pushRegistration() {
+          await navigator.serviceWorker.register('sw.js');
+          return Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Service worker not ready')), 10000))
+          ]);
+        }
+
+        async function saveDeviceToken() {
+          const registration = await pushRegistration();
+          const token = await getToken(getMessaging(app), { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+          if (!token) throw new Error('No push token');
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+          const id = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+          const old = localStorage.getItem(PUSH_DEVICE_KEY);
+          const tokens = { [id]: { token, userAgent: navigator.userAgent.slice(0, 160), updatedAt: serverTimestamp() } };
+          if (old && old !== id) tokens[old] = deleteField();
+          await setDoc(devicesRef, { tokens }, { merge: true });
+          localStorage.setItem(PUSH_DEVICE_KEY, id);
+        }
+
+        window.togglePushAlerts = async function() {
+          if (pushStatus === 'on') {
+            setPush('busy');
+            try {
+              const id = localStorage.getItem(PUSH_DEVICE_KEY);
+              if (id) await setDoc(devicesRef, { tokens: { [id]: deleteField() } }, { merge: true });
+              const reg = await navigator.serviceWorker.getRegistration();
+              const sub = reg && await reg.pushManager.getSubscription();
+              if (sub) await sub.unsubscribe();
+              localStorage.removeItem(PUSH_DEVICE_KEY);
+              setPush('off');
+              window.showToast('Assignment alerts are off on this device.', 'info');
+            } catch (e) {
+              console.error(e);
+              setPush('on');
+              window.showToast("Couldn't turn alerts off.", 'error');
+            }
+            return;
+          }
+          if (pushStatus !== 'off') return;
+          setPush('busy');
+          try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') { setPush(permission === 'denied' ? 'blocked' : 'off'); return; }
+            await saveDeviceToken();
+            setPush('on');
+            window.showToast('Assignment alerts are on.', 'success');
+          } catch (e) {
+            console.error('Push setup failed:', e);
+            setPush('off');
+            window.showToast(`Couldn't turn on alerts: ${e.message}`, 'error');
+          }
+        };
+
+        (async () => {
+          const ok = 'Notification' in window && 'serviceWorker' in navigator && await isSupported().catch(() => false);
+          if (!ok) return setPush('unsupported');
+          if (VAPID_KEY.startsWith('PASTE')) return setPush('needs-key');
+          if (Notification.permission === 'denied') return setPush('blocked');
+          if (Notification.permission === 'granted' && localStorage.getItem(PUSH_DEVICE_KEY)) {
+            setPush('on');
+            saveDeviceToken().catch(e => console.warn('Push token refresh failed', e));
+          } else {
+            setPush('off');
+          }
+        })();
+        
         window.saveToCloud = async function() {
           try { await setDoc(stateRef, window.appState); }
           catch (e) { console.error("Cloud sync save error:", e); }
