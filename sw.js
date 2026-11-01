@@ -68,3 +68,27 @@ async function staleWhileRevalidate(event, req, cacheName) {
   if (hit) { event.waitUntil(network); return hit; }
   return network;
 }
+// ---- PlusPortals assignment alerts ----
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch (_) {}
+  const d = payload.data || {};
+  const n = payload.notification || {};
+  event.waitUntil(self.registration.showNotification(d.title || n.title || "Leo's LifeOS", {
+    body: d.body || n.body || '',
+    icon: 'icon-192.png',
+    tag: d.tag || 'plusportals',
+    data: { url: self.registration.scope },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || self.registration.scope;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const open = windows.find(w => w.url.startsWith(self.registration.scope));
+    if (open) return open.focus();
+    return self.clients.openWindow(url);
+  })());
+});
