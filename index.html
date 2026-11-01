@@ -1326,7 +1326,7 @@
       "AP Economics": "#FACC15",
       "Elaboración de Proyectos": "#EC4899",
       "Computer Science": "#A855F7",
-      "Tech": "#A855F7"
+      "Tech": "#A855F7",
       "Filosofía": "#14B8A6",
     };
 
@@ -2236,7 +2236,6 @@
       e.preventDefault();
       const editId = $('block-edit-id').value;
       const fields = {
-        type: $('asgn-type-input').value,
         current: bestExerciseName($('block-primary-input').value, exForm.edited.has('name')),
         target: $('block-target-input').value.trim(),
         split: $('block-split-input').value,
@@ -3385,6 +3384,7 @@ window.handleAddAssignment = function(e) {
       e.preventDefault();
       const editId = $('asgn-edit-id').value;
       const fields = {
+        type: $('asgn-type-input').value,
         title: $('asgn-title-input').value.trim(),
         course: $('asgn-course-input').value,
         dueDate: $('asgn-date-input').value
