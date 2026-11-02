@@ -4607,7 +4607,7 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
         const stateRef = doc(collection(db, 'artifacts', appId, 'users', ACCOUNT, 'appData'), 'state');
 
         // ---- PlusPortals assignment alerts (push notifications) ----
-        const VAPID_KEY = "NDfVp3jlO1SCqjvx6dPwYOUsAym1"; // leo-slifeos: Project settings → Cloud Messaging → Web Push certificates
+        const VAPID_KEY = "BOsLu0UfzSRD3L2P8i94-DKu62jjhn-GPZ33sxM_G0yKaG7DM72srLg4Hv5KtBOkHcZU7D0tluB4EHth92Yhlys"; // leo-slifeos: Project settings → Cloud Messaging → Web Push certificates
         const devicesRef = doc(collection(db, 'artifacts', appId, 'users', ACCOUNT, 'appData'), 'pushDevices');
         const PUSH_DEVICE_KEY = 'lifeOsPushDevice';
         let pushStatus = 'off';
