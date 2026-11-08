@@ -792,6 +792,10 @@
       <button type="submit" id="lock-btn" class="btn btn-primary w-full" style="height:48px">Unlock</button>
     </form>
   </div>
+<script>
+    // This device was unlocked before: skip the lock screen
+    try { if (localStorage.getItem('lifeOsRemember')) document.getElementById('lock-screen').classList.add('is-unlocked'); } catch (_) {}
+  </script>
 
   <!-- MOBILE APP BAR -->
   <header id="appbar" class="appbar">
@@ -4726,6 +4730,7 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
     }
 
     window.lockApp = function() {
+            localStorage.removeItem('lifeOsRemember');
       setLockMsg('Enter your password');
       $('lock-input').value = '';
       $('lock-screen').classList.remove('is-unlocked');
@@ -4741,6 +4746,8 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
         input.value = '';
         input.blur();
         $('lock-screen').classList.add('is-unlocked');
+                localStorage.setItem('lifeOsRemember', '1');
+
         if (window.currentTab === 'home') renderDashboard(true);
         haptic([8, 30, 8]);
       } catch (err) {
@@ -4754,10 +4761,7 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
       }
     });
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) lockHiddenAt = Date.now();
-      else if (lockHiddenAt && Date.now() - lockHiddenAt > LOCK_AFTER_MS) window.lockApp();
-    });
+    
 
     // =====================================================================
     // --- DUPLICATE ASSIGNMENTS ---
