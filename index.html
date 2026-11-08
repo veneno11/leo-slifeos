@@ -692,9 +692,106 @@
         animation-delay: 0ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important;
       }
     }
+  /* ---------- Lock screen ---------- */
+    .lock-screen {
+      position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px;
+      background: var(--iron); transition: opacity 0.35s var(--ease-out), visibility 0.35s;
+    }
+    .lock-screen.is-unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
+    .lock-card { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+    .lock-card .brand-mark { width: 52px; height: 52px; margin: 0 auto 4px; font-size: 18px; }
+    .lock-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .lock-msg { font-size: 14px; color: var(--dust); margin-top: -8px; min-height: 20px; }
+    .lock-msg.is-error { color: var(--red); }
+    .lock-card.shake { animation: shake 0.4s; }
+    @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
+    /* ---------- Home dashboard ---------- */
+    .dash-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .dash-card { grid-column: 1 / -1; min-width: 0; padding: 16px; border-radius: 18px; background: var(--slab); border: 1px solid var(--line); }
+    .dash-kpi { grid-column: span 1; display: flex; flex-direction: column; align-items: flex-start; text-align: left; transition: border-color 0.2s, transform 0.15s var(--ease-out); }
+    .dash-kpi:hover { border-color: var(--line-strong); }
+    .dash-kpi:active { transform: scale(0.98); }
+    @media (min-width: 1024px) {
+      .dash-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
+      .dash-kpi { grid-column: span 3; }
+      .span-8 { grid-column: span 8; } .span-7 { grid-column: span 7; } .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; }
+    }
+    .is-animated > .dash-card { animation: popIn 0.5s var(--ease-out) backwards; }
+    .dash-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+    .dash-head h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .dash-head > span, .dash-label { font-size: 12.5px; color: var(--dust); }
+    .dash-label { font-weight: 600; margin-bottom: 8px; }
+    .t-red { color: var(--red); font-weight: 600; }
+    .t-yellow { color: var(--yellow); font-weight: 600; }
+    .kpi-label { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--dust); }
+    .kpi-label i { font-size: 12px; color: #A1A1AA; }
+    .kpi-value { font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-top: 12px; color: #F4F4F5; }
+    .kpi-value small { font-size: 14px; font-weight: 600; letter-spacing: 0; color: var(--dust); margin-left: 3px; }
+    .kpi-sub { font-size: 12.5px; line-height: 1.35; color: var(--dust); margin-top: 8px; }
+    .due-chart { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; height: 190px; }
+    .due-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .due-track { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; font-size: 11.5px; }
+    .due-bar { width: 100%; max-width: 28px; min-height: 4px; display: flex; flex-direction: column-reverse; gap: 2px; border-radius: 6px; overflow: hidden; background: var(--raised); transform-origin: bottom; }
+    .due-bar span { flex: 1; background: var(--c); }
+    .is-animated .due-bar { animation: growY 0.6s var(--ease-out) backwards; animation-delay: calc(var(--i) * 30ms); }
+    .due-day { font-size: 11px; line-height: 1.25; font-weight: 600; color: var(--dim); text-align: center; border-radius: 6px; padding: 2px 0; }
+    .due-col.is-weekend .due-day { opacity: 0.55; }
+    .due-col.is-today .due-day { color: #09090B; background: var(--accent); }
+    .donut-wrap { display: flex; align-items: center; gap: 20px; }
+    .donut { position: relative; width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0; }
+    .donut::after { content: ''; position: absolute; inset: 20px; border-radius: 50%; background: var(--slab); }
+    .donut-center { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; text-align: center; }
+    .donut-center b { font-size: 30px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+    .donut-center small { font-size: 11.5px; color: var(--dust); margin-top: 3px; }
+    .is-animated .donut { animation: popIn 0.7s var(--ease-out) backwards; }
+    .legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+    .legend li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .legend b { margin-left: auto; font-weight: 600; color: var(--dust); }
+    .legend-row { flex-direction: row; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; }
+    .legend-row b { margin-left: 0; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; background: var(--c); }
+    .train-wrap { display: grid; gap: 20px; }
+    @media (min-width: 640px) { .train-wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .heat { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; max-width: 360px; }
+    .heat-head { font-size: 10.5px; font-weight: 600; color: var(--dim); text-align: center; }
+    .heat-cell { aspect-ratio: 1; border-radius: 6px; background: var(--raised); }
+    .heat-cell.is-on { background: var(--c); }
+    .heat-cell.is-today { box-shadow: inset 0 0 0 2px var(--chalk); }
+    .is-animated .heat-cell.is-on { animation: popIn 0.4s var(--ease-out) backwards; animation-delay: calc(var(--i) * 12ms); }
+    .meter { height: 8px; border-radius: 99px; background: var(--raised); overflow: hidden; }
+    .meter i { display: block; height: 100%; border-radius: inherit; background: var(--c); transform-origin: left; }
+    .is-animated .meter i { animation: growX 0.7s var(--ease-out) backwards; }
+    @keyframes growX { from { transform: scaleX(0); } }
+    @keyframes growY { from { transform: scaleY(0); } }
+    .fresh-row, .lift-row, .next-row { display: grid; width: 100%; text-align: left; border-radius: 10px; transition: background-color 0.2s; }
+    .fresh-row:hover, .lift-row:hover, .next-row:hover { background: var(--raised); }
+    .fresh-row { grid-template-columns: 10rem minmax(0, 1fr) 3rem; align-items: center; gap: 10px; padding: 7px 6px; font-size: 13px; font-weight: 600; }
+    .fresh-row > :last-child { text-align: right; color: var(--dust); }
+    .fresh-row em, .lift-top em { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--yellow); margin-left: 6px; }
+    .lift-row { gap: 7px; padding: 8px 6px; }
+    .lift-top { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 13.5px; font-weight: 600; }
+    .lift-top b { margin-left: auto; }
+    .next-row { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 8px; }
+    .next-title { display: block; font-size: 14px; font-weight: 600; }
+    .next-meta { display: block; font-size: 12px; color: var(--dust); margin-top: 1px; }
+    .next-row .due-tag { font-size: 12.5px; white-space: nowrap; }
+    .stackbar { display: flex; gap: 3px; height: 12px; border-radius: 99px; overflow: hidden; }
+    .stackbar span { background: var(--c); }
+
   </style>
 </head>
 <body data-hub="gym">
+    <!-- LOCK SCREEN -->
+  <div id="lock-screen" class="lock-screen">
+    <form id="lock-form" class="lock-card">
+      <div class="brand-mark"><i class="fa-solid fa-lock"></i></div>
+      <h1 class="lock-title">Leo's LifeOS</h1>
+      <p id="lock-msg" class="lock-msg">Enter your password</p>
+      <input type="password" id="lock-input" class="field" placeholder="Password" autocomplete="current-password" required autofocus />
+      <button type="submit" id="lock-btn" class="btn btn-primary w-full" style="height:48px">Unlock</button>
+    </form>
+  </div>
 
   <!-- MOBILE APP BAR -->
   <header id="appbar" class="appbar">
@@ -718,7 +815,7 @@
   <!-- DESKTOP HEADER -->
   <header class="desk-header">
     <div class="max-w-6xl mx-auto w-full px-4 h-16 flex items-center justify-between gap-4">
-      <button class="flex items-center gap-3 min-w-0 text-left" onclick="window.switchTab('gym')">
+      <button class="flex items-center gap-3 min-w-0 text-left" onclick="window.switchTab('home')">
         <div class="brand-mark">
           <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
@@ -738,9 +835,11 @@
         <button onclick="window.switchTab('gym')" id="nav-btn-gym" class="tab-nav-btn is-active"><i class="fa-solid fa-dumbbell"></i> Gym</button>
         <button onclick="window.switchTab('student')" id="nav-btn-student" class="tab-nav-btn"><i class="fa-solid fa-graduation-cap"></i> School</button>
         <button onclick="window.switchTab('info')" id="nav-btn-info" class="tab-nav-btn"><i class="fa-solid fa-lightbulb"></i> Mindset</button>
+        <button onclick="window.switchTab('home')" id="nav-btn-home" class="tab-nav-btn"><i class="fa-solid fa-house"></i> Home</button>
       </nav>
 
       <div class="flex items-center gap-2 shrink-0">
+                <button onclick="window.lockApp()" class="icon-btn" title="Lock" aria-label="Lock"><i class="fa-solid fa-lock"></i></button>
         <button onclick="window.openModal('settingsModal')" class="icon-btn relative" title="Settings" aria-label="Settings">
           <i class="fa-solid fa-sliders"></i>
           <span id="api-indicator" class="ai-dot hidden"></span>
@@ -765,6 +864,12 @@
   </section>
 
   <main class="max-w-6xl mx-auto w-full px-4 pt-6">
+<!-- HOME TAB -->
+    <div id="tab-home" class="tab-content">
+      <h2 id="dash-greeting" class="hub-title">Overview</h2>
+      <p id="dash-date" class="hub-sub"></p>
+      <div id="dashboard" class="dash-grid mt-5"></div>
+    </div>
 
     <!-- GYM TAB -->
     <div id="tab-gym" class="tab-content active">
@@ -900,6 +1005,9 @@
   <nav class="bottom-nav" aria-label="Sections">
     <div class="nav-pill">
       <span id="nav-indicator" class="nav-indicator" aria-hidden="true"></span>
+      <button onclick="window.switchTab('home')" id="mob-btn-home" class="mob-nav-btn">
+        <i class="fa-solid fa-house"></i><span>Home</span>
+      </button>
       <button onclick="window.switchTab('gym')" id="mob-btn-gym" class="mob-nav-btn active-tab-mob">
         <i class="fa-solid fa-dumbbell"></i><span>Gym</span>
       </button>
@@ -4571,12 +4679,276 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
       quoteIndex++;
       applyQuote(q);
     };
+
+  // =====================================================================
+    // --- LOCK SCREEN ---
+    // The password is your Firebase login, so no other browser can load your
+    // data. The first unlock on a device checks it with Firebase; after that a
+    // salted hash on the device unlocks instantly, even offline.
+    // Locks again after 5 minutes in the background, or with the lock button.
+    // =====================================================================
+    const LOCK_HASH_KEY = 'lifeOsLockHash';
+    const LOCK_AFTER_MS = 5 * 60 * 1000;
+    let lockHiddenAt = 0;
+
+    async function hashPassword(pw, salt) {
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: 200000 }, key, 256);
+      return btoa(String.fromCharCode(...new Uint8Array(bits)));
+    }
+
+    function setLockMsg(text, isError = false) {
+      $('lock-msg').textContent = text;
+      $('lock-msg').classList.toggle('is-error', isError);
+    }
+
+    async function checkPassword(pw) {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(LOCK_HASH_KEY)); } catch (_) {}
+      if (saved && await hashPassword(pw, saved.salt) === saved.hash) {
+        // Right password. Reconnect sync if this device got signed out somehow.
+        if (window.lifeosSignedIn && !window.lifeosSignedIn()) window.lifeosSignIn(pw).catch(() => {});
+        return;
+      }
+      if (!window.lifeosSignIn) {
+        throw new Error(navigator.onLine ? 'Still connecting. Try again in a second.' : 'Go online to unlock on this device the first time.');
+      }
+      try {
+        await window.lifeosSignIn(pw);
+      } catch (err) {
+        const code = String(err?.code || '');
+        throw new Error(code.includes('network') ? "Can't reach the server. Check your connection."
+          : code.includes('too-many') ? 'Too many tries. Wait a minute.' : 'Wrong password.');
+      }
+      const salt = crypto.randomUUID();
+      localStorage.setItem(LOCK_HASH_KEY, JSON.stringify({ salt, hash: await hashPassword(pw, salt) }));
+    }
+
+    window.lockApp = function() {
+      setLockMsg('Enter your password');
+      $('lock-input').value = '';
+      $('lock-screen').classList.remove('is-unlocked');
+      setTimeout(() => $('lock-input').focus(), 60);
+    };
+
+    $('lock-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = $('lock-btn'), input = $('lock-input'), card = $('lock-form');
+      btn.disabled = true;
+      try {
+        await checkPassword(input.value);
+        input.value = '';
+        input.blur();
+        $('lock-screen').classList.add('is-unlocked');
+        if (window.currentTab === 'home') renderDashboard(true);
+        haptic([8, 30, 8]);
+      } catch (err) {
+        setLockMsg(err.message, true);
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        haptic([12, 50, 12]);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) lockHiddenAt = Date.now();
+      else if (lockHiddenAt && Date.now() - lockHiddenAt > LOCK_AFTER_MS) window.lockApp();
+    });
+
+    // =====================================================================
+    // --- DUPLICATE ASSIGNMENTS ---
+    // Same course + title + due date = one assignment. A done copy wins.
+    // =====================================================================
+    function dedupeTasks() {
+      const tasks = window.appState.tasks;
+      if (!Array.isArray(tasks)) return false;
+      const firstByKey = new Map();
+      const kept = tasks.filter(t => {
+        const key = [t.course, t.title, t.dueDate].map(v => String(v ?? '').trim().toLowerCase()).join(' | ');
+        const first = firstByKey.get(key);
+        if (!first) { firstByKey.set(key, t); return true; }
+        if (t.completed) first.completed = true;
+        return false;
+      });
+      if (kept.length === tasks.length) return false;
+      window.appState.tasks = kept;
+      return true;
+    }
+
+    // =====================================================================
+    // --- HOME DASHBOARD ---
+    // Everything at a glance. Charts are plain HTML/CSS, no library.
+    // =====================================================================
+    const SPLIT_COLORS = { chest: '#F87171', back: '#FB923C', arms: '#C084FC', legs: '#60A5FA' };
+    const CREATOR_COLORS = { Fitness: '#34D399', Academics: '#60A5FA', Tech: '#A855F7', Mindset: '#F59E0B', Misc: '#71717A' };
+    const dayOffset = (n) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return d; };
+    const dashCard = (cls, title, sub, body) =>
+      `<section class="dash-card ${cls}"><div class="dash-head"><h3>${title}</h3>${sub ? `<span>${sub}</span>` : ''}</div>${body}</section>`;
+    const dashLegend = (items, row = false) => `<ul class="legend ${row ? 'legend-row' : ''}">${items.map(([label, color, n]) =>
+      `<li><span class="legend-dot" style="--c:${color}"></span><span class="truncate">${esc(label)}</span>${n == null ? '' : `<b class="tnum">${n}</b>`}</li>`).join('')}</ul>`;
+
+    // Course color for charts; very dark ones (German's black) show as light gray
+    function chartColor(course) {
+      return courseVars(course).includes('ring') ? '#D4D4D8' : (CLASS_COLORS[course] || '#9B9B9B');
+    }
+
+    function renderDashboard(animate = false) {
+      const root = $('dashboard');
+      if (!root) return;
+      const st = window.appState;
+      const notes = notesOf(), quotes = quotesOf();
+
+      // School
+      const open = st.tasks.filter(t => !t.completed).sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+      const dueToday = open.filter(t => daysUntil(t.dueDate) === 0).length;
+      const overdue = open.filter(t => daysUntil(t.dueDate) < 0).length;
+      const days = Array.from({ length: 14 }, (_, i) => dayOffset(i));
+      const perDay = days.map(d => open.filter(t => t.dueDate === todayISO(d)));
+      const maxDue = Math.max(3, ...perDay.map(list => list.length));
+      const byCourse = {};
+      open.forEach(t => { const c = t.course || 'No class'; byCourse[c] = (byCourse[c] || 0) + 1; });
+      const courses = Object.entries(byCourse).sort((a, b) => b[1] - a[1]).map(([c, n]) => [c, chartColor(c), n]);
+      let deg = 0;
+      const ring = courses.map(([, color, n]) => { const from = deg; deg += n / open.length * 360; return `${color} ${from}deg ${deg}deg`; }).join(', ');
+
+      // Gym
+      const trainedOn = {};
+      GYM_SPLIT_IDS.forEach(s => splitHistoryFor(s).forEach(d => { trainedOn[d] = trainedOn[d] || s; }));
+      const ages = GYM_SPLIT_IDS.map(s => ({ s, days: daysSinceTrained(s) }));
+      const nextUp = ages.reduce((a, b) => ((b.days ?? 99) > (a.days ?? 99) ? b : a)).s;
+      const last = ages.filter(a => a.days !== null).sort((a, b) => a.days - b.days)[0];
+      const thisWeek = Object.keys(trainedOn).filter(d => daysUntil(d) > -7).length;
+      const heatDays = Array.from({ length: 28 }, (_, i) => dayOffset(i - 27));
+      const sessions = heatDays.filter(d => trainedOn[todayISO(d)]).length;
+      const best = new Map(); // best estimated 1RM per lift (Epley)
+      st.pbLogs.forEach(l => {
+        const e1rm = Math.round(l.reps > 1 ? l.weight * (1 + l.reps / 30) : l.weight);
+        const k = String(l.exercise).trim().toLowerCase();
+        if (!best.has(k) || best.get(k).e1rm < e1rm) best.set(k, { ...l, e1rm });
+      });
+      const lifts = [...best.values()].sort((a, b) => b.e1rm - a.e1rm).slice(0, 6);
+      const retests = lifts.filter(l => calculateNextPRDay(l.date, l.weight, l.reps).isOverdue);
+
+      // Mindset
+      const latest = [...notes].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))[0];
+      const cats = {};
+      st.ytChannels.forEach(c => { cats[c.category] = (cats[c.category] || 0) + 1; });
+      const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, n]) => [c, CREATOR_COLORS[c] || '#94A3B8', n]);
+
+      const hour = new Date().getHours();
+      $('dash-greeting').textContent = `Good ${hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'}, Leo`;
+      $('dash-date').textContent = `${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}. ${SPLIT_LABELS[nextUp]} is up next.`;
+
+      const kpi = (tab, icon, label, value, sub) => `
+        <button type="button" class="dash-card dash-kpi" onclick="window.switchTab('${tab}')">
+          <span class="kpi-label"><i class="fa-solid ${icon}"></i>${label}</span>
+          <span class="kpi-value tnum">${value}</span>
+          <span class="kpi-sub">${sub}</span>
+        </button>`;
+      const taskSub = [dueToday && `<b class="t-yellow">${dueToday} due today</b>`, overdue && `<b class="t-red">${overdue} overdue</b>`].filter(Boolean).join(' · ') || 'Nothing due today';
+
+      const dueChart = `<div class="due-chart">${days.map((d, i) => {
+        const list = perDay[i];
+        return `<div class="due-col ${i === 0 ? 'is-today' : ''} ${d.getDay() % 6 ? '' : 'is-weekend'}" title="${esc(formatDateNice(todayISO(d)) + ': ' + (list.map(t => t.title).join(', ') || 'nothing due'))}">
+          <div class="due-track">${list.length ? `<b>${list.length}</b>` : ''}<div class="due-bar" style="height:${list.length / maxDue * 85}%;--i:${i}">${list.map(t => `<span style="--c:${chartColor(t.course)}"></span>`).join('')}</div></div>
+          <span class="due-day">${d.toLocaleDateString('en-US', { weekday: 'narrow' })}<br>${d.getDate()}</span>
+        </div>`;
+      }).join('')}</div>`;
+
+      const donut = `<div class="donut-wrap">
+          <div class="donut" style="background:${open.length ? `conic-gradient(${ring})` : 'var(--raised)'}"><div class="donut-center"><b class="tnum">${open.length}</b><small>open</small></div></div>
+          ${courses.length ? dashLegend(courses) : '<p class="kpi-sub">All clear.</p>'}
+        </div>`;
+
+      const heat = `<div>
+          <div class="heat">${heatDays.slice(0, 7).map(d => `<span class="heat-head">${d.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>`).join('')}${heatDays.map((d, i) => {
+            const iso = todayISO(d), s = trainedOn[iso];
+            return `<span class="heat-cell ${s ? 'is-on' : ''} ${i === 27 ? 'is-today' : ''}" style="${s ? `--c:${SPLIT_COLORS[s]};` : ''}--i:${i}" title="${formatDateNice(iso)}${s ? ': ' + SPLIT_LABELS[s] : ''}"></span>`;
+          }).join('')}</div>
+          ${dashLegend(GYM_SPLIT_IDS.map(s => [SPLIT_LABELS[s], SPLIT_COLORS[s]]), true)}
+        </div>`;
+
+      const freshness = `<div>
+          <p class="dash-label">Days since trained</p>
+          ${ages.map(({ s, days: n }) => `
+            <button type="button" class="fresh-row" onclick="window.setGymSplit('${s}'); window.switchTab('gym')">
+              <span class="truncate">${SPLIT_LABELS[s]}${s === nextUp ? '<em>Next</em>' : ''}</span>
+              <span class="meter"><i style="--c:${SPLIT_COLORS[s]};width:${n === null ? 100 : Math.min(100, n * 10)}%"></i></span>
+              <span class="tnum">${n === null ? 'never' : n === 0 ? 'today' : n + 'd'}</span>
+            </button>`).join('')}
+        </div>`;
+
+      const strength = lifts.length ? lifts.map(l => `
+          <button type="button" class="lift-row" onclick="window.editPR('${l.id}')">
+            <span class="lift-top"><span class="truncate min-w-0">${esc(l.exercise)}</span>${retests.includes(l) ? '<em>Retest</em>' : ''}<b class="tnum">${l.e1rm} lb</b></span>
+            <span class="meter"><i style="--c:var(--green);width:${l.e1rm / lifts[0].e1rm * 100}%"></i></span>
+          </button>`).join('')
+        : emptyState('fa-trophy', 'No PRs logged yet.', 'Log PR', "window.openModal('logSetModal', true)");
+
+      const upNext = open.length ? open.slice(0, 6).map(t => {
+          const due = dueInfo(t.dueDate);
+          return `
+          <button type="button" class="next-row" style="${courseVars(t.course)}" onclick="window.editTask('${t.id}')">
+            <span class="course-dot"></span>
+            <span class="min-w-0"><span class="next-title truncate">${esc(t.title)}</span><span class="next-meta truncate">${esc(t.course || 'No class')} · ${esc(t.type)}</span></span>
+            <span class="due-tag ${due.tone}">${due.label}</span>
+          </button>`;
+        }).join('')
+        : emptyState('fa-circle-check', 'Nothing open. Enjoy it.');
+
+      const mindset = `
+        ${latest ? `<button type="button" class="card note-card w-full text-left" onclick="window.openNote('${latest.id}')">
+            <span class="note-date">Latest note · ${esc(noteDateLabel(latest.createdAt))}</span>
+            <span class="note-title truncate">${esc(latest.title || 'Untitled note')}</span>
+            <span class="note-preview line-clamp-2">${esc(noteText(latest).trim())}</span>
+          </button>` : emptyState('fa-note-sticky', 'No notes yet.', 'New note', 'window.newNote()')}
+        ${catList.length ? `<p class="dash-label mt-5">Creators by category</p>
+          <div class="stackbar">${catList.map(([c, color, n]) => `<span style="flex:${n};--c:${color}" title="${esc(c)}: ${n}"></span>`).join('')}</div>
+          ${dashLegend(catList, true)}` : ''}`;
+
+      root.classList.toggle('is-animated', animate);
+      root.innerHTML = [
+        kpi('student', 'fa-graduation-cap', 'Open assignments', open.length, taskSub),
+        kpi('gym', 'fa-dumbbell', 'Workouts, last 7 days', thisWeek, last ? `Last: ${SPLIT_LABELS[last.s]}, ${agoText(last.days)}` : 'None logged yet'),
+        kpi('gym', 'fa-trophy', 'Top est. 1RM', lifts.length ? `${lifts[0].e1rm}<small>lb</small>` : '–', lifts.length ? `${esc(lifts[0].exercise)} · ${st.pbLogs.length} PRs logged` : 'Log a PR to see it'),
+        kpi('info', 'fa-note-sticky', 'Notes', notes.length, `${quotes.length} saved quotes · ${st.ytChannels.length} creators`),
+        dashCard('span-8', 'Due in the next 2 weeks', `${perDay.reduce((n, l) => n + l.length, 0)} due${overdue ? ` · <b class="t-red">${overdue} overdue</b>` : ''}`, dueChart),
+        dashCard('span-4', 'Open by course', '', donut),
+        dashCard('span-7', 'Training, last 4 weeks', `${sessions} sessions`, `<div class="train-wrap">${heat}${freshness}</div>`),
+        dashCard('span-5', 'Strength', retests.length ? `<b class="t-yellow">${retests.length} retest${retests.length === 1 ? '' : 's'} due</b>` : 'Best estimated 1RM', strength),
+        dashCard('span-7', 'Up next', `${open.length} open`, upNext),
+        dashCard('span-5', 'Mindset', '', mindset)
+      ].join('');
+    }
+
+    // Hook it all in: open on Home, clean duplicates, refresh the dashboard on any change
+    const renderAllBase = window.renderAll, saveStateBase = window.saveState, switchTabBase = window.switchTab;
+    window.renderAll = function() {
+      if (dedupeTasks()) saveStateBase();
+      renderAllBase();
+      renderDashboard();
+    };
+    window.saveState = function() {
+      saveStateBase();
+      if (window.currentTab === 'home') renderDashboard();
+    };
+    window.switchTab = function(tabId) {
+      switchTabBase(tabId);
+      if (tabId === 'home') renderDashboard(true);
+    };
+    window.currentTab = 'home';
+    window.addEventListener('DOMContentLoaded', () => window.switchTab('home'));
+
   </script>
 
  <!-- FIREBASE SYNC MODULE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { initializeFirestore, doc, collection, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
@@ -4600,8 +4972,13 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
         // Skip undefined fields instead of rejecting the whole save
         const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 
-        await signInAnonymously(auth);
-        if (!auth.currentUser?.uid) return;
+        // Sign-in happens on the lock screen; old anonymous sessions don't count
+        window.lifeosSignIn = (pw) => signInWithEmailAndPassword(auth, LOGIN_EMAIL, pw);
+        window.lifeosSignedIn = () => !!auth.currentUser && !auth.currentUser.isAnonymous;
+        await new Promise(resolve => {
+          const stop = onAuthStateChanged(auth, (user) => { if (user && !user.isAnonymous) { stop(); resolve(); } });
+        });
+
         if (typeof window.setSyncUI === 'function') window.setSyncUI('synced');
 
         const stateRef = doc(collection(db, 'artifacts', appId, 'users', ACCOUNT, 'appData'), 'state');
