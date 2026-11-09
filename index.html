@@ -778,6 +778,19 @@
     .next-row .due-tag { font-size: 12.5px; white-space: nowrap; }
     .stackbar { display: flex; gap: 3px; height: 12px; border-radius: 99px; overflow: hidden; }
     .stackbar span { background: var(--c); }
+        /* ---------- Training check-in ---------- */
+    .checkin-opt {
+      display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 16px; border-radius: 14px; text-align: left;
+      background: color-mix(in srgb, var(--c) 12%, var(--iron)); border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+      transition: transform 0.15s var(--ease-out), background-color 0.2s;
+    }
+    .checkin-opt:hover { background: color-mix(in srgb, var(--c) 20%, var(--iron)); }
+    .checkin-opt:active { transform: scale(0.97); }
+    .checkin-opt.is-picked { box-shadow: inset 0 0 0 2px var(--c); }
+    .checkin-opt.is-rest { margin-top: 8px; }
+    .checkin-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: var(--c); box-shadow: 0 0 10px var(--c); }
+    .checkin-opt b { display: block; font-size: 16px; font-weight: 700; color: var(--chalk); }
+    .checkin-opt small { display: block; font-size: 12.5px; font-weight: 500; color: var(--dust); margin-top: 2px; }
 
   </style>
 </head>
@@ -1375,7 +1388,22 @@
     </div>
   </div>
 
-  <!-- TOASTS -->
+  <!-- TRAINING CHECK-IN -->
+  <div id="checkinModal" class="modal-backdrop hidden" onclick="if (event.target === this) window.closeModal('checkinModal')">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="checkin-title">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <div class="min-w-0">
+          <h3 id="checkin-title" class="sheet-title">Did you train today?</h3>
+          <p id="checkin-date" class="text-[13px] text-notion-textMuted mt-1"></p>
+        </div>
+        <button onclick="window.closeModal('checkinModal')" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div id="checkin-options" class="grid gap-2"></div>
+    </div>
+  </div>
+
+    <!-- TOASTS -->
   <div id="toast-container" aria-live="polite"></div>
     
 
@@ -4946,6 +4974,52 @@ ${noteText(note).slice(0, 4000).replace(/[<>]/g, '')}
     };
     window.currentTab = 'home';
     window.addEventListener('DOMContentLoaded', () => window.switchTab('home'));
+    
+
+ // =====================================================================
+    // --- TRAINING CHECK-IN ---
+    // The evening reminder opens LifeOS with ?checkin=1, which shows this
+    // sheet. One tap logs today's split (same colors as Home) or a rest day.
+    // =====================================================================
+    window.openCheckin = function() {
+      const today = todayISO();
+      const picked = [...GYM_SPLIT_IDS, 'rest'].find(s => splitHistoryFor(s).includes(today));
+      const option = (id, color, label, sub, extra = '') => `
+        <button type="button" class="checkin-opt ${extra} ${picked === id ? 'is-picked' : ''}" style="--c:${color}" onclick="window.answerCheckin('${id}')">
+          <span class="checkin-dot"></span>
+          <span class="flex-1 min-w-0"><b>${label}</b><small>${sub}</small></span>
+          ${picked === id ? '<i class="fa-solid fa-check" style="color:var(--c)"></i>' : ''}
+        </button>`;
+      $('checkin-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      $('checkin-options').innerHTML = GYM_SPLIT_IDS.map(s => {
+        const days = daysSinceTrained(s);
+        return option(s, SPLIT_COLORS[s], SPLIT_LABELS[s], days === null ? 'Not trained yet' : `Last trained ${agoText(days)}`);
+      }).join('') + option('rest', '#71717A', "No, I didn't train", 'Rest day', 'is-rest');
+      window.openModal('checkinModal');
+    };
+
+    window.answerCheckin = function(choice) {
+      const today = todayISO();
+      if (!window.appState.splitHistory || typeof window.appState.splitHistory !== 'object') window.appState.splitHistory = {};
+      const hist = window.appState.splitHistory;
+      // Training today replaces a rest day, and a rest day replaces training
+      (choice === 'rest' ? GYM_SPLIT_IDS : ['rest']).forEach(k => {
+        const list = splitHistoryFor(k).filter(d => d !== today);
+        if (list.length) hist[k] = list; else delete hist[k];
+      });
+      hist[choice] = [today, ...splitHistoryFor(choice).filter(d => d !== today)].slice(0, 8);
+      window.saveState();
+      window.renderAll();
+      window.closeModal('checkinModal');
+      haptic([8, 30, 8]);
+      window.showToast(choice === 'rest' ? 'Rest day logged.' : `${SPLIT_LABELS[choice]} logged for today.`, 'success');
+    };
+
+    // Opened from the notification: show the check-in, then tidy the address
+    if (new URLSearchParams(location.search).has('checkin')) {
+      history.replaceState(null, '', location.pathname + location.hash);
+      window.addEventListener('DOMContentLoaded', () => setTimeout(window.openCheckin, 350));
+    }
 
   </script>
 
